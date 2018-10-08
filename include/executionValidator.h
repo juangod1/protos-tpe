@@ -28,4 +28,7 @@ validation_response_t validate_arguments(int argc, char ** argv);
 int validate_argument(char * arg);
 int option_validator(char option);
 
+void test_mode();
+void non_test_mode();
+
 #endif //PROTOS_TPE_MAIN_H

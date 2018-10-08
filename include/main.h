@@ -9,8 +9,6 @@
 #include <stdio.h>
 #include "executionValidator.h"
 
-
-void test_mode();
-void non_test_mode();
+int parse_command(int argc, char ** argv);
 
 #endif //PROTOS_TPE_MAIN_H
