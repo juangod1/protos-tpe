@@ -6,7 +6,13 @@ SOURCES=$(wildcard *.c)
 OBJECTS=$(SOURCES:%.c=$(OUTPUT)/%.o)
 OUTPUT=build
 
-all: $(TARGET)
+DIRECTORY=build/
+
+all: | $(DIRECTORY) $(TARGET)
+
+$(DIRECTORY):
+	@echo "Folder $(directory) does not exist, one will be created."
+	mkdir $@;
 
 $(TARGET): $(OBJECTS)
 	$(GCC) $(GCCFLAGS) -o $(OUTPUT)/$(TARGET) $(OBJECTS)

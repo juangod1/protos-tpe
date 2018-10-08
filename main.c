@@ -16,4 +16,5 @@ int parse_command(int argc, char ** argv){
         execute_options(response.selectedOptions, response.length);
         return 0;
     }
+    return -1;
 }
