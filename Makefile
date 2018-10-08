@@ -1,26 +1,13 @@
-GCC=gcc
-GCCFLAGS=-Wall -std=c99 -pedantic
+all: Proxy Control
 
-TARGET=run
-SOURCES=$(wildcard *.c)
-OBJECTS=$(SOURCES:%.c=$(OUTPUT)/%.o)
-OUTPUT=build
+Proxy:
+	cd Proxy; make all
 
-DIRECTORY=build/
-
-all: | $(DIRECTORY) $(TARGET)
-
-$(DIRECTORY):
-	@echo "Folder $(directory) does not exist, one will be created."
-	mkdir $@;
-
-$(TARGET): $(OBJECTS)
-	$(GCC) $(GCCFLAGS) -o $(OUTPUT)/$(TARGET) $(OBJECTS)
-
-$(OUTPUT)/%.o: %.c
-	$(GCC) $(GCCFLAGS) -I./include -c $< -o $@
+Control:
+	cd Control; make all
 
 clean:
-	rm -rf build/*
+	cd Bootloader; make clean
+	cd Control; make clean
 
-.PHONY: all clean
+.PHONY: Proxy Control all clean
