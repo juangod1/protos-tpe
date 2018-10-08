@@ -4,7 +4,7 @@ int main(int argc, char ** argv)
 {
     parse_command(argc,argv);
 
-    return -1;
+    return 0;
 }
 
 int parse_command(int argc, char ** argv){

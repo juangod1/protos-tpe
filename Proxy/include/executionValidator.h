@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "main.h"
 
-#define MAX_OPTIONS 10
+#define MAX_OPTIONS 15
 
 typedef struct {
     char * name;
