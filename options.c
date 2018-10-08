@@ -7,8 +7,8 @@
 
 void initialize_options()
 {
-    option_register("Test Mode","t",test_mode,"A mode that tests.");
-    option_register("Non test Mode","n",non_test_mode,"A mode that doesn't test");
+    option_register("Test Mode",'t',test_mode,"A mode that tests.");
+    option_register("Non test Mode",'n',non_test_mode,"A mode that doesn't test");
 }
 
 void test_mode()

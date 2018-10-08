@@ -9,23 +9,20 @@
 
 typedef struct {
     char * name;
-    char * command;
+    char command;
     void (*function)();
     char * description;
+    char selected;
 } option_t;
 
-typedef struct {
-    int length;
-    int selectedOptions[MAX_OPTIONS];
-} validation_response_t;
-
 void initialize_options();
-void option_register(char * name, char * command, void (*function)(), char * description);
+void option_register(char * name, char command, void (*function)(), char * description);
 
-void execute_options(int *selectedOptions, int optionLength);
+void execute_options();
 
-validation_response_t validate_arguments(int argc, char ** argv);
+int validate_arguments(int argc, char ** argv);
 int validate_argument(char * arg);
+int multiple_option_validator(char * arg);
 int option_validator(char option);
 
 void test_mode();

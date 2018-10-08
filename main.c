@@ -9,12 +9,12 @@ int main(int argc, char ** argv)
 
 int parse_command(int argc, char ** argv){
     initialize_options();
-    validation_response_t response = validate_arguments(argc, argv);
+    int response = validate_arguments(argc, argv);
 
-    if(response.length>0)
+    if(response<0)
     {
-        execute_options(response.selectedOptions, response.length);
-        return 0;
+        return -1;
     }
-    return -1;
+    execute_options();
+    return 0;
 }
