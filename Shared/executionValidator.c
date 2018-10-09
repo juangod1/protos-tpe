@@ -104,3 +104,15 @@ void help()
         printf("'-%c':\t%-30s - %s\n",option.command,option.name, option.description);
     }
 }
+
+int parse_command(int argc, char ** argv, void (*initialize_options)()){
+    initialize_options();
+    int response = validate_arguments(argc, argv);
+
+    if(response<0)
+    {
+        return -1;
+    }
+    execute_options();
+    return 0;
+}

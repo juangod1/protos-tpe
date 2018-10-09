@@ -15,6 +15,7 @@ typedef struct {
     char selected;
 } option_t;
 
+int parse_command(int argc, char ** argv, void (*initialize_options)());
 void execute_options();
 int validate_arguments(int argc, char ** argv);
 int validate_argument(char * arg);
