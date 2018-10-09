@@ -2,7 +2,6 @@
 # Created by https://www.gitignore.io/api/c,c++,nanoc,macos,linux,windows,notepadpp,sublimetext
 
 ### Build ###
-build/*
 Makefile
 control
 proxy
@@ -10,6 +9,7 @@ CMakeCache.txt
 cmake_install.cmake
 CMakeFiles/*
 cmake-build-debug/*
+protos_tpe.cbp
 
 ### CLion ###
 .idea/*
