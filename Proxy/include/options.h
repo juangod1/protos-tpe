@@ -7,8 +7,6 @@
 
 
 void initialize_options();
-void test_mode();
-void non_test_mode();
 void error_specification();
 void help();
 void management_direction();

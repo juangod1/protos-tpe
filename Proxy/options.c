@@ -17,8 +17,6 @@ void initialize_options()
     option_register("Origin Port",'P',origin_port,"Specifies the TCP port where the POP3 server is found in the origin server. By defect 110");
     option_register("Command Specification",'t',command_specification,"Command utilized for external transformations. Compatible with system(3). By defect applies no transformations.");
     option_register("Version",'v',version,"Prints version information.");
-    option_register("Test Mode",'T',test_mode,"A mode that tests.");
-    option_register("Non test Mode",'n',non_test_mode,"A mode that doesn't test");
 }
 
 void error_specification()
@@ -71,14 +69,4 @@ void version()
     //TODO: has to print out version
     printf("This is version!\n");fflush(stdout);
 
-}
-
-void test_mode()
-{
-    printf("This is test mode!\n");fflush(stdout);
-}
-
-void non_test_mode()
-{
-    printf("This is non test mode!\n");fflush(stdout);
 }
