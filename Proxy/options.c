@@ -2,12 +2,8 @@
 // Created by juangod on 08/10/18.
 //
 
-#include "include/executionValidator.h"
+#include "../Shared/include/executionValidator.h"
 #include "include/options.h"
-
-
-static option_t options[MAX_OPTIONS];
-static int options_size = 0;
 
 void initialize_options()
 {
@@ -25,69 +21,13 @@ void initialize_options()
     option_register("Non test Mode",'n',non_test_mode,"A mode that doesn't test");
 }
 
-void option_register(char * name, char command, void (*function)(), char * description)
-{
-    option_t option = {0};
-    option.name = name;
-    option.command = command;
-    option.function = function;
-    option.description = description;
-    option.selected=0;
-    options[options_size++]=option;
-}
-
-int option_validator(char option)
-{
-    int i;
-    for(i=0;i<options_size;i++)
-    {
-        if(option == options[i].command)
-        {
-            if(options[i].selected==1)
-            {
-                return -1;
-            }
-            options[i].selected=1;
-            return i;
-        }
-    }
-    return -1;
-}
-
-
-
-
-
-
-
-
-void execute_options()
-{
-    for( int i=0; i<options_size; i++)
-    {
-        option_t option = options[i];
-        if(option.selected)
-        {
-            void (*execute_option)() = option.function;
-            execute_option();
-        }
-    }
-}
-
 void error_specification()
 {
     //TODO: has to receive a file direction and use it to specify the file to print out the stderr.
     printf("This is error specification!\n");fflush(stdout);
 
 }
-void help()
-{
-    for(int i=0; i<options_size; i++)
-    {
-        option_t option=options[i];
-        printf("'-%c':\t%-30s - %s\n",option.command,option.name, option.description);
-    }
-}
+
 void management_direction()
 {
     //TODO: has to receive a direction and use it to specify the route of the management service.

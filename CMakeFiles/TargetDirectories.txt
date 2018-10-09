@@ -1,0 +1,4 @@
+/home/juangod/ITBA/Protos/TPE/protos-tpe/CMakeFiles/rebuild_cache.dir
+/home/juangod/ITBA/Protos/TPE/protos-tpe/CMakeFiles/edit_cache.dir
+/home/juangod/ITBA/Protos/TPE/protos-tpe/CMakeFiles/proxy.dir
+/home/juangod/ITBA/Protos/TPE/protos-tpe/CMakeFiles/control.dir

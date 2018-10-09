@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "executionValidator.h"
+#include "../../Shared/include/executionValidator.h"
 #include "options.h"
 
 int parse_command(int argc, char ** argv);

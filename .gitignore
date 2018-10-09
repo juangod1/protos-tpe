@@ -3,6 +3,11 @@
 
 ### Build ###
 build/*
+Makefile
+control
+proxy
+CMakeCache.txt
+cmake_install.cmake
 
 ### CLion ###
 .idea/*
