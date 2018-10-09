@@ -1,10 +1,10 @@
-//
-// Created by juangod on 08/10/18.
-//
-
 #include "include/main.h"
+#include "include/options.h"
+#include "../Shared/include/executionValidator.h"
 
 int main(int argc, char ** argv)
 {
-    return 1;
+    parse_command(argc,argv,initialize_options);
+
+    return 0;
 }
