@@ -85,7 +85,7 @@ void help()
     for(int i=0; i<options_size; i++)
     {
         option_t option=options[i];
-        printf("'-%c': \t %s. \t\t\t %s\n",option.command,option.name, option.description);
+        printf("'-%c':\t%-30s - %s\n",option.command,option.name, option.description);
     }
 }
 void management_direction()
