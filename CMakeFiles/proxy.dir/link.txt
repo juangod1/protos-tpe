@@ -1,1 +1,0 @@
-/usr/bin/cc  -pthread --std=c99 -pedantic -pedantic-errors -Wall -Wextra -Werror -Wno-unused-parameter -D_POSIX_C_SOURCE=200112L -O1 -fsanitize=address   CMakeFiles/proxy.dir/Shared/executionValidator.c.o CMakeFiles/proxy.dir/Proxy/main.c.o CMakeFiles/proxy.dir/Proxy/options.c.o  -o proxy 
