@@ -1,33 +1,5 @@
 #include "include/executionValidator.h"
 
-static option_t options[MAX_OPTIONS];
-static int options_size = 0;
-
-void option_register(char * name, char command, void (*function)(), char * description)
-{
-    option_t option = {0};
-    option.name = name;
-    option.command = command;
-    option.function = function;
-    option.description = description;
-    option.selected=0;
-    options[options_size++]=option;
-}
-
-void execute_options()
-{
-    for( int i=0; i<options_size; i++)
-    {
-        option_t option = options[i];
-        if(option.selected)
-        {
-            void (*execute_option)() = option.function;
-            execute_option();
-        }
-    }
-}
-
-
 int validate_arguments(int argc, char ** argv)
 {
     int count;
@@ -42,24 +14,6 @@ int validate_arguments(int argc, char ** argv)
         }
     }
     return 0;
-}
-
-int option_validator(char option)
-{
-    int i;
-    for(i=0;i<options_size;i++)
-    {
-        if(option == options[i].command)
-        {
-            if(options[i].selected==1)
-            {
-                return -1;
-            }
-            options[i].selected=1;
-            return i;
-        }
-    }
-    return -1;
 }
 
 int multiple_option_validator(char * str)
