@@ -11,11 +11,29 @@
 
 int main(int argc, char ** argv)
 {
+    initialize_app_context();
     int response = proxy_parse(argc,argv);
 
-    file_descriptor MUA_sock = setup_MUA_socket();
-
-    run_server(MUA_sock);
+    if(response==ERROR)
+        printf("Program execution stopped.\n");
+    {
+    }
+    if(response==STANDARD)
+    {
+        execute_options();
+        file_descriptor MUA_sock = setup_MUA_socket();
+        run_server(MUA_sock);
+    }
+    if(response==HELP)
+    {
+        help();
+    }
+    if(response==VERSION)
+    {
+        version();
+    }
+    destroy_app_context();
+    return response;
 
     return 0;
 }

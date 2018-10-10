@@ -95,20 +95,18 @@ void execute_options()
     for( int i=0; i<options_size; i++)
     {
         option_t option = options[i];
-        if(option.selected)
-        {
-            void (*execute_option)() = option.function;
-            execute_option();
-        }
+        void (*execute_option)(char * arg) = option.function;
+        execute_option(option.function_argument);
     }
 }
 
-void option_register(char * name, char command, void (*function)(), char * description, void (*validator)(int argc, char ** argv, response_p resp), int validator_arguments)
+void option_register(char * name, char command, void (*function)(char * arg), char * function_argument ,char * description, void (*validator)(int argc, char ** argv, response_p resp), int validator_arguments)
 {
     option_t option = {0};
     option.name = name;
     option.command = command;
     option.function = function;
+    option.function_argument = function_argument;
     option.description = description;
     option.selected=FALSE;
     option.validator=validator;
@@ -121,6 +119,6 @@ void option_help()
     for(int i=0; i<options_size; i++)
     {
         option_t option=options[i];
-        printf("'-%c':\t%-30s - %s\n",option.command,option.name, option.description);
+        printf("\t-%c:\t%-30s - %s\n",option.command,option.name, option.description);
     }
 }

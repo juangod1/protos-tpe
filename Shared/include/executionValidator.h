@@ -17,7 +17,7 @@ typedef response_t * response_p;
 typedef struct {
     char * name;
     char command;
-    void (*function)();
+    void (*function)(char * arg);
     char * function_argument;
     char * description;
     char selected;
@@ -31,7 +31,8 @@ response_p parse_command(int argc, char ** argv, response_p response);
 response_p validate_arguments(int argc, char ** argv,response_p response);
 response_p validate_argument(int argc, char ** argv, response_p response);
 
-void option_register(char * name, char command, void (*function)(), char * description, void (*validator)(int argc, char ** argv, response_p resp), int validator_arguments);
+void option_register(char * name, char command, void (*function)(char * arg), char * function_argument ,char * description,
+                     void (*validator)(int argc, char ** argv, response_p resp), int validator_arguments);
 void option_validator(char ch, option_p * option);
 void option_help();
 

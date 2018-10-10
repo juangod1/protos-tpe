@@ -12,12 +12,12 @@ response_p validate_server_string(char *string, response_p response) //TODO: par
     response->next_argument=0;
     return response;
 }
-void error_specification_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
+void pop3_direction_validation(int argc, char ** argv, response_p resp)//TODO: parse string, make sure it has the correct format.
 {
     resp->success=TRUE;
     resp->next_argument=1;
 }
-void help_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
+void error_specification_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
 {
     resp->success=TRUE;
     resp->next_argument=1;
@@ -53,11 +53,6 @@ void origin_port_validation(int argc, char ** argv, response_p resp) //TODO: par
     resp->next_argument=1;
 }
 void command_specification_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
-{
-    resp->success=TRUE;
-    resp->next_argument=1;
-}
-void version_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
 {
     resp->success=TRUE;
     resp->next_argument=1;
