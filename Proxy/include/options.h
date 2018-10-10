@@ -5,7 +5,6 @@
 #ifndef PROTOS_TPE_OPTIONS_H
 #define PROTOS_TPE_OPTIONS_H
 
-
 void initialize_options();
 void error_specification();
 void help();

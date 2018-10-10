@@ -3,56 +3,92 @@
 option_t options[MAX_OPTIONS];
 int options_size = 0;
 
-int validate_arguments(int argc, char ** argv)
+response_p parse_command(int argc, char ** argv, response_p response)
 {
-    int count;
+    return validate_arguments(argc, argv, response);
+}
 
-    for(count=1;count<argc;count++)
+response_p validate_arguments(int argc, char ** argv,response_p response)
+{
+    argc--;
+    argv+=1;
+    int counter=0;
+
+    while(counter<argc)
     {
-        int response = validate_argument(argv[count]);
-        if(response<0)
+        validate_argument(argc-counter, argv+counter,response);
+        if(!response->success)
         {
-            printf("Invalid argument: '%s'\n", argv[count]);
-            return -1;
+            printf("Invalid argument: '%s': %s.\n", argv[counter], response->error_text);
+            return response;
+        }
+        int argument_shift = 1 +response->next_argument;;
+        counter+=argument_shift;
+    }
+    return response;
+}
+
+response_p validate_argument(int argc, char ** argv, response_p response)
+{
+    if (argv[0][0] != '-' || argv[0][1]==0 || argv[0][2]!=0)
+    {
+        response->success = FALSE;
+        response->error_text = "Argument should be an option";
+        return response;
+    }
+    option_p option = NULL;
+    option_validator(argv[0][1], &option);
+    if (option == NULL)
+    {
+        response->success = FALSE;
+        response->error_text = "Argument is not a valid option";
+        return response;
+    }
+    int remaining_args= argc-1;
+    if (remaining_args < option->validator_arguments) {
+        response->success = FALSE;
+        response->error_text = "Not enough arguments for option";
+        return response;
+    }
+    argc--;
+    argv++;
+    option->validator(argc, argv, response);
+    if(response->success)
+    {
+        if(option->validator_arguments==1)
+        {
+            option->function_argument=*argv;
+            response->next_argument=1;
+        }
+        else
+        {
+            option->function_argument=NULL;
+            response->next_argument=0;
         }
     }
-    return 0;
+    return response;
 }
 
-int multiple_option_validator(char * str)
+void option_validator(char ch, option_p * option)
 {
-    if(str==NULL)
+    int i;
+    for(i=0;i<options_size;i++)
     {
-        return -1;
-    }
-    char c= *str;
-    int index=0;
-    while(c!=0)
-    {
-        int response = option_validator(c);
-        if(response<0)
+        if(ch == options[i].command)
         {
-            return -1;
+            if(options[i].selected==1)
+            {
+                *option=NULL;
+                return;
+            }
+            options[i].selected=1;
+            *option=&options[i];
+            return;
         }
-        index++;
-        c=*(str+index);
     }
-    return 0;
+    *option=NULL;
 }
 
-int validate_argument(char * arg)
-{
-    if(arg==NULL)
-    {
-        return -1;
-    }
-
-    if(arg[0]=='-')
-    {
-        return multiple_option_validator(arg+1);
-    }
-    return -1;
-}
 
 void execute_options()
 {
@@ -67,52 +103,24 @@ void execute_options()
     }
 }
 
-void option_register(char * name, char command, void (*function)(), char * description)
+void option_register(char * name, char command, void (*function)(), char * description, void (*validator)(int argc, char ** argv, response_p resp), int validator_arguments)
 {
     option_t option = {0};
     option.name = name;
     option.command = command;
     option.function = function;
     option.description = description;
-    option.selected=0;
+    option.selected=FALSE;
+    option.validator=validator;
+    option.validator_arguments=validator_arguments;
     options[options_size++]=option;
 }
 
-int option_validator(char option)
-{
-    int i;
-    for(i=0;i<options_size;i++)
-    {
-        if(option == options[i].command)
-        {
-            if(options[i].selected==1)
-            {
-                return -1;
-            }
-            options[i].selected=1;
-            return i;
-        }
-    }
-    return -1;
-}
-
-void help()
+void option_help()
 {
     for(int i=0; i<options_size; i++)
     {
         option_t option=options[i];
         printf("'-%c':\t%-30s - %s\n",option.command,option.name, option.description);
     }
-}
-
-int parse_command(int argc, char ** argv, void (*initialize_options)()){
-    initialize_options();
-    int response = validate_arguments(argc, argv);
-
-    if(response<0)
-    {
-        return -1;
-    }
-    execute_options();
-    return 0;
 }

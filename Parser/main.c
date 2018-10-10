@@ -4,7 +4,10 @@
 
 int main(int argc, char ** argv)
 {
-    parse_command(argc,argv,initialize_options);
+    response_p response = malloc(sizeof(response_t));
+    initialize_options();
+    parse_command(argc,argv,response);
+    free(response);
 
     return 0;
 }

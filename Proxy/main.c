@@ -2,13 +2,36 @@
 #include <netinet/in.h>
 #include <memory.h>
 #include "include/main.h"
-#include "include/options.h"
 #include "../Shared/include/executionValidator.h"
+#include "include/proxyParse.h"
 
 int main(int argc, char ** argv)
 {
-    parse_command(argc,argv,initialize_options);
+    int response = proxy_parse(argc,argv);
 
+    if(response==ERROR)
+    {
+        printf("Program execution stopped.\n");
+    }
+    if(response==STANDARD)
+    {
+        execute_options();
+        proxy_main();
+    }
+    if(response==HELP)
+    {
+        help();
+    }
+    if(response==VERSION)
+    {
+        version();
+    }
+    return response;
+}
+
+int proxy_main()
+{
+    printf("Starting Program...\n");
     setup_MUA_socket();
 
     return 0;
@@ -26,25 +49,25 @@ void setup_MUA_socket()
 
     if(server < 0)
     {
-        perror("Unable to create socket.");
+        perror("Unable to create socket.\n");
         error();
     }
     else
     {
-        printf("Listening on port %d...",MUAPORT);
+        printf("Listening on port %d...\n",MUAPORT);
     }
 
     setsockopt(server, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
 
     if(bind(server, (struct sockaddr*) &address, sizeof(address)) < 0)
     {
-        perror("Unable to bind socket.");
+        perror("Unable to bind socket.\n");
         error();
     }
 
     if (listen(server, 20) < 0)
     {
-        perror("Unable to listen.");
+        perror("Unable to listen.\n");
         error();
     }
 
