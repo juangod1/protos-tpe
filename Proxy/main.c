@@ -6,6 +6,7 @@
 #include <sys/param.h>
 #include "include/main.h"
 #include "../Shared/include/executionValidator.h"
+#include "../Shared/include/lib.h"
 #include "include/proxyParse.h"
 
 int main(int argc, char ** argv)

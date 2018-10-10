@@ -1,7 +1,6 @@
 #include "../Shared/include/executionValidator.h"
+#include "../Shared/include/lib.h"
 #include "include/proxyParse.h"
-#include "include/optionValidatorFunctions.h"
-#include "include/main.h"
 
 int proxy_parse(int argc, char ** argv)
 {

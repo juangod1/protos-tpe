@@ -1,13 +1,29 @@
-#include "include/main.h"
-#include "include/options.h"
-#include "../Shared/include/executionValidator.h"
+#include <string.h>
+#include "include/runCommandLine.h"
+#include "../Shared/include/lib.h"
 
 int main(int argc, char ** argv)
 {
-    response_p response = malloc(sizeof(response_t));
-    initialize_options();
-    parse_command(argc,argv,response);
-    free(response);
-
+    int response = parser_parse(argc,argv);
+    if(response==ERROR)
+    {
+        return ERROR;
+    }
+    run_parser(argv[1]);
     return 0;
+}
+
+int parser_parse(int argc, char ** argv)
+{
+    if(argc!=2)
+    {
+        printf("Please execute the program with one parameter in the following format: ./prog \"param\"\n");
+        return ERROR;
+    }
+    if(strcmp(argv[1],"")==0)
+    {
+        printf("Please execute the program with one parameter in the following format: ./prog \"param\"\n");
+        return ERROR;
+    }
+    return STANDARD;
 }
