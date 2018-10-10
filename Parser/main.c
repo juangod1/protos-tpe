@@ -1,4 +1,5 @@
 #include <string.h>
+#include "include/main.h"
 #include "include/runCommandLine.h"
 #include "../Shared/include/lib.h"
 

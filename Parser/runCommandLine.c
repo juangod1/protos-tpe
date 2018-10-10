@@ -45,14 +45,22 @@ void run_parser(char * command)
       close(FILTER_READ_FD);
       close(FILTER_WRITE_FD);
 
-      system(command); //executes command in parameter
+      int response = system(command); //executes command in parameter
+      if(response<0)
+      {
+        printf("Could not execute command\n");
+      }
     }
     else{ //PRODUCER PROCESS
       close(FILTER_READ_FD);
       close(FILTER_WRITE_FD);
       close(CONSUMER_READ_FD);
 
-      write(PRODUCER_WRITE_FD, input, size);
+      if(write(PRODUCER_WRITE_FD, input, size)<0)
+      {
+        printf("Could not execute write\n");
+        return;
+      };
 
       char parity = parityByte(input, size);
       char * bytes = charToHex(parity);
