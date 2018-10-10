@@ -14,30 +14,31 @@ int main(int argc, char ** argv)
     int response = proxy_parse(argc,argv);
 
     file_descriptor MUA_sock = setup_MUA_socket();
-    file_descriptor Origin_sock = setup_origin_socket("127.0.0.1");
 
-    //run_server(MUA_sock, Origin_sock);
+    run_server(MUA_sock);
 
     return 0;
 }
 
-/*void run_server(file_descriptor MUA_sock, file_descriptor Origin_sock)
+void run_server(file_descriptor MUA_sock)
 {
-    fd_set file_descriptors;
-    struct timeval tv;
+    fd_set read_fds;
+    fd_set write_fds;
+    fd_set except_fds;
+
+    const struct timespec timeout={
+            .tv_sec=5, .tv_nsec=0
+    };
+
+    FD_ZERO(&read_fds);
+    FD_ZERO(&write_fds);
+    FD_ZERO(&except_fds);
+
+    FD_SET(MUA_sock, &read_fds);
+
     int select_ret;
-
-    FD_ZERO(&file_descriptors);
-    FD_SET(MUA_sock,&file_descriptors);
-    FD_SET(MUA_sock,&file_descriptors);
-
-    file_descriptors[0].fd = MUA_sock;
-    file_descriptors[1].fd = Origin_sock;
-
-    int max_fd = findMax((int*)file_descriptors,SELECT_FILE_DESCRIPTOR_AMOUNT);
-
     for(;;){
-        select_ret = pselect(max_fd,);
+        select_ret = pselect(MUA_sock+1,&read_fds,&write_fds,&except_fds,&timeout,NULL);
 
         if(select_ret == -1)
         {
@@ -45,7 +46,7 @@ int main(int argc, char ** argv)
             error();
         }
     }
-}*/
+}
 
 file_descriptor setup_origin_socket(char * origin_address){
     struct sockaddr_in address;
@@ -102,7 +103,7 @@ file_descriptor setup_MUA_socket()
         error();
     }
 
-    if (listen(sock, 20) < 0)
+    if (listen(sock, MAXIMUM_PENDING_CONNECTIONS) < 0)
     {
         perror("Unable to listen.\n");
         error();

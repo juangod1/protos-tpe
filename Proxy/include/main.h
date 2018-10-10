@@ -6,11 +6,12 @@ typedef const int file_descriptor;
 #define MUA_PORT 1110
 #define ORIGIN_PORT  110
 #define SELECT_FILE_DESCRIPTOR_AMOUNT 2
+#define MAXIMUM_PENDING_CONNECTIONS 50
 
 file_descriptor setup_MUA_socket();
 file_descriptor setup_origin_socket(char * origin_address);
 void error();
-void run_server(file_descriptor MUA_sock, file_descriptor Origin_sock);
+void run_server(file_descriptor MUA_sock);
 int max(int a, int b);
 int findMax(int * a, int size);
 
