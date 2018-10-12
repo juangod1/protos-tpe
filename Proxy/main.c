@@ -4,6 +4,8 @@
 #include <arpa/inet.h>
 #include <sys/select.h>
 #include <sys/param.h>
+#include <unistd.h>
+#include <errno.h>
 #include "include/main.h"
 #include "../Shared/include/executionValidator.h"
 #include "../Shared/include/lib.h"
@@ -57,11 +59,35 @@ void run_server(file_descriptor MUA_sock)
     int select_ret;
     for(;;){
         select_ret = pselect(MUA_sock+1,&read_fds,&write_fds,&except_fds,&timeout,NULL);
-
         if(select_ret == -1)
         {
             perror("Poll error.");
             error();
+        }
+
+        int i;
+        for(i=0;i<FD_SETSIZE;i++){
+            if(FD_ISSET(i,&read_fds)){
+                if(i==MUA_sock){
+                    printf("llego");fflush(stdout);
+                    struct sockaddr address;
+                    memset(&address, 0, sizeof(address));
+                    socklen_t size = sizeof(address);
+                    int accept_ret = accept(MUA_sock,NULL,NULL);
+
+                    if(accept_ret<0){
+                        perror("accept");
+                        error();
+                    }while(1){
+                    char buff[2];
+                    if((int)read(accept_ret,buff,1)<0){
+                        perror("read error");
+                    }
+                    buff[1]='\0';
+                    printf("%s",buff);
+                    memcpy(buff,"0",1);}
+                }
+            }
         }
     }
 }
@@ -113,7 +139,7 @@ file_descriptor setup_MUA_socket()
         printf("Listening on port %d...",MUA_PORT);
     }
 
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
+    //setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
 
     if(bind(sock, (struct sockaddr*) &address, sizeof(address)) < 0)
     {
