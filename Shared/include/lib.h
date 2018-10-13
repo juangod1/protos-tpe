@@ -18,5 +18,6 @@
 
 int fetchInputFromStdin(char ** bufferPosition, size_t size);
 int fetchInputFromFile(char ** bufferPosition, FILE * f, size_t  size);
+int fetchLineFromStdin(char ** bufferPosition, size_t  size);
 
 #endif

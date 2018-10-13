@@ -1,6 +1,9 @@
 #include "include/main.h"
 #include "include/options.h"
 #include "../Shared/include/executionValidator.h"
+#include "../Shared/include/lib.h"
+
+void prepareForSending(char **username, char **password);
 
 int main(int argc, char ** argv)
 {
@@ -40,8 +43,6 @@ void waitForConection()
 
 void requestForLogin(char* status)
 {
-    //Le solicito un usuario
-    //Le solicito una contraseña
     //Hago la solicitud al servidor
     if (requestLoginToProxy())
     {
@@ -57,23 +58,61 @@ void requestForLogin(char* status)
 void loginError(char* status)
 {
     //Aviso que no se puedo autenticar
+    printf("Login failed. Do you wish to retry? (Y/n): ");
     //Pregunto si quiere volver a intentar o si quiere quitear
+    char * input = calloc(1,INITIAL_INPUT_SIZE);
+    int count = fetchLineFromStdin(&input,INITIAL_INPUT_SIZE);
+    if(count!=1)
+    {
+        printf("Please input only Y/n");
+    } else
+    {
+        if(*input == 'Y' || *input == 'y')
+        {
+            requestForLogin(status);
+        }
+        else if(*input == 'N' || *input == 'n')
+        {
+            *status = 2;
+        }
+    }
     //Si quitea hago *status = 2;
 }
 
 void loginSuccess(char* status)
 {
     //Aviso que se conecto
+    printf("Login succesful");
     //Seteo variable para que salga del while
     *status = 1;
 }
 
 char requestLoginToProxy(){
+    char * usernameInput = calloc(1,INITIAL_INPUT_SIZE);
+    char * passwordInput = calloc(1,INITIAL_INPUT_SIZE);
+    //Le solicito un usuario
+    printf("Please enter your username: ");
+    fetchLineFromStdin(&usernameInput,INITIAL_INPUT_SIZE);
+    printf("+OK\n");
+    //Le solicito una contraseña
+    printf("Please enter your password: ");
+    fetchLineFromStdin(&passwordInput,INITIAL_INPUT_SIZE);
+    prepareForSending(&usernameInput,&passwordInput);
+
     //En la conexion 9090 le envia con USER name el parametro obtenido del usuario
     //Luego le envia la contraseña con PASS string
     //Parsea la respuesta del proxy
     //Devuelve 1 si fue exitoso
     //Devuelve 0 si falla
+}
+
+void prepareForSending(char **username, char **password) {
+    char * user = calloc(1,INITIAL_INPUT_SIZE + 6);
+    strcpy(user,"USER: ");
+    strcat(user, *username);
+    char * pass = calloc(1,INITIAL_INPUT_SIZE + 5);
+    strcpy(pass,"PASS: ");
+    strcat(pass, *username);
 }
 
 void interaction()

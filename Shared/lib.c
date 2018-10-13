@@ -19,3 +19,18 @@ int fetchInputFromFile(char ** bufferPosition, FILE * f, size_t  size)
     }
     return counter;
 }
+
+int fetchLineFromStdin(char ** bufferPosition, size_t  size)
+{
+    int c;
+    int counter=0;
+    while((c=fgetc(stdin))!='\n'){
+        if(counter>=size){
+            size+=INITIAL_INPUT_SIZE;
+            (*bufferPosition) = realloc((*bufferPosition), size);
+        }
+        *((*bufferPosition)+counter)=(char)c;
+        counter++;
+    }
+    return counter;
+}
