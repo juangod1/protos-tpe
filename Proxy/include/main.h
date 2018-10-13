@@ -11,7 +11,7 @@ typedef const int file_descriptor;
 file_descriptor setup_MUA_socket();
 file_descriptor setup_origin_socket(char * origin_address);
 void error();
-void run_server(file_descriptor MUA_sock);
+void run_server();
 int max(int a, int b);
 int findMax(int * a, int size);
 

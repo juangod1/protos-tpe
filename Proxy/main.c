@@ -23,8 +23,7 @@ int main(int argc, char ** argv)
     if(response==STANDARD)
     {
         execute_options();
-        file_descriptor MUA_sock = setup_MUA_socket();
-        run_server(MUA_sock);
+        run_server();
     }
     if(response==HELP)
     {
@@ -36,12 +35,11 @@ int main(int argc, char ** argv)
     }
     destroy_app_context();
     return response;
-
-    return 0;
 }
 
-void run_server(file_descriptor MUA_sock)
+void read_user_test()
 {
+    file_descriptor MUA_sock = setup_MUA_socket();
     fd_set read_fds;
     fd_set write_fds;
     fd_set except_fds;
@@ -79,17 +77,22 @@ void run_server(file_descriptor MUA_sock)
                         perror("accept");
                         error();
                     }while(1){
-                    char buff[2];
-                    if((int)read(accept_ret,buff,1)<0){
-                        perror("read error");
-                    }
-                    buff[1]='\0';
-                    printf("%s",buff);
-                    memcpy(buff,"0",1);}
+                        char buff[2];
+                        if((int)read(accept_ret,buff,1)<0){
+                            perror("read error");
+                        }
+                        buff[1]='\0';
+                        printf("%s",buff);
+                        memcpy(buff,"0",1);}
                 }
             }
         }
     }
+}
+
+void run_server()
+{
+
 }
 
 file_descriptor setup_origin_socket(char * origin_address){
