@@ -13,6 +13,7 @@ int main(int argc, char ** argv)
     free(response);
 
     //Saludo al usuario y le informo que se va a intentar hacer una conexion al proxy
+    printf("Hello! Starting connection...\n");
     //Waiting for conection
     waitForConection();
 
@@ -23,13 +24,14 @@ int main(int argc, char ** argv)
         requestForLogin(&status);
         if(status == 1)
         {
-            //Me conecte eitosamente entonces entro en otro modo
+            //Me conecte exitosamente entonces entro en otro modo
             interaction();
         }
     }
     //CierreDeConexion
     closeConection();
     //Saludo de despedida
+    printf("Goodbye, hope to see you soon!\n");
     return 0;
 }
 
@@ -73,16 +75,17 @@ void loginError(char* status)
         }
         else if(*input == 'N' || *input == 'n')
         {
+            //Si quitea hago *status = 2;
             *status = 2;
         }
     }
-    //Si quitea hago *status = 2;
+    free(input);
 }
 
 void loginSuccess(char* status)
 {
     //Aviso que se conecto
-    printf("Login succesful");
+    printf("Login succesful\n");
     //Seteo variable para que salga del while
     *status = 1;
 }
@@ -104,15 +107,22 @@ char requestLoginToProxy(){
     //Parsea la respuesta del proxy
     //Devuelve 1 si fue exitoso
     //Devuelve 0 si falla
+    //Libera memoria
+    free(usernameInput);
+    free(passwordInput);
 }
 
 void prepareForSending(char **username, char **password) {
     char * user = calloc(1,INITIAL_INPUT_SIZE + 6);
     strcpy(user,"USER: ");
     strcat(user, *username);
+    strcpy(*username,user);
     char * pass = calloc(1,INITIAL_INPUT_SIZE + 5);
     strcpy(pass,"PASS: ");
-    strcat(pass, *username);
+    strcat(pass, *password);
+    strcpy(*password,pass);
+    free(user);
+    free(pass);
 }
 
 void interaction()
