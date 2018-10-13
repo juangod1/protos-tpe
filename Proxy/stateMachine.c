@@ -40,8 +40,8 @@ state_machine * new_machine(int states_amount, state * states, state_code initia
 
 void run_state(state_machine * sm)
 {
-    state_code next = select_state();
-    state * st = get_state_by_code(next,sm);
+    file_descriptor next = select_state();
+    state * st = get_state_by_fd(next,sm);
 
     switch(st->exec_state)
     {
@@ -51,10 +51,10 @@ void run_state(state_machine * sm)
                     st->onLeave();
                     break;
                 case WAITING_READ:
-                    set_waiting_read(st->wait_read_fd);
+                    set_waiting_read(st->wait_read_fd, st);
                     break;
                 case WAITING_WRITE:
-                    set_waiting_write(st->wait_write_fd);
+                    set_waiting_write(st->wait_write_fd, st);
                     break;
             }
             break;
@@ -64,10 +64,10 @@ void run_state(state_machine * sm)
                     st->onLeave();
                     break;
                 case WAITING_READ:
-                    set_waiting_read(st->wait_read_fd);
+                    set_waiting_read(st->wait_read_fd, st);
                     break;
                 case WAITING_WRITE:
-                    set_waiting_write(st->wait_write_fd);
+                    set_waiting_write(st->wait_write_fd, st);
                     break;
             }
             break;
@@ -77,10 +77,10 @@ void run_state(state_machine * sm)
                     st->onLeave();
                     break;
                 case WAITING_READ:
-                    set_waiting_read(st->wait_read_fd);
+                    set_waiting_read(st->wait_read_fd, st);
                     break;
                 case WAITING_WRITE:
-                    set_waiting_write(st->wait_write_fd);
+                    set_waiting_write(st->wait_write_fd, st);
                     break;
             }
             break;
