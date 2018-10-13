@@ -10,6 +10,8 @@
 
 static app_context_p app_context = NULL;
 
+static char * version_number = "PRE_ALPHA 1.0.0.0";
+
 void initialize_app_context()
 {
     app_context=malloc(sizeof(app_context_t));
@@ -100,7 +102,7 @@ void command_specification(char * arg)
 void version()
 {
     //TODO: has to print out version
-    printf("This is version!\n");fflush(stdout);
+    printf("%s!\n",version_number);fflush(stdout);
 
 }
 void help()

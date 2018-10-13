@@ -10,7 +10,6 @@ int proxy_parse(int argc, char ** argv)
         return ERROR;
     }
     response_p response = malloc(sizeof(response_t));
-    initialize_options();
     if(argc==2)
     {
         int ret=execution_validator(argv[1],response);

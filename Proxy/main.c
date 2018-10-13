@@ -14,25 +14,28 @@
 int main(int argc, char ** argv)
 {
     initialize_app_context();
+    initialize_options();
+
     int response = proxy_parse(argc,argv);
 
-    if(response==ERROR)
-        printf("Program execution stopped.\n");
+    switch(response)
     {
+        case ERROR:
+            printf("Program execution stopped.\n");
+            break;
+        case STANDARD:
+            execute_options();
+            file_descriptor MUA_sock = setup_MUA_socket();
+            run_server(MUA_sock);
+            break;
+        case HELP:
+            help();
+            break;
+        case VERSION:
+            version();
+            break;
     }
-    if(response==STANDARD)
-    {
-        execute_options();
-        run_server();
-    }
-    if(response==HELP)
-    {
-        help();
-    }
-    if(response==VERSION)
-    {
-        version();
-    }
+
     destroy_app_context();
     return response;
 }
