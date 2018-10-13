@@ -5,13 +5,13 @@
 #include "include/stateMachine.h"
 #include "include/stateSelector.h"
 
-state * new_state(state_code id, error_code error, execution_state (*onArrive)(), execution_state (*onResume)(), state_code (*onLeave)()){
+state * new_state(state_code id, execution_state (*on_arrive)(), execution_state (*on_resume)(), state_code (*on_leave)()){
     state * new = malloc(sizeof(state));
     new->id = id;
-    new->error = error;
-    new->onArrive = onArrive;
-    new->onResume = onResume;
-    new->onLeave = onLeave;
+    new->error = -1;
+    new->on_arrive = on_arrive;
+    new->on_resume = on_resume;
+    new->on_leave = on_leave;
     new->exec_state = NOT_WAITING;
     new->internal_state=0;
     return new;
@@ -25,11 +25,13 @@ void free_machine(state_machine * machine){
     int i;
     for(i=0;i<machine->states_amount;i++)
     {
-        free_state(&machine->states[i]);
+        free_state(machine->states[i]);
     }
+    free(machine->states);
+    free(machine);
 }
 
-state_machine * new_machine(int states_amount, state * states, state_code initial_state, state_code next_state){
+state_machine * new_machine(int states_amount, state ** states, state_code initial_state){
     state_machine * new = malloc(sizeof(state_machine));
     new->next_state = initial_state;
     new->initial_state = initial_state;
@@ -46,9 +48,9 @@ void run_state(state_machine * sm)
     switch(st->exec_state)
     {
         case NOT_WAITING:
-            switch(st->onArrive()){
+            switch(st->on_arrive()){
                 case NOT_WAITING:
-                    st->onLeave();
+                    st->on_leave();
                     break;
                 case WAITING_READ:
                     set_waiting_read(st->wait_read_fd, st);
@@ -59,9 +61,9 @@ void run_state(state_machine * sm)
             }
             break;
         case WAITING_READ:
-            switch(st->onResume()){
+            switch(st->on_resume()){
                 case NOT_WAITING:
-                    st->onLeave();
+                    st->on_leave();
                     break;
                 case WAITING_READ:
                     set_waiting_read(st->wait_read_fd, st);
@@ -72,9 +74,9 @@ void run_state(state_machine * sm)
             }
             break;
         case WAITING_WRITE:
-            switch(st->onResume()){
+            switch(st->on_resume()){
                 case NOT_WAITING:
-                    st->onLeave();
+                    st->on_leave();
                     break;
                 case WAITING_READ:
                     set_waiting_read(st->wait_read_fd, st);
@@ -92,8 +94,8 @@ void run_state(state_machine * sm)
 state * get_state_by_code(state_code code, state_machine * sm){
     int i;
     for(i=0;i<sm->states_amount;i++){
-        if(sm->states[i].id==code)
-            return &(sm->states[i]);
+        if(sm->states[i]->id==code)
+            return (sm->states[i]);
     }
     return NULL;
 }

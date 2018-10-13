@@ -11,6 +11,8 @@
 #include "../Shared/include/executionValidator.h"
 #include "../Shared/include/lib.h"
 #include "include/proxyParse.h"
+#include "include/stateMachine.h"
+#include "include/MasterStateMachine.h"
 
 int main(int argc, char ** argv)
 {
@@ -23,11 +25,7 @@ int main(int argc, char ** argv)
     {
         case STANDARD:
             execute_options();
-            //file_descriptor MUA_sock = setup_MUA_socket();
-            start_parser("cat","hola",5);
-            char * buffer=calloc(1,INITIAL_INPUT_SIZE);
-            read_parser(buffer,INITIAL_INPUT_SIZE);
-            //run_server(MUA_sock);
+            run_server();
             break;
         case HELP:
             help();
@@ -99,7 +97,11 @@ void read_user_test()
 
 void run_server()
 {
-
+    file_descriptor MUA_sock = setup_MUA_socket();
+    state_machine * machine = initialize_master_machine();
+    for(;;){
+        //run_state(machine);
+    }
 }
 
 file_descriptor setup_origin_socket(char * origin_address){
