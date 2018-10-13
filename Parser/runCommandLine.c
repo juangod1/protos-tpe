@@ -1,6 +1,6 @@
 #include "include/runCommandLine.h"
 #include "include/parityByte.h"
-#include <sys/types.h>
+#include "../Shared/include/lib.h"
 
 //https://stackoverflow.com/questions/28507950/calling-ls-with-execv
 //https://jineshkj.wordpress.com/2006/12/22/how-to-capture-stdin-stdout-and-stderr-of-child-program/
@@ -16,8 +16,8 @@ Consumer Process reads from FILTER_WRITE_PIPE and prints to STDOUT
 */
 void run_parser(char * command)
 {
-  char * input;
-  int size = fetchInputFromStdin(&input);
+  char * input = malloc(INITIAL_INPUT_SIZE);
+  int counter = fetchInputFromStdin(&input, INITIAL_INPUT_SIZE);
 
   //initialize pipes
   if(pipe(pipes[FILTER_READ_PIPE])==-1){
@@ -40,6 +40,7 @@ void run_parser(char * command)
     if(pid==0){ //FILTER PROCESS
       close(CONSUMER_READ_FD);
       close(PRODUCER_WRITE_FD);
+      free(input);
 
       dup2(FILTER_READ_FD, STDIN_FILENO);
       dup2(FILTER_WRITE_FD, STDOUT_FILENO);
@@ -58,18 +59,19 @@ void run_parser(char * command)
       close(FILTER_WRITE_FD);
       close(CONSUMER_READ_FD);
 
-      if(write(PRODUCER_WRITE_FD, input, size)<0)
+      if(write(PRODUCER_WRITE_FD, input, counter)<0)
       {
         printf("Could not execute write\n");
         return;
       };
 
-      char parity = parityByte(input, size);
+      char parity = parityByte(input, counter);
       char * bytes = charToHex(parity);
 
-      free(input);
-
       fprintf(stderr, "in parity: %s\n",bytes);
+
+      free(input);
+      free(bytes);
 
       close(PRODUCER_WRITE_FD);
 
@@ -79,57 +81,22 @@ void run_parser(char * command)
     close(PRODUCER_WRITE_FD);
     close(FILTER_READ_FD);
     close(FILTER_WRITE_FD);
+    free(input);
 
-    char buffer[READ_BUFFER_SIZE+1]={0};
-    int readSize =0, size=0, allocsize=INITIAL_INPUT_SIZE;
-    char * string = malloc(allocsize);
+    char * string = malloc(INITIAL_INPUT_SIZE);
+    FILE * fstream = fdopen(CONSUMER_READ_FD, "r");
 
-    while((readSize = read(CONSUMER_READ_FD,buffer,READ_BUFFER_SIZE))!=0){
-      if(size>=allocsize){
-        allocsize+=INITIAL_INPUT_SIZE;
-        string = realloc(string, allocsize);
-      }
-      size+=readSize;
+    int size =fetchInputFromFile(&string,fstream, INITIAL_INPUT_SIZE);
 
-      buffer[READ_BUFFER_SIZE]=0;
-      strcat(string,buffer);
-      resetBuffer(buffer,READ_BUFFER_SIZE);
-    }
     char parity = parityByte(string,size);
     char * hexString = charToHex(parity);
 
-
     fprintf(stderr, "out parity: %s\n",hexString);
 
-    printf("%s\n",string);
+    printf("%s",string);
 
     free(string);
     free(hexString);
     close(CONSUMER_READ_FD);
-  }
-}
-
-int fetchInputFromStdin(char ** bufferPosition)
-{
-  char c;
-  int counter=0;
-  char * buffer = malloc(INITIAL_INPUT_SIZE);
-  int size=INITIAL_INPUT_SIZE;
-  while((c=getchar())!=EOF){
-    if(counter>=size){
-      size+=INITIAL_INPUT_SIZE;
-      buffer = realloc(buffer, size);
-    }
-    *(buffer+counter)=c;
-    counter++;
-  }
-  *bufferPosition=buffer;
-  return counter;
-}
-
-void resetBuffer(char * buffer, int size)
-{
-  for(int i=0; i<size; i++){
-    *(buffer+i)=0;
   }
 }

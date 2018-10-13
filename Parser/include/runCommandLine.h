@@ -24,8 +24,8 @@
 #define FILTER_READ_FD   ( pipes[FILTER_READ_PIPE][READ_FD]  )
 #define FILTER_WRITE_FD  ( pipes[FILTER_WRITE_PIPE][WRITE_FD]  )
 
-int fetchInputFromStdin(char ** bufferPosition);
-void resetBuffer(char * buffer, int size);
+int fetchInputFromStdin(char ** bufferPosition, size_t size);
+int fetchInputFromFile(char ** bufferPosition, FILE * f, size_t  size);
 void run_parser(char * command);
 
 #endif

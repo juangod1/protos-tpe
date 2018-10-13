@@ -6,6 +6,7 @@
 #include <sys/param.h>
 #include <unistd.h>
 #include <errno.h>
+#include "include/proxyCommunication.h"
 #include "include/main.h"
 #include "../Shared/include/executionValidator.h"
 #include "../Shared/include/lib.h"
@@ -20,19 +21,22 @@ int main(int argc, char ** argv)
 
     switch(response)
     {
-        case ERROR:
-            printf("Program execution stopped.\n");
-            break;
         case STANDARD:
             execute_options();
-            file_descriptor MUA_sock = setup_MUA_socket();
-            run_server(MUA_sock);
+            //file_descriptor MUA_sock = setup_MUA_socket();
+            start_parser("cat","hola",5);
+            char * buffer=calloc(1,INITIAL_INPUT_SIZE);
+            read_parser(buffer,INITIAL_INPUT_SIZE);
+            //run_server(MUA_sock);
             break;
         case HELP:
             help();
             break;
         case VERSION:
             version();
+            break;
+        default:
+            printf("Program execution stopped.\n");
             break;
     }
 
