@@ -14,17 +14,19 @@ int main(int argc, char ** argv)
     waitForConection();
 
     char status = 0;//0 desconectado, 1 conectado, 2 quitting.
-    //Tengo que loggearme
     while(status!=2)
     {
-        //Leer comando
+        //Tengo que loggearme
         requestForLogin(&status);
         if(status == 1)
         {
             //Me conecte eitosamente entonces entro en otro modo
-            interactionMode();
+            interaction();
         }
     }
+    //CierreDeConexion
+    closeConection();
+    //Saludo de despedida
     return 0;
 }
 
@@ -69,11 +71,43 @@ void loginSuccess(char* status)
 char requestLoginToProxy(){
     //En la conexion 9090 le envia con USER name el parametro obtenido del usuario
     //Luego le envia la contraseña con PASS string
+    //Parsea la respuesta del proxy
     //Devuelve 1 si fue exitoso
     //Devuelve 0 si falla
 }
 
-void interactionMode()
+void interaction()
 {
+    //Aca se que estoy logeado y quiero procesar acciones del usuario con una maquina de estados
+    //Leer que es lo que quiere hacer
+    char quit = 0;
+    while(!quit) {
+        function command;
+        char* parameter = "";
+        //Llamar a la funcion de pablo para leer de input
+        //Llamar a la funcion de alguien para parsear lo que me dio pablo
+        switch (command) {
+            case EXIT:
+                quit = 1;
+                break;
+            case STATS:
+                //Hacer request al proxy por los stats
+                //Reportar la respuesta
+                break;
+            case COMMAND:
+                //Hacer request para cambio de transformacion.
+                //Como esta es una funcion critica hay que agregar cosas en el header como etag para diferenciar entre
+                //pedidos de distintos usuarios.
+                //Reportar respuesta
+                break;
+            default:
+                //Input incorrecto
+                break;
+        }
+    }
+}
 
+void closeConection()
+{
+    //Cerrar la conexion SCTP
 }
