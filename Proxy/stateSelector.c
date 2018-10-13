@@ -28,7 +28,7 @@ void add_write_fd(file_descriptor fd){
 
 state_code select_state(){
 
-    int select_ret=0;
+    int select_ret;
     select_ret = pselect(MUA_sock+1,&read_fds,&write_fds,NULL,&timeout,NULL);
     if(select_ret == -1)
     {

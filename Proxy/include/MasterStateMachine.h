@@ -13,9 +13,6 @@
 #define ERROR_STATE 6
 
 state_machine * initialize_master_machine();
-execution_state SELECT_on_arrive();
-execution_state SELECT_on_resume();
-state_code SELECT_on_leave();
 execution_state ATTEND_ADMIN_on_arrive();
 execution_state ATTEND_ADMIN_on_resume();
 state_code ATTEND_ADMIN_on_leave();
