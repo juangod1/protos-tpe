@@ -4,9 +4,19 @@
 #include <sys/param.h>
 #include "include/stateMachine.h"
 #include <sys/select.h>
+#include <stdio.h>
+#include <memory.h>
+#include <unistd.h>
+#include <sys/socket.h>
 
 fd_set read_fds;
 fd_set write_fds;
+
+const struct timespec timeout={ //TODO: como hacer que no timeoutee?
+        .tv_sec=99999999999, .tv_nsec=0
+};
+
+file_descriptor MUA_sock;
 
 void add_read_fd(file_descriptor fd){
     FD_SET(fd, &read_fds);
@@ -18,7 +28,15 @@ void add_write_fd(file_descriptor fd){
 
 state_code select_state(){
 
-    return 0;
+    int select_ret=0;
+    select_ret = pselect(MUA_sock+1,&read_fds,&write_fds,NULL,&timeout,NULL);
+    if(select_ret == -1)
+    {
+        perror("pselect error.");
+        error();
+    }
+    
+    return select_ret;
 }
 
 state * get_state_by_fd(file_descriptor fd, state_machine * stm){
@@ -70,11 +88,15 @@ void remove_write_fd(file_descriptor fd){
     FD_CLR(fd, &write_fds);
 }
 
-void initialize_selector(file_descriptor MUA_SOCKET){
+void initialize_selector(){
     const struct timespec timeout={
             .tv_sec=5, .tv_nsec=0
     };
 
     FD_ZERO(&read_fds);
     FD_ZERO(&write_fds);
+
+    MUA_sock = setup_MUA_socket();
+
+    add_read_fd(MUA_sock);
 }

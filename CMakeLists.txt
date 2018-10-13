@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(protos_tpe C)
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread --std=c99 -pedantic -pedantic-errors -Wall -Wextra -Wno-unused-parameter -D_POSIX_C_SOURCE=200112L -O1 -fsanitize=address")
 

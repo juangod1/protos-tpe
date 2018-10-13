@@ -1,7 +1,7 @@
 #ifndef PROTOS_TPE_MAIN_H
 #define PROTOS_TPE_MAIN_H
 
-typedef const int file_descriptor;
+typedef int file_descriptor;
 
 #define MUA_PORT 1110
 #define ORIGIN_PORT  110

@@ -2,6 +2,7 @@
 // Created by juangod on 13/10/18.
 //
 
+#include <malloc.h>
 #include "include/stateMachine.h"
 #include "include/MasterStateMachine.h"
 
@@ -9,7 +10,8 @@ state_machine * sm;
 
 state_machine * initialize_master_machine(){
     int states_amount=6;
-    state * states[states_amount];
+    state ** states = malloc(sizeof(*states)*states_amount);
+    int i;
     states[0]= new_state(SELECT_STATE, SELECT_on_arrive, SELECT_on_resume,SELECT_on_leave);
     states[1]= new_state(ATTEND_ADMIN_STATE, ATTEND_ADMIN_on_arrive, ATTEND_ADMIN_on_resume,ATTEND_ADMIN_on_leave);
     states[2]= new_state(CONNECT_ADMIN_STATE, CONNECT_ADMIN_on_arrive, CONNECT_ADMIN_on_resume,CONNECT_ADMIN_on_leave);

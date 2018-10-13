@@ -13,6 +13,7 @@
 #include "include/proxyParse.h"
 #include "include/stateMachine.h"
 #include "include/MasterStateMachine.h"
+#include "include/stateSelector.h"
 
 int main(int argc, char ** argv)
 {
@@ -97,10 +98,11 @@ void read_user_test()
 
 void run_server()
 {
-    file_descriptor MUA_sock = setup_MUA_socket();
     state_machine * machine = initialize_master_machine();
+    initialize_selector();
+
     for(;;){
-        //run_state(machine);
+        run_state(machine);
     }
 }
 
