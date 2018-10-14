@@ -1,6 +1,5 @@
 #include "include/list.h"
 #include "include/stateMachine.h"
-#include "include/state.h"
 #include <stdlib.h>
 
 list new_list(){
@@ -16,10 +15,11 @@ node new_node(state s){
     return n;
 }
 
-int put(list l, state s){
+node put(list l, state s)
+{
     if(l!=NULL) {
         l->size++;
-        return putRec(l, s);
+        return putRec(l->head, s);
     }
     return NULL;
 }
@@ -38,8 +38,8 @@ state getRec(node curr, file_descriptor fd){
     if(curr==NULL)
         return NULL;
 
-    if(curr->state->wait_read_fd == fd || curr->state->wait_write_fd == fd){
-        return curr->state;
+    if(curr->st->wait_read_fd == fd || curr->st->wait_write_fd == fd){
+        return curr->st;
     }
 
     return getRec(curr->next,fd);
@@ -62,7 +62,7 @@ int removeRec(node curr, state s){
     if(curr->next==NULL)
         return -1;
 
-    if(curr->next->state == s){
+    if(curr->next->st == s){
         node n = curr->next->next;
         free_node(curr->next);
         curr->next=n;
@@ -71,7 +71,7 @@ int removeRec(node curr, state s){
 }
 
 void free_node(node n){
-    free_state(n->state);
+    free_state(n->st);
     free(n);
 }
 

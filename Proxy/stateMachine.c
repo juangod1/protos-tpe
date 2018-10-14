@@ -35,7 +35,7 @@ state_machine * new_machine(){
 
 void run_state(state_machine * sm)
 {
-    state previous = get_state_by_fd(sm->next_state,sm);
+    state previous =get(sm->states,sm->next_state);
 
     if(previous->error){
         // error state has fd -1
@@ -45,7 +45,7 @@ void run_state(state_machine * sm)
     }
 
     file_descriptor next = select_state();
-    state st = get_state_by_fd(next,sm);
+    state st = get(sm->states,next);
     printf("State %d was chosen.",st->id);
 
     switch(st->exec_state)
@@ -92,13 +92,4 @@ void run_state(state_machine * sm)
         default:
             break;
     }
-}
-
-state get_state_by_code(state_code code, state_machine * sm){
-    int i;
-    for(i=0;i<sm->states_amount;i++){
-        if(sm->states[i]->id==code)
-            return (sm->states[i]);
-    }
-    return NULL;
 }

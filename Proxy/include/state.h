@@ -8,8 +8,6 @@
 #include <unistd.h>
 #include "main.h"
 
-typedef struct stateStruct * state;
-
 typedef int state_code;
 typedef int error_code;
 
@@ -28,5 +26,7 @@ struct stateStruct {
     execution_state (*on_resume)();
     state_code (*on_leave)();
 };
+
+typedef struct stateStruct * state;
 
 #endif //PROTOS_TPE_STATE_H

@@ -33,6 +33,13 @@ void replacement_message_validation(int argc, char ** argv, response_p resp) //T
     resp->success=TRUE;
     resp->next_argument=1;
 }
+
+void command_specification_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
+{
+    resp->success=TRUE;
+    resp->next_argument=1;
+}
+
 void censored_mediatype_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
 {
     if(argc!=1)
@@ -68,21 +75,51 @@ void censored_mediatype_validation(int argc, char ** argv, response_p resp) //TO
 }
 void management_port_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
 {
-   resp->success=TRUE;
-   resp->next_argument=1;
+    if(argc!=1 && *argv[0]!=0)
+    {
+        resp->success=FALSE;
+        resp->error_text="Management Port accepts only one parameter";
+        return;
+    }
+    is_valid_port(argv[0],resp);
 }
 void local_port_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
 {
-   resp->success=TRUE;
-   resp->next_argument=1;
+    if(argc!=1 && *argv[0]!=0)
+    {
+        resp->success=FALSE;
+        resp->error_text="Local Port accepts only one parameter";
+        return;
+    }
+    is_valid_port(argv[0],resp);
 }
 void origin_port_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
 {
-   resp->success=TRUE;
-   resp->next_argument=1;
+    if(argc!=1 && *argv[0]!=0)
+    {
+        resp->success=FALSE;
+        resp->error_text="Origin Port accepts only one parameter";
+        return;
+    }
+    is_valid_port(argv[0],resp);
 }
-void command_specification_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
+
+void is_valid_port(char * port_string, response_p resp)
 {
-   resp->success=TRUE;
-   resp->next_argument=1;
+    char * endptr = port_string;
+    long port = strtol(port_string,&endptr,BASE_TEN);
+    if(*endptr!=0)
+    {
+        resp->success=FALSE;
+        resp->error_text="Invalid Port number";
+        return;
+    }
+    if(port>MAX_PORT_NUMBER || port<MIN_PORT_NUMBER)
+    {
+        resp->success=FALSE;
+        resp->error_text="Port number must be in valid port-range";
+        return;
+    }
+    resp->success=TRUE;
+    resp->next_argument=1;
 }

@@ -4,7 +4,6 @@
 #include "unistd.h"
 #include "state.h"
 
-typedef struct listStruct * list;
 typedef struct nodeStruct * node;
 
 struct nodeStruct{
@@ -17,12 +16,20 @@ struct listStruct{
 	size_t size;
 };
 
+typedef struct listStruct * list;
+
 list new_list();
 node new_node(state s);
-int put(list l, state s);
+node put(list l, state s);
+
+node putRec(node curr, state s);
 state get(list l, file_descriptor fd);
+state getRec(node curr, file_descriptor fd);
 int remove_node(list l, state s);
+int removeRec(node curr, state s);
+
 void free_node(node n);
 void free_list(list l);
+void free_list_rec(node curr);
 
 #endif
