@@ -5,6 +5,8 @@
 #ifndef PROTOS_TPE_STATESELECTOR_H
 #define PROTOS_TPE_STATESELECTOR_H
 
+#define MAX_FD 65535
+
 #include "stateMachine.h"
 
 state_code select_state();

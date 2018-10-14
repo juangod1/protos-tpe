@@ -3,6 +3,7 @@
 //
 #include <sys/param.h>
 #include "include/stateMachine.h"
+#include "include/stateSelector.h"
 #include <sys/select.h>
 #include <stdio.h>
 #include <memory.h>
@@ -26,7 +27,7 @@ void add_write_fd(file_descriptor fd){
     FD_SET(fd, &write_fds);
 }
 
-state_code select_state(){
+file_descriptor select_state(){
 
     int select_ret;
     select_ret = pselect(MUA_sock+1,&read_fds,&write_fds,NULL,&timeout,NULL);
@@ -35,7 +36,17 @@ state_code select_state(){
         perror("pselect error.");
         error();
     }
-    
+
+    int i;
+    for(i=0;i<MAX_FD;i++){
+        if(FD_ISSET(i,&read_fds)){
+            return i;
+        }
+        if(FD_ISSET(i,&write_fds)){
+            return i;
+        }
+    }
+
     return select_ret;
 }
 

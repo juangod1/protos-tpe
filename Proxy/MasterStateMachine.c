@@ -55,7 +55,7 @@ state_code CONNECT_ADMIN_on_leave(){
 }
 
 execution_state CONNECT_CLIENT_on_arrive(){
-    
+
 }
 
 execution_state CONNECT_CLIENT_on_resume(){
