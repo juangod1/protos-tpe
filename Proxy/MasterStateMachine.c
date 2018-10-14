@@ -3,12 +3,18 @@
 //
 
 #include <stdlib.h>
+#include <memory.h>
+#include <stdio.h>
+#include <sys/socket.h>
 #include "include/state.h"
 #include "include/stateMachine.h"
 #include "include/MasterStateMachine.h"
 #include "include/list.h"
+#include "include/stateSelector.h"
 
 state_machine * sm;
+
+file_descriptor MUA_sock;
 
 state_machine * initialize_master_machine(file_descriptor MUA_sock){
     sm = new_machine();
@@ -55,7 +61,20 @@ state_code CONNECT_ADMIN_on_leave(){
 }
 
 execution_state CONNECT_CLIENT_on_arrive(){
+    int accept_ret = accept(MUA_sock,NULL,NULL);
 
+    if(accept_ret<0){
+        perror("accept");
+        error();
+    }
+
+    state s = new_state(ATTEND_CLIENT_STATE,ATTEND_CLIENT_on_arrive,ATTEND_CLIENT_on_resume,ATTEND_CLIENT_on_leave);
+    s->wait_read_fd = accept_ret;
+    add_state(sm,s);
+
+    hard_set_waiting_read(accept_ret);
+
+    return NOT_WAITING;
 }
 
 execution_state CONNECT_CLIENT_on_resume(){

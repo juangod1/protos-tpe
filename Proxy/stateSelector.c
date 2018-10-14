@@ -50,6 +50,14 @@ file_descriptor select_state(){
     return select_ret;
 }
 
+void hard_set_waiting_read(file_descriptor fd){
+    FD_SET(fd,&read_fds);
+}
+
+void hard_set_waiting_write(file_descriptor fd){
+    FD_SET(fd,&write_fds);
+}
+
 void set_waiting_read(file_descriptor fd, state st){
     int i;
     for(i=0;i<FD_SETSIZE;i++){

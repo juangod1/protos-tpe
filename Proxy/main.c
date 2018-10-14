@@ -81,9 +81,6 @@ void read_user_test()
             if(FD_ISSET(i,&read_fds)){
                 if(i==MUA_sock){
                     printf("llego");fflush(stdout);
-                    struct sockaddr address;
-                    memset(&address, 0, sizeof(address));
-                    socklen_t size = sizeof(address);
                     int accept_ret = accept(MUA_sock,NULL,NULL);
 
                     if(accept_ret<0){

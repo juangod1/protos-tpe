@@ -97,3 +97,19 @@ void run_state(state_machine * sm)
             break;
     }
 }
+
+void add_state(state_machine * sm, state s){
+    put(sm->states,s);
+    sm->states_amount++;
+}
+
+int remove_state(state_machine * sm, state s){
+    if(!remove_node(sm->states,s)){
+        sm->states_amount--;
+        return 0;
+    }
+    else{
+        return -1;
+    }
+
+}

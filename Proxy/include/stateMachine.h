@@ -22,5 +22,7 @@ void free_machine(state_machine * machine);
 state_machine * new_machine();
 void run_state(state_machine * sm);
 state get_state_by_code(state_code code, state_machine * sm);
+void add_state(state_machine * sm, state s);
+int remove_state(state_machine * sm, state s);
 
 #endif //PROTOS_TPE_STATEMACHINE_H
