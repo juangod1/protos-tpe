@@ -39,18 +39,7 @@ state_code select_state(){
     return select_ret;
 }
 
-state * get_state_by_fd(file_descriptor fd, state_machine * stm){
-    int i;
-    for(i=0;i<stm->states_amount;i++) {
-        if(fd==stm->states[i]->wait_write_fd)
-            return (stm->states[i]);
-        if(fd==stm->states[i]->wait_read_fd)
-            return (stm->states[i]);
-    }
-    return NULL;
-}
-
-void set_waiting_read(file_descriptor fd, state * st){
+void set_waiting_read(file_descriptor fd, state st){
     int i;
     for(i=0;i<FD_SETSIZE;i++){
         if(FD_ISSET(st->wait_read_fd,&read_fds)){
@@ -65,7 +54,7 @@ void set_waiting_read(file_descriptor fd, state * st){
     FD_SET(fd,&read_fds);
 }
 
-void set_waiting_write(file_descriptor fd, state * st){
+void set_waiting_write(file_descriptor fd, state st){
     int i;
     for(i=0;i<FD_SETSIZE;i++){
         if(FD_ISSET(st->wait_read_fd,&read_fds)){

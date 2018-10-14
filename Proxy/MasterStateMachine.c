@@ -2,22 +2,25 @@
 // Created by juangod on 13/10/18.
 //
 
-#include <malloc.h>
+#include <stdlib.h>
+#include "include/state.h"
 #include "include/stateMachine.h"
 #include "include/MasterStateMachine.h"
+#include "include/list.h"
 
 state_machine * sm;
 
+
+/*
+ * ERROR STATE SHOULD ALWAYS BE THE FIRST STATE
+ */
 state_machine * initialize_master_machine(){
-    int states_amount=5;
-    state ** states = malloc(sizeof(*states)*states_amount);
-    int i;
-    states[0]= new_state(ATTEND_ADMIN_STATE, ATTEND_ADMIN_on_arrive, ATTEND_ADMIN_on_resume,ATTEND_ADMIN_on_leave);
-    states[1]= new_state(CONNECT_ADMIN_STATE, CONNECT_ADMIN_on_arrive, CONNECT_ADMIN_on_resume,CONNECT_ADMIN_on_leave);
-    states[2]= new_state(CONNECT_CLIENT_STATE, CONNECT_CLIENT_on_arrive, CONNECT_CLIENT_on_resume,CONNECT_CLIENT_on_leave);
-    states[3]= new_state(ATTEND_CLIENT_STATE, ATTEND_CLIENT_on_arrive, ATTEND_CLIENT_on_resume,ATTEND_CLIENT_on_leave);
-    states[4]= new_state(ERROR_STATE, ERROR_on_arrive, ERROR_on_resume,ERROR_on_leave);
-    sm = new_machine(states_amount,states,SELECT_STATE);
+    sm = new_machine();
+    sm->states=new_list();
+    state s = new_state(ERROR_STATE, ERROR_on_arrive, ERROR_on_resume,ERROR_on_leave);
+    s->wait_write_fd=-1;
+    s->wait_read_fd=-1;
+    put(sm->states,s);
     return sm;
 }
 

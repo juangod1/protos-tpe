@@ -4,11 +4,12 @@
 #include <malloc.h>
 #include "include/stateMachine.h"
 #include "include/stateSelector.h"
+#include "include/state.h"
 
-state * new_state(state_code id, execution_state (*on_arrive)(), execution_state (*on_resume)(), state_code (*on_leave)()){
-    state * new = malloc(sizeof(state));
+state new_state(state_code id, execution_state (*on_arrive)(), execution_state (*on_resume)(), state_code (*on_leave)()){
+    state new = malloc(sizeof(state));
     new->id = id;
-    new->error = -1;
+    new->error = 0;
     new->on_arrive = on_arrive;
     new->on_resume = on_resume;
     new->on_leave = on_leave;
@@ -17,33 +18,35 @@ state * new_state(state_code id, execution_state (*on_arrive)(), execution_state
     return new;
 }
 
-void free_state(state * st){
+void free_state(state st){
     free(st);
 }
 
 void free_machine(state_machine * machine){
     int i;
-    for(i=0;i<machine->states_amount;i++)
-    {
-        free_state(machine->states[i]);
-    }
-    free(machine->states);
+    free_list(machine->states);
     free(machine);
 }
 
-state_machine * new_machine(int states_amount, state ** states, state_code initial_state){
+state_machine * new_machine(){
     state_machine * new = malloc(sizeof(state_machine));
-    new->next_state = initial_state;
-    new->initial_state = initial_state;
-    new->states_amount = states_amount;
-    new->states = states;
     return new;
 }
 
 void run_state(state_machine * sm)
 {
+    state previous = get_state_by_fd(sm->next_state,sm);
+
+    if(previous->error){
+        // error state has fd -1
+        state err = get(sm->states,-1);
+        err->on_arrive();
+        err->on_resume();
+    }
+
     file_descriptor next = select_state();
-    state * st = get_state_by_fd(next,sm);
+    state st = get_state_by_fd(next,sm);
+    printf("State %d was chosen.",st->id);
 
     switch(st->exec_state)
     {
@@ -91,7 +94,7 @@ void run_state(state_machine * sm)
     }
 }
 
-state * get_state_by_code(state_code code, state_machine * sm){
+state get_state_by_code(state_code code, state_machine * sm){
     int i;
     for(i=0;i<sm->states_amount;i++){
         if(sm->states[i]->id==code)
