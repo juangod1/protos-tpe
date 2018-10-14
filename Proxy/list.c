@@ -15,13 +15,16 @@ node new_node(state s){
     return n;
 }
 
-node put(list l, state s)
+void put(list l, state s)
 {
     if(l!=NULL) {
         l->size++;
-        return putRec(l->head, s);
+        if(l->head==NULL){
+            l->head=new_node(s);
+            return;
+        }
+        putRec(l->head, s);
     }
-    return NULL;
 }
 
 node putRec(node curr, state s){

@@ -10,17 +10,23 @@
 
 state_machine * sm;
 
-
-/*
- * ERROR STATE SHOULD ALWAYS BE THE FIRST STATE
- */
-state_machine * initialize_master_machine(){
+state_machine * initialize_master_machine(file_descriptor MUA_sock){
     sm = new_machine();
     sm->states=new_list();
+
+    sm->previous_state=NULL;
+    sm->next_state=NULL;
+
     state s = new_state(ERROR_STATE, ERROR_on_arrive, ERROR_on_resume,ERROR_on_leave);
-    s->wait_write_fd=-1;
-    s->wait_read_fd=-1;
+    s->wait_write_fd=-2;
+    s->wait_read_fd=-2;
     put(sm->states,s);
+
+    state connect_client = new_state(CONNECT_CLIENT_STATE, CONNECT_CLIENT_on_arrive, CONNECT_CLIENT_on_resume,CONNECT_CLIENT_on_leave);
+    connect_client->wait_write_fd=-1;
+    connect_client->wait_read_fd=MUA_sock;
+    put(sm->states,connect_client);
+
     return sm;
 }
 
@@ -49,7 +55,7 @@ state_code CONNECT_ADMIN_on_leave(){
 }
 
 execution_state CONNECT_CLIENT_on_arrive(){
-
+    
 }
 
 execution_state CONNECT_CLIENT_on_resume(){

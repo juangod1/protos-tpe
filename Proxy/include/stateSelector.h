@@ -12,6 +12,6 @@ void set_waiting_read(file_descriptor fd, state st);
 void set_waiting_write(file_descriptor fd, state st);
 void remove_read_fd(file_descriptor fd);
 void remove_write_fd(file_descriptor fd);
-void initialize_selector();
+void initialize_selector(file_descriptor mua);
 
 #endif //PROTOS_TPE_STATESELECTOR_H

@@ -77,7 +77,7 @@ void remove_write_fd(file_descriptor fd){
     FD_CLR(fd, &write_fds);
 }
 
-void initialize_selector(){
+void initialize_selector(file_descriptor mua){
     const struct timespec timeout={
             .tv_sec=5, .tv_nsec=0
     };
@@ -85,7 +85,7 @@ void initialize_selector(){
     FD_ZERO(&read_fds);
     FD_ZERO(&write_fds);
 
-    MUA_sock = setup_MUA_socket();
+    MUA_sock = mua;
 
-    add_read_fd(MUA_sock);
+    add_read_fd(mua);
 }

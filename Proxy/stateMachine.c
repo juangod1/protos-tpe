@@ -1,13 +1,14 @@
 //
 // Created by juangod on 13/10/18.
 //
-#include <malloc.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "include/stateMachine.h"
 #include "include/stateSelector.h"
 #include "include/state.h"
 
 state new_state(state_code id, execution_state (*on_arrive)(), execution_state (*on_resume)(), state_code (*on_leave)()){
-    state new = malloc(sizeof(state));
+    state new = malloc(sizeof(struct stateStruct));
     new->id = id;
     new->error = 0;
     new->on_arrive = on_arrive;
@@ -35,9 +36,9 @@ state_machine * new_machine(){
 
 void run_state(state_machine * sm)
 {
-    state previous =get(sm->states,sm->next_state);
+    state previous = sm->previous_state;
 
-    if(previous->error){
+    if(previous!=NULL&&previous->error){
         // error state has fd -1
         state err = get(sm->states,-1);
         err->on_arrive();
@@ -46,7 +47,7 @@ void run_state(state_machine * sm)
 
     file_descriptor next = select_state();
     state st = get(sm->states,next);
-    printf("State %d was chosen.",st->id);
+    printf("State %d was chosen.",st->id);fflush(stdout);
 
     switch(st->exec_state)
     {

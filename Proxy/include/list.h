@@ -20,7 +20,7 @@ typedef struct listStruct * list;
 
 list new_list();
 node new_node(state s);
-node put(list l, state s);
+void put(list l, state s);
 
 node putRec(node curr, state s);
 state get(list l, file_descriptor fd);

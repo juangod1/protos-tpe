@@ -12,8 +12,8 @@
 typedef struct {
     list states;
     int states_amount;
-    state_code initial_state;
-    state_code next_state;
+    state previous_state;
+    state next_state;
 } state_machine;
 
 state new_state(state_code id, execution_state (*on_arrive)(), execution_state (*on_resume)(), state_code (*on_leave)());

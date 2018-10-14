@@ -105,8 +105,9 @@ void read_user_test()
 
 void run_server()
 {
-    state_machine * machine = initialize_master_machine();
-    initialize_selector();
+    file_descriptor mua = setup_MUA_socket();
+    state_machine * machine = initialize_master_machine(mua);
+    initialize_selector(mua);
 
     for(;;){
         run_state(machine);

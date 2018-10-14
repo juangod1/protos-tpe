@@ -12,7 +12,7 @@
 #define ATTEND_CLIENT_STATE 5
 #define ERROR_STATE 6
 
-state_machine * initialize_master_machine();
+state_machine * initialize_master_machine(file_descriptor MUA_sock);
 execution_state ATTEND_ADMIN_on_arrive();
 execution_state ATTEND_ADMIN_on_resume();
 state_code ATTEND_ADMIN_on_leave();
