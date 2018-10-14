@@ -10,7 +10,7 @@ typedef struct {
     int pop3_path;
     int management_path;
     char * replacement_message;
-    char * censored_media_types;
+    char ** censored_media_types;
     int management_port;
     int local_port;
     int origin_port;

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "include/options.h"
 #include "../Shared/include/executionValidator.h"
+#include "../Shared/include/lib.h"
 #include "include/proxyParse.h"
 
 static app_context_p app_context = NULL;
@@ -71,7 +72,8 @@ void censored_mediatype(char * arg)
 {
     //TODO: has to receive a list of media types and apply a condition for the server to censor them <<USE PROTOS TP 2>>
     printf("This is censored mediatype!\n");fflush(stdout);
-    app_context->censored_media_types=arg;
+    char ** mediaRangeCompleteList = divideMediaRangeList(arg);
+    app_context->censored_media_types=mediaRangeCompleteList;
 
 }
 void management_port(char * arg)
