@@ -96,6 +96,7 @@ void run_state(state_machine * sm)
         default:
             break;
     }
+    sm->previous_state=st;
 }
 
 void add_state(state_machine * sm, state s){
