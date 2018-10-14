@@ -1,11 +1,10 @@
 #include "include/List.h"
 #include "include/stateMachine.h"
 
-list new_list(int (*comparator)(node a, node b)){
+list new_list(){
     list new = malloc(sizeof(listStruct));
     new->head = NULL;
     new->size = 0;
-    new->comparator = comparator;
 }
 
 node new_node(state * s){
@@ -29,16 +28,16 @@ node putRec(node curr, state * s){
     return putRec(curr->next,s);
 }
 
-state get(list l, file_descriptor fd){
-    getRec(l->head, fd);
+state * get(list l, file_descriptor fd){
+    return getRec(l->head, fd);
 }
 
-state getRec(node curr, file_descriptor fd){
+state * getRec(node curr, file_descriptor fd){
     if(curr==NULL)
         return NULL;
 
     if(curr->state->wait_read_fd == fd || curr->state->wait_write_fd == fd){
-        return curr;
+        return curr->state;
     }
 
     return getRec(curr->next,fd);
