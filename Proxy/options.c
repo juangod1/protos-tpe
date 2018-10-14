@@ -16,10 +16,20 @@ static char * version_number = "PRE_ALPHA 1.0.0.0";
 void initialize_app_context()
 {
     app_context=malloc(sizeof(app_context_t));
+    app_context->censored_media_types=NULL;
+    app_context->pop3_path=0;
+    app_context->command_specification=NULL;
+    app_context->error_path=NULL;
+    app_context->local_port=0;
+    app_context->management_path=0;
+    app_context->management_port=0;
+    app_context->origin_port=0;
+    app_context->replacement_message=NULL;
 }
 
 void destroy_app_context()
 {
+    recursiveDoublePointerFree(app_context->censored_media_types);
     free(app_context);
 }
 

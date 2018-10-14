@@ -14,6 +14,10 @@
 #include "include/stateMachine.h"
 #include "include/MasterStateMachine.h"
 #include "include/stateSelector.h"
+#include "include/mediaTypes.h"
+#include "include/options.h"
+
+static app_context_p app_context;
 
 int main(int argc, char ** argv)
 {
@@ -25,7 +29,10 @@ int main(int argc, char ** argv)
     switch(response)
     {
         case STANDARD:
+            
             execute_options();
+            app_context=get_app_context();
+
             run_server();
             break;
         case HELP:

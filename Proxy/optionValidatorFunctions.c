@@ -60,6 +60,7 @@ void censored_mediatype_validation(int argc, char ** argv, response_p resp) //TO
             i++;
             recursiveDoublePointerFree(splitMediaRange);
         }
+        recursiveDoublePointerFree(mediaRangeCompleteList);
     }
     resp->success=TRUE;
     resp->next_argument=1;
