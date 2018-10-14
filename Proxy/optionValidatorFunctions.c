@@ -28,7 +28,7 @@ void management_direction_validation(int argc, char ** argv, response_p resp) //
     resp->success=TRUE;
     resp->next_argument=1;
 }
-void replacement_message_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
+void replacement_message_validation(int argc, char ** argv, response_p resp)
 {
     resp->success=TRUE;
     resp->next_argument=1;
@@ -40,7 +40,7 @@ void command_specification_validation(int argc, char ** argv, response_p resp) /
     resp->next_argument=1;
 }
 
-void censored_mediatype_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
+void censored_mediatype_validation(int argc, char ** argv, response_p resp)
 {
     if(argc!=1)
     {
@@ -73,7 +73,7 @@ void censored_mediatype_validation(int argc, char ** argv, response_p resp) //TO
     resp->next_argument=1;
     return;
 }
-void management_port_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
+void management_port_validation(int argc, char ** argv, response_p resp)
 {
     if(argc!=1 && *argv[0]!=0)
     {
@@ -83,7 +83,7 @@ void management_port_validation(int argc, char ** argv, response_p resp) //TODO:
     }
     is_valid_port(argv[0],resp);
 }
-void local_port_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
+void local_port_validation(int argc, char ** argv, response_p resp)
 {
     if(argc!=1 && *argv[0]!=0)
     {
@@ -93,7 +93,7 @@ void local_port_validation(int argc, char ** argv, response_p resp) //TODO: pars
     }
     is_valid_port(argv[0],resp);
 }
-void origin_port_validation(int argc, char ** argv, response_p resp) //TODO: parse string, make sure it has the correct format.
+void origin_port_validation(int argc, char ** argv, response_p resp)
 {
     if(argc!=1 && *argv[0]!=0)
     {

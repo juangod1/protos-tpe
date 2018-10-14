@@ -33,7 +33,21 @@ int main(int argc, char ** argv)
             execute_options();
             app_context=get_app_context();
 
-            run_server();
+            int pid;
+            char * buffer = calloc(1,INITIAL_INPUT_SIZE);
+            int fd = start_parser("catt","holaquetal",11,&pid);
+            int size = read_parser(buffer,INITIAL_INPUT_SIZE,pid,fd);
+            if(size<0)
+            {
+                free(buffer);
+                return ERROR;
+            }
+
+
+            printf("%s\n",buffer);
+            free(buffer);
+
+            //run_server();
             break;
         case HELP:
             help();

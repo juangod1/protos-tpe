@@ -14,7 +14,7 @@ Producer Process reads from STDIN and sends input to FILTER_READ_PIPE.
 Filter Process executes the bash command received, the command reads from FILTER_READ_PIPE and writes to FILTER_WRITE_PIPE
 Consumer Process reads from FILTER_WRITE_PIPE and prints to STDOUT
 */
-void run_parser(char * command)
+int run_parser(char * command)
 {
   char * input = malloc(INITIAL_INPUT_SIZE);
   int counter = fetchInputFromStdin(&input, INITIAL_INPUT_SIZE);
@@ -22,11 +22,11 @@ void run_parser(char * command)
   //initialize pipes
   if(pipe(pipes[FILTER_READ_PIPE])==-1){
     perror("pipe");
-    exit(-1);
+    exit(BAD_EXIT_STATUS);
   }
   if(pipe(pipes[FILTER_WRITE_PIPE])==-1){
     perror("pipe");
-    exit(-1);
+    exit(BAD_EXIT_STATUS);
   }
 
   pid_t pid;
@@ -48,11 +48,13 @@ void run_parser(char * command)
       close(FILTER_READ_FD);
       close(FILTER_WRITE_FD);
 
-      int response = system(command); //executes command in parameter
-      if(response<0)
+      int status = system(command);
+      if(WSTOPSIG(status)==127)
       {
-        printf("Could not execute command\n");
+        perror("Invalid command");
+        exit(BAD_EXIT_STATUS);
       }
+      exit(GOOD_EXIT_STATUS);
     }
     else{ //PRODUCER PROCESS
       close(FILTER_READ_FD);
@@ -62,8 +64,19 @@ void run_parser(char * command)
       if(write(PRODUCER_WRITE_FD, input, counter)<0)
       {
         printf("Could not execute write\n");
-        return;
+        close(PRODUCER_WRITE_FD);
+        free(input);
+        exit(BAD_EXIT_STATUS);
       };
+      close(PRODUCER_WRITE_FD);
+
+      int status;
+      wait(&status);
+      if(WEXITSTATUS(status)!=GOOD_EXIT_STATUS)
+      {
+        free(input);
+        exit(BAD_EXIT_STATUS);
+      }
 
       char parity = parityByte(input, counter);
       char * bytes = charToHex(parity);
@@ -73,8 +86,7 @@ void run_parser(char * command)
       free(input);
       free(bytes);
 
-      close(PRODUCER_WRITE_FD);
-
+      exit(GOOD_EXIT_STATUS);
     }
   }
   else{ //CONSUMER PROCESS
@@ -83,7 +95,15 @@ void run_parser(char * command)
     close(FILTER_WRITE_FD);
     free(input);
 
-    char * string = malloc(INITIAL_INPUT_SIZE);
+    int status;
+    wait(&status);
+    if(WEXITSTATUS(status)!=GOOD_EXIT_STATUS)
+    {
+      close(CONSUMER_READ_FD);
+      return ERROR;
+    }
+
+    char * string = calloc(1,INITIAL_INPUT_SIZE);
     FILE * fstream = fdopen(CONSUMER_READ_FD, "r");
 
     int size =fetchInputFromFile(&string,fstream, INITIAL_INPUT_SIZE);

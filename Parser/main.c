@@ -8,10 +8,14 @@ int main(int argc, char ** argv)
     int response = parser_parse(argc,argv);
     if(response==ERROR)
     {
-        return ERROR;
+        exit(BAD_EXIT_STATUS);
     }
-    run_parser(argv[1]);
-    return 0;
+    response = run_parser(argv[1]);
+    if(response==ERROR)
+    {
+        exit(BAD_EXIT_STATUS);
+    }
+    exit(GOOD_EXIT_STATUS);
 }
 
 int parser_parse(int argc, char ** argv)

@@ -19,6 +19,9 @@
 #define MAX_TYPE_SIZE 15
 #define INITIAL_DICTIONARY_SIZE 5
 
+#define BAD_EXIT_STATUS 1
+#define GOOD_EXIT_STATUS 0
+
 int toNLowerString(char * lowerCaseCopy, char * original, int n);
 char *my_strdup(const char *s);
 char *my_strsep(char ** string_ptr, char delimeter );
