@@ -35,7 +35,7 @@ int main(int argc, char ** argv)
 
             int pid;
             char * buffer = calloc(1,INITIAL_INPUT_SIZE);
-            int fd = start_parser("catt","holaquetal",11,&pid);
+            int fd = start_parser(app_context->command_specification,"holaquetal",11,&pid);
             int size = read_parser(buffer,INITIAL_INPUT_SIZE,pid,fd);
             if(size<0)
             {
