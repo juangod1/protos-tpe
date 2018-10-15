@@ -8,7 +8,7 @@
 #include "include/stateSelector.h"
 #include "include/state.h"
 
-state new_state(state_code id, execution_state (*on_arrive)(), execution_state (*on_resume)(), state_code (*on_leave)()){
+state new_state(state_code id, execution_state (*on_arrive)(state s), execution_state (*on_resume)(state s), state_code (*on_leave)(state s)){
     state new = malloc(sizeof(struct stateStruct));
     new->wait_read_fd=-1;
     new->wait_write_fd=-1;
@@ -18,7 +18,7 @@ state new_state(state_code id, execution_state (*on_arrive)(), execution_state (
     new->on_resume = on_resume;
     new->on_leave = on_leave;
     new->exec_state = NOT_WAITING;
-    new->internal_state=0;
+    new->internal_state=1;
     return new;
 }
 
@@ -65,9 +65,9 @@ void run_state(state_machine * sm)
     switch(st->exec_state)
     {
         case NOT_WAITING:
-            switch(st->on_arrive()){
+            switch(st->on_arrive(st)){
                 case NOT_WAITING:
-                    st->on_leave();
+                    st->on_leave(st);
                     break;
                 case WAITING_READ:
                     break;
@@ -76,9 +76,9 @@ void run_state(state_machine * sm)
             }
             break;
         case WAITING_READ:
-            switch(st->on_resume()){
+            switch(st->on_resume(st)){
                 case NOT_WAITING:
-                    st->on_leave();
+                    st->on_leave(st);
                     break;
                 case WAITING_READ:
                     break;
@@ -87,9 +87,9 @@ void run_state(state_machine * sm)
             }
             break;
         case WAITING_WRITE:
-            switch(st->on_resume()){
+            switch(st->on_resume(st)){
                 case NOT_WAITING:
-                    st->on_leave();
+                    st->on_leave(st);
                     break;
                 case WAITING_READ:
                     break;

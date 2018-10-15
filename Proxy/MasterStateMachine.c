@@ -38,31 +38,31 @@ state_machine * initialize_master_machine(file_descriptor MUA_sock){
     return sm;
 }
 
-execution_state ATTEND_ADMIN_on_arrive(){
+execution_state ATTEND_ADMIN_on_arrive(state s){
 
 }
 
-execution_state ATTEND_ADMIN_on_resume(){
+execution_state ATTEND_ADMIN_on_resume(state s){
 
 }
 
-state_code ATTEND_ADMIN_on_leave(){
+state_code ATTEND_ADMIN_on_leave(state s){
 
 }
 
-execution_state CONNECT_ADMIN_on_arrive(){
+execution_state CONNECT_ADMIN_on_arrive(state s){
 
 }
 
-execution_state CONNECT_ADMIN_on_resume(){
+execution_state CONNECT_ADMIN_on_resume(state s){
 
 }
 
-state_code CONNECT_ADMIN_on_leave(){
+state_code CONNECT_ADMIN_on_leave(state s){
 
 }
 
-execution_state CONNECT_CLIENT_on_arrive(){
+execution_state CONNECT_CLIENT_on_arrive(state s){
     int accept_ret = accept(MUA_sock,NULL,NULL);
 
     if(accept_ret<0){
@@ -70,44 +70,62 @@ execution_state CONNECT_CLIENT_on_arrive(){
         error();
     }
 
-    state s = new_state(ATTEND_CLIENT_STATE,ATTEND_CLIENT_on_arrive,ATTEND_CLIENT_on_resume,ATTEND_CLIENT_on_leave);
-    s->wait_read_fd = accept_ret;
-    add_state(sm,s);
+    state st = new_state(ATTEND_CLIENT_STATE,ATTEND_CLIENT_on_arrive,ATTEND_CLIENT_on_resume,ATTEND_CLIENT_on_leave);
+    st->wait_read_fd = accept_ret;
+    add_state(sm,st);
 
 
 
     return NOT_WAITING;
 }
 
-execution_state CONNECT_CLIENT_on_resume(){
+execution_state CONNECT_CLIENT_on_resume(state s){
 
 }
 
-state_code CONNECT_CLIENT_on_leave(){
+state_code CONNECT_CLIENT_on_leave(state s){
 
 }
 
-execution_state ATTEND_CLIENT_on_arrive(){
+execution_state ATTEND_CLIENT_on_arrive(state s){
+    switch(s->internal_state){
+        case ATTEND_CLIENT_READ_MUA:
+            break;
+        case WRITE_ORIGIN:
+            break;
+        case READ_ORIGIN:
+            break;
+        case OK_MUA:
+            break;
+        case SEND_TRANSFORM:
+            break;
+        case RECV_TRANSFORM:
+            break;
+        case WRITE_MUA:
+            break;
+        default:
+            perror("Corrupted attend internal state.");
+            break;
+    }
+}
+
+execution_state ATTEND_CLIENT_on_resume(state s){
+    ATTEND_CLIENT_on_arrive(s);
+}
+
+state_code ATTEND_CLIENT_on_leave(state s){
 
 }
 
-execution_state ATTEND_CLIENT_on_resume(){
+execution_state ERROR_on_arrive(state s){
 
 }
 
-state_code ATTEND_CLIENT_on_leave(){
+execution_state ERROR_on_resume(state s){
 
 }
 
-execution_state ERROR_on_arrive(){
-
-}
-
-execution_state ERROR_on_resume(){
-
-}
-
-state_code ERROR_on_leave(){
+state_code ERROR_on_leave(state s){
 
 }
 

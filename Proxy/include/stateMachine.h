@@ -16,7 +16,7 @@ typedef struct {
     state next_state;
 } state_machine;
 
-state new_state(state_code id, execution_state (*on_arrive)(), execution_state (*on_resume)(), state_code (*on_leave)());
+state new_state(state_code id, execution_state (*on_arrive)(state s), execution_state (*on_resume)(state s), state_code (*on_leave)(state s));
 void free_state(state st);
 void free_machine(state_machine * machine);
 state_machine * new_machine();
