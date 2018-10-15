@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include "include/runCommandLine.h"
 #include "include/parityByte.h"
 #include "../Shared/include/lib.h"
@@ -49,7 +50,7 @@ int run_parser(char * command)
       close(FILTER_WRITE_FD);
 
       int status = system(command);
-      if(WSTOPSIG(status)==127)
+      if(WIFSTOPPED(status)==true && WSTOPSIG(status)==127)
       {
         perror("Invalid command");
         exit(BAD_EXIT_STATUS);
@@ -72,7 +73,7 @@ int run_parser(char * command)
 
       int status;
       wait(&status);
-      if(WEXITSTATUS(status)!=GOOD_EXIT_STATUS)
+      if(WIFEXITED(status)==false || WEXITSTATUS(status)!=GOOD_EXIT_STATUS)
       {
         free(input);
         exit(BAD_EXIT_STATUS);
@@ -97,7 +98,7 @@ int run_parser(char * command)
 
     int status;
     wait(&status);
-    if(WEXITSTATUS(status)!=GOOD_EXIT_STATUS)
+    if(WIFEXITED(status)==false || WEXITSTATUS(status)!=GOOD_EXIT_STATUS)
     {
       close(CONSUMER_READ_FD);
       return ERROR;
@@ -106,9 +107,9 @@ int run_parser(char * command)
     char * string = calloc(1,INITIAL_INPUT_SIZE);
     FILE * fstream = fdopen(CONSUMER_READ_FD, "r");
 
-    int size =fetchInputFromFile(&string,fstream, INITIAL_INPUT_SIZE);
+    size_t size =fetchInputFromFile(&string,fstream, INITIAL_INPUT_SIZE);
 
-    char parity = parityByte(string,size);
+    char parity = parityByte(string,(int)size);
     char * hexString = charToHex(parity);
 
     fprintf(stderr, "out parity: %s\n",hexString);
@@ -119,4 +120,5 @@ int run_parser(char * command)
     free(hexString);
     close(CONSUMER_READ_FD);
   }
+  return 0;
 }

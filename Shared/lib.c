@@ -26,10 +26,9 @@ char *my_strsep(char ** string_ptr, char delimeter )
     }
     char * ptr = *string_ptr;
     char * ret = *string_ptr;
-    while(*ptr!=0 && *ptr!=delimeter)
-    {
-        *ptr++;
-    }
+
+    while(*ptr!=0 && *ptr!=delimeter) ptr++;
+
     if(*ptr==delimeter)
     {
         *ptr=0;
@@ -41,19 +40,21 @@ char *my_strsep(char ** string_ptr, char delimeter )
 }
 
 
-int fetchInputFromStdin(char ** bufferPosition, size_t size)
+size_t fetchInputFromStdin(char ** bufferPosition, size_t size)
 {
     return fetchInputFromFile(bufferPosition, stdin, size);
 }
 
-int fetchInputFromFile(char ** bufferPosition, FILE * f, size_t  size)
+size_t fetchInputFromFile(char ** bufferPosition, FILE * f, size_t  size)
 {
     int c;
-    int counter=0;
+    size_t counter=0;
     while((c=fgetc(f))!=EOF){
         if(counter>=size){
+            size_t init=size;
             size+=INITIAL_INPUT_SIZE;
             (*bufferPosition) = realloc((*bufferPosition), size);
+            while(init<size) (*bufferPosition)[init++]=0;
         }
         *((*bufferPosition)+counter)=(char)c;
         counter++;
@@ -61,20 +62,22 @@ int fetchInputFromFile(char ** bufferPosition, FILE * f, size_t  size)
     return counter;
 }
 
-int fetchLineFromStdin(char ** bufferPosition, size_t  size)
+size_t fetchLineFromStdin(char ** bufferPosition, size_t  size)
 {
-    fetchLineFromFile(bufferPosition,stdin,size);
+    return fetchLineFromFile(bufferPosition,stdin,size);
 }
 
 
-int fetchLineFromFile(char ** bufferPosition, FILE * f, size_t  size)
+size_t fetchLineFromFile(char ** bufferPosition, FILE * f, size_t  size)
 {
     int c;
-    int counter=0;
+    size_t counter=0;
     while((c=fgetc(f))!='\n' && c!=0){
         if(counter>=size){
+            size_t init=size;
             size+=INITIAL_INPUT_SIZE;
             (*bufferPosition) = realloc((*bufferPosition), size);
+            while(init<size) (*bufferPosition)[init++]=0;
         }
         *((*bufferPosition)+counter)=(char)c;
         counter++;

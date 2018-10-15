@@ -1,10 +1,6 @@
 #include "include/proxyCommunication.h"
 #include "../Shared/include/lib.h"
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+#include <stdbool.h>
 
 
 /*
@@ -46,7 +42,7 @@ int start_parser(char * cmd,char * msg, size_t size, int * pid_ret)
         close(PARSER_WRITE_FD);
 
         char *argv[]={"parser",cmd,NULL};
-        if(execv("parser",argv)<0);exit(-1);
+        if(execv("parser",argv)<0) exit(BAD_EXIT_STATUS);
     }
     else /* pid!=0; parent process */
     {
@@ -64,11 +60,12 @@ int start_parser(char * cmd,char * msg, size_t size, int * pid_ret)
  *   Returns the pipes content in the buffer parameter and the new size of the buffer.
  *
  */
-int read_parser(char * buffer, int size, int parser_pid, int proxy_read_fd)
+int read_parser(char ** buffer, int size, int parser_pid, int proxy_read_fd)
 {
     int status;
     waitpid(parser_pid,&status,0);
-    if(WEXITSTATUS(status)!=GOOD_EXIT_STATUS)
+
+    if(WIFEXITED(status)==false || WEXITSTATUS(status)!=GOOD_EXIT_STATUS)
     {
         perror("Parser failed, no content written");
         close(proxy_read_fd);
@@ -76,7 +73,7 @@ int read_parser(char * buffer, int size, int parser_pid, int proxy_read_fd)
     }
     FILE * fstream = fdopen(proxy_read_fd, "r");
 
-    size =fetchInputFromFile(&buffer,fstream, (size_t) size);
+    size =fetchInputFromFile(buffer,fstream, (size_t) size);
 
     if(size<0)
     {

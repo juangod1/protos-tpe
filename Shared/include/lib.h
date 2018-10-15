@@ -22,6 +22,9 @@
 #define BAD_EXIT_STATUS 1
 #define GOOD_EXIT_STATUS 0
 
+#define FALSE 0
+#define TRUE 1
+
 int toNLowerString(char * lowerCaseCopy, char * original, int n);
 char *my_strdup(const char *s);
 char *my_strsep(char ** string_ptr, char delimeter );
@@ -36,9 +39,9 @@ void recursiveDoublePointerFree(char ** splitMediaType);
 int isValidMediaType(char ** mediaType);
 
 
-int fetchInputFromStdin(char ** bufferPosition, size_t size);
-int fetchInputFromFile(char ** bufferPosition, FILE * f, size_t  size);
-int fetchLineFromStdin(char ** bufferPosition, size_t  size);
-int fetchLineFromFile(char ** bufferPosition, FILE * f, size_t  size);
+size_t fetchInputFromStdin(char ** bufferPosition, size_t size);
+size_t fetchInputFromFile(char ** bufferPosition, FILE * f, size_t  size);
+size_t fetchLineFromStdin(char ** bufferPosition, size_t  size);
+size_t fetchLineFromFile(char ** bufferPosition, FILE * f, size_t  size);
 
 #endif
