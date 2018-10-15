@@ -6,11 +6,13 @@
 #include <memory.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include "include/state.h"
 #include "include/stateMachine.h"
 #include "include/MasterStateMachine.h"
 #include "include/list.h"
 #include "include/stateSelector.h"
+#include <sys/select.h>
 
 state_machine * sm;
 
@@ -72,7 +74,7 @@ execution_state CONNECT_CLIENT_on_arrive(){
     s->wait_read_fd = accept_ret;
     add_state(sm,s);
 
-    hard_set_waiting_read(accept_ret);
+
 
     return NOT_WAITING;
 }
@@ -107,4 +109,21 @@ execution_state ERROR_on_resume(){
 
 state_code ERROR_on_leave(){
 
+}
+
+void set_up_fd_sets_rec(fd_set * read_fds, fd_set * write_fds, node curr){
+    if(curr==NULL)
+        return;
+
+    if(curr->st->wait_read_fd>0)
+        add_read_fd(curr->st->wait_read_fd);
+
+    if(curr->st->wait_write_fd>0)
+        add_write_fd(curr->st->wait_write_fd);
+
+    set_up_fd_sets_rec(read_fds,write_fds,curr->next);
+}
+
+void set_up_fd_sets(fd_set * read_fds, fd_set * write_fds){
+    set_up_fd_sets_rec(read_fds,write_fds,sm->states->head);
 }

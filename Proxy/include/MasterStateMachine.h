@@ -5,6 +5,8 @@
 #ifndef PROTOS_TPE_TOPLEVELSTATEMACHINE_H
 #define PROTOS_TPE_TOPLEVELSTATEMACHINE_H
 
+#include <sys/select.h>
+
 #define SELECT_STATE 1
 #define CONNECT_CLIENT_STATE 2
 #define ATTEND_ADMIN_STATE 3
@@ -13,6 +15,8 @@
 #define ERROR_STATE 6
 
 state_machine * initialize_master_machine(file_descriptor MUA_sock);
+void set_up_fd_sets(fd_set * read_fds, fd_set * write_fds);
+
 execution_state ATTEND_ADMIN_on_arrive();
 execution_state ATTEND_ADMIN_on_resume();
 state_code ATTEND_ADMIN_on_leave();

@@ -24,5 +24,7 @@ void run_state(state_machine * sm);
 state get_state_by_code(state_code code, state_machine * sm);
 void add_state(state_machine * sm, state s);
 int remove_state(state_machine * sm, state s);
+void set_write_fd(state st, file_descriptor fd);
+void set_read_fd(state st, file_descriptor fd);
 
 #endif //PROTOS_TPE_STATEMACHINE_H

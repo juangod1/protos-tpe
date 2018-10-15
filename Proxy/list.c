@@ -1,6 +1,7 @@
 #include "include/list.h"
 #include "include/stateMachine.h"
 #include <stdlib.h>
+#include <sys/select.h>
 
 list new_list(){
     list new = malloc(sizeof(struct listStruct));

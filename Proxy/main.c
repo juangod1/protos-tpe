@@ -52,7 +52,7 @@ int main(int argc, char ** argv)
             printf("%s\n",buffer);
             free(buffer);
 
-            //run_server();
+            run_server();
             break;
         case HELP:
             help();

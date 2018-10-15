@@ -3,12 +3,15 @@
 //
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include "include/stateMachine.h"
 #include "include/stateSelector.h"
 #include "include/state.h"
 
 state new_state(state_code id, execution_state (*on_arrive)(), execution_state (*on_resume)(), state_code (*on_leave)()){
     state new = malloc(sizeof(struct stateStruct));
+    new->wait_read_fd=-1;
+    new->wait_write_fd=-1;
     new->id = id;
     new->error = 0;
     new->on_arrive = on_arrive;
@@ -19,12 +22,19 @@ state new_state(state_code id, execution_state (*on_arrive)(), execution_state (
     return new;
 }
 
+void set_write_fd(state st, file_descriptor fd){
+    st->wait_write_fd=fd;
+}
+
+void set_read_fd(state st, file_descriptor fd){
+    st->wait_read_fd=fd;
+}
+
 void free_state(state st){
     free(st);
 }
 
 void free_machine(state_machine * machine){
-    int i;
     free_list(machine->states);
     free(machine);
 }
@@ -60,10 +70,8 @@ void run_state(state_machine * sm)
                     st->on_leave();
                     break;
                 case WAITING_READ:
-                    set_waiting_read(st->wait_read_fd, st);
                     break;
                 case WAITING_WRITE:
-                    set_waiting_write(st->wait_write_fd, st);
                     break;
             }
             break;
@@ -73,10 +81,8 @@ void run_state(state_machine * sm)
                     st->on_leave();
                     break;
                 case WAITING_READ:
-                    set_waiting_read(st->wait_read_fd, st);
                     break;
                 case WAITING_WRITE:
-                    set_waiting_write(st->wait_write_fd, st);
                     break;
             }
             break;
@@ -86,10 +92,8 @@ void run_state(state_machine * sm)
                     st->on_leave();
                     break;
                 case WAITING_READ:
-                    set_waiting_read(st->wait_read_fd, st);
                     break;
                 case WAITING_WRITE:
-                    set_waiting_write(st->wait_write_fd, st);
                     break;
             }
             break;
