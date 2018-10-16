@@ -22,9 +22,6 @@
 #define BAD_EXIT_STATUS 1
 #define GOOD_EXIT_STATUS 0
 
-#define FALSE 0
-#define TRUE 1
-
 int toNLowerString(char * lowerCaseCopy, char * original, int n);
 char *my_strdup(const char *s);
 char *my_strsep(char ** string_ptr, char delimeter );
