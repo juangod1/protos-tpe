@@ -11,14 +11,14 @@ typedef enum {
 
 void initialize_options();
 int createConnection();
-void requestForLogin();
-void loginError();
+void requestForLogin(int fd, char* status);
+void loginError(int fd, char* status);
 void loginSuccess(char* connected);
-char requestLoginToProxy();
+char requestLoginToProxy(int fd);
 void interaction();
 char requestAdmin();
 void adminMode();
-void closeConnection();
+void closeConnection(int fd);
 void reportNotAvailableResource();
 
 #endif //PROTOS_TPE_MAIN_H

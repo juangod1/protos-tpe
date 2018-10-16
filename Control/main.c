@@ -28,7 +28,8 @@ int main(int argc, char ** argv)
     while(status!=2)
     {
         //Tengo que loggearme
-        requestForLogin(&status);
+
+        requestForLogin(fd,&status);
         if(status == 1)
         {
             //Me conecte exitosamente entonces entro en otro modo
@@ -36,7 +37,7 @@ int main(int argc, char ** argv)
         }
     }
     //CierreDeConexion
-    closeConnection();
+    closeConnection(fd);
     //Saludo de despedida
     printf("Goodbye, hope to see you soon!\n");
     return 0;
@@ -63,27 +64,27 @@ int createConnection()
     perror("socket");
     exit(1);
     }
-//    //Configuro la cantidad de streams disponible para el socket
-//    memset(&initmsg,0, sizeof(struct sctp_initmsg));
-//    initmsg.sinit_num_ostreams  = MAX_STREAMS;
-//    initmsg.sinit_max_instreams = MAX_STREAMS;
-//    initmsg.sinit_max_attempts  = MAX_STREAMS;
-//    ret = setsockopt(fd,IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(struct sctp_initmsg));
-//    if(ret<0)
-//    {
-//        perror("setsockopt SCTP_INITMSG");
-//        exit(1);
-//    }
-//
-//    //Configuro los eventos
-//    events.sctp_association_event = 1;
-//    events.sctp_data_io_event = 1;
-//    ret = setsockopt(fd,IPPROTO_SCTP,SCTP_EVENTS, &events, sizeof(events));
-//    if(ret<0)
-//    {
-//        perror("setsockopt SCTP_EVENTS");
-//        exit(1);
-//    }
+    //Configuro la cantidad de streams disponible para el socket
+    memset(&initmsg,0, sizeof(struct sctp_initmsg));
+    initmsg.sinit_num_ostreams  = MAX_STREAMS;
+    initmsg.sinit_max_instreams = MAX_STREAMS;
+    initmsg.sinit_max_attempts  = MAX_STREAMS;
+    ret = setsockopt(fd,IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(struct sctp_initmsg));
+    if(ret<0)
+    {
+        perror("setsockopt SCTP_INITMSG");
+        exit(1);
+    }
+
+    //Configuro los eventos
+    events.sctp_association_event = 1;
+    events.sctp_data_io_event = 1;
+    ret = setsockopt(fd,IPPROTO_SCTP,SCTP_EVENTS, &events, sizeof(events));
+    if(ret<0)
+    {
+        perror("setsockopt SCTP_EVENTS");
+        exit(1);
+    }
     //Realizo la conexion
     if((ret = connect(fd,(struct sockaddr*)&addr, sizeof(addr))) == -1)
     {
@@ -93,21 +94,21 @@ int createConnection()
     }
     return fd;
 }
-void requestForLogin(char* status)
+void requestForLogin(int fd, char* status)
 {
     //Hago la solicitud al servidor
-    if (requestLoginToProxy())
+    if (requestLoginToProxy(fd))
     {
         //Respuesta positiva
         loginSuccess(status);
     } else
     {
         //Respuesta negativa
-        loginError(status);
+        loginError(fd,status);
     }
 }
 
-void loginError(char* status)
+void loginError(int fd, char* status)
 {
     //Aviso que no se puedo autenticar
     printf("Login failed. Do you wish to retry? [Y/n]: ");
@@ -121,7 +122,7 @@ void loginError(char* status)
     {
         if(*input == 'Y' || *input == 'y')
         {
-            requestForLogin(status);
+            requestForLogin(fd,status);
         }
         else if(*input == 'N' || *input == 'n')
         {
@@ -160,14 +161,14 @@ char requestLoginToProxy(int fd){
         perror("sctp_sendmsg");
         exit(1);
     }
+
+    //Luego le envia la contraseña con PASS string
     ret = sctp_sendmsg(fd,passwordInput,sizeof(passwordInput), NULL, 0, 0, 0, 0, 0, 0);
-    if(ret == -1)
-    {
+    if(ret == -1) {
         printf("An error has ocurred sending PASS info\n");
         perror("sctp_sendmsg");
         exit(1);
     }
-    //Luego le envia la contraseña con PASS string
     //Parsea la respuesta del proxy
     //Devuelve 1 si fue exitoso
     //Devuelve 0 si falla
@@ -199,7 +200,7 @@ void interaction(int fd)
     {
         if(fgets(buffer,1024,stdin))
         {
-            closeConnection();
+            closeConnection(fd);
             exit(-1);
         }
         buffer[strcspn(buffer,"\r\n")];
@@ -213,7 +214,7 @@ void interaction(int fd)
         }
     }
 }
-void closeConnection()
+void closeConnection(int fd)
 {
-
+    closeConnection(fd);
 }
