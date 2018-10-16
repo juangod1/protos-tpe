@@ -22,6 +22,7 @@ state_machine * initialize_master_machine(file_descriptor MUA_sock){
     sm = new_machine();
     sm->states=new_list();
 
+    sm->states_amount=0;
     sm->previous_state=NULL;
     sm->next_state=NULL;
 
