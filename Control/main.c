@@ -154,7 +154,7 @@ char requestLoginToProxy(int fd){
     prepareForSending(&usernameInput,&passwordInput);
 
     //En la conexion 9090 le envia con USER name el parametro obtenido del usuario
-    int ret = sctp_sendmsg(fd,usernameInput,sizeof(usernameInput), NULL, 0, 0, 0, 0, 0, 0);
+    int ret = 0;//sctp_sendmsg(fd,usernameInput,sizeof(usernameInput), NULL, 0, 0, 0, 0, 0, 0);
     if(ret == -1)
     {
         printf("An error has ocurred sending USER info\n");
@@ -163,7 +163,7 @@ char requestLoginToProxy(int fd){
     }
 
     //Luego le envia la contraseña con PASS string
-    ret = sctp_sendmsg(fd,passwordInput,sizeof(passwordInput), NULL, 0, 0, 0, 0, 0, 0);
+    //ret = sctp_sendmsg(fd,passwordInput,sizeof(passwordInput), NULL, 0, 0, 0, 0, 0, 0);
     if(ret == -1) {
         printf("An error has ocurred sending PASS info\n");
         perror("sctp_sendmsg");
@@ -205,7 +205,7 @@ void interaction(int fd)
         }
         buffer[strcspn(buffer,"\r\n")];
         size_t length = strlen(buffer);
-        int ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+        int ret = 0;//sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
         if(ret == -1)
         {
             printf("An error has ocurred sending the message\n");
