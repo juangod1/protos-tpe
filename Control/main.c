@@ -44,7 +44,7 @@ int main(int argc, char ** argv)
 
 void initialize_options()
 {
-    __bzero((void*)&addr, sizeof(addr));
+    memcpy((void*)&addr,0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(9090);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
@@ -192,33 +192,7 @@ void prepareForSending(char **username, char **password) {
 
 void interaction(int fd)
 {
-    //Aca se que estoy logeado y quiero procesar acciones del usuario con una maquina de estados
-    //Leer que es lo que quiere hacer
-//    char quit = 0;
-//    while(!quit) {
-//        function command;
-//        char* parameter = "";
-//        //Llamar a la funcion de pablo para leer de input
-//        //Llamar a la funcion de alguien para parsear lo que me dio pablo
-//        switch (command) {
-//            case EXIT:
-//                quit = 1;
-//                break;
-//            case STATS:
-//                //Hacer request al proxy por los stats
-//                //Reportar la respuesta
-//                break;
-//            case COMMAND:
-//                //Hacer request para cambio de transformacion.
-//                //Como esta es una funcion critica hay que agregar cosas en el header como etag para diferenciar entre
-//                //pedidos de distintos usuarios.
-//                //Reportar respuesta
-//                break;
-//            default:
-//                //Input incorrecto
-//                break;
-//        }
-//    }
+
     char buffer[1024];
 
     while(1)
