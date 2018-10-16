@@ -8,26 +8,27 @@
 #include "include/stateSelector.h"
 #include "include/state.h"
 
-state new_state(state_code id, execution_state (*on_arrive)(state s), execution_state (*on_resume)(state s), state_code (*on_leave)(state s)){
+state new_state(state_code id, execution_state (*on_arrive)(state s, file_descriptor fd), execution_state (*on_resume)(state s, file_descriptor fd), state_code (*on_leave)(state s)){
     state new = malloc(sizeof(struct stateStruct));
-    new->wait_read_fd=-1;
-    new->wait_write_fd=-1;
+    new->socket_read_fd=-1;
+    new->socket_write_fd=-1;
+    new->pipe_read_fd=-1;
+    new->pipe_write_fd=-1;
     new->id = id;
     new->error = 0;
     new->on_arrive = on_arrive;
     new->on_resume = on_resume;
     new->on_leave = on_leave;
     new->exec_state = NOT_WAITING;
-    new->internal_state=1;
     return new;
 }
 
 void set_write_fd(state st, file_descriptor fd){
-    st->wait_write_fd=fd;
+    st->socket_write_fd=fd;
 }
 
 void set_read_fd(state st, file_descriptor fd){
-    st->wait_read_fd=fd;
+    st->socket_read_fd=fd;
 }
 
 void free_state(state st){
@@ -51,8 +52,8 @@ void run_state(state_machine * sm)
     if(previous!=NULL&&previous->error){
         // error state has fd -1
         state err = get(sm->states,-1);
-        err->on_arrive();
-        err->on_resume();
+        err->on_arrive(err,-1);
+        err->on_leave();
     }
 
     file_descriptor next = select_state();
@@ -65,35 +66,20 @@ void run_state(state_machine * sm)
     switch(st->exec_state)
     {
         case NOT_WAITING:
-            switch(st->on_arrive(st)){
+            switch(st->on_arrive(st, next)){
                 case NOT_WAITING:
-                    st->on_leave(st);
+                    st->on_leave();
                     break;
-                case WAITING_READ:
-                    break;
-                case WAITING_WRITE:
+                case WAITING:
                     break;
             }
             break;
-        case WAITING_READ:
-            switch(st->on_resume(st)){
+        case WAITING:
+            switch(st->on_resume(st, next)){
                 case NOT_WAITING:
-                    st->on_leave(st);
+                    st->on_leave();
                     break;
-                case WAITING_READ:
-                    break;
-                case WAITING_WRITE:
-                    break;
-            }
-            break;
-        case WAITING_WRITE:
-            switch(st->on_resume(st)){
-                case NOT_WAITING:
-                    st->on_leave(st);
-                    break;
-                case WAITING_READ:
-                    break;
-                case WAITING_WRITE:
+                case WAITING:
                     break;
             }
             break;

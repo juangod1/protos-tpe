@@ -25,20 +25,20 @@
 state_machine * initialize_master_machine(file_descriptor MUA_sock);
 void set_up_fd_sets(fd_set * read_fds, fd_set * write_fds);
 
-execution_state ATTEND_ADMIN_on_arrive(state s);
-execution_state ATTEND_ADMIN_on_resume(state s);
+execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd);
+execution_state ATTEND_ADMIN_on_resume(state s, file_descriptor fd);
 state_code ATTEND_ADMIN_on_leave(state s);
-execution_state CONNECT_ADMIN_on_arrive(state s);
-execution_state CONNECT_ADMIN_on_resume(state s);
+execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd);
+execution_state CONNECT_ADMIN_on_resume(state s, file_descriptor fd);
 state_code CONNECT_ADMIN_on_leave(state s);
-execution_state CONNECT_CLIENT_on_arrive(state s);
-execution_state CONNECT_CLIENT_on_resume(state s);
+execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd);
+execution_state CONNECT_CLIENT_on_resume(state s, file_descriptor fd);
 state_code CONNECT_CLIENT_on_leave(state s);
-execution_state ATTEND_CLIENT_on_arrive(state s);
-execution_state ATTEND_CLIENT_on_resume(state s);
+execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd);
+execution_state ATTEND_CLIENT_on_resume(state s, file_descriptor fd);
 state_code ATTEND_CLIENT_on_leave(state s);
-execution_state ERROR_on_arrive(state s);
-execution_state ERROR_on_resume(state s);
+execution_state ERROR_on_arrive(state s, file_descriptor fd);
+execution_state ERROR_on_resume(state s, file_descriptor fd);
 state_code ERROR_on_leave(state s);
 
 #endif //PROTOS_TPE_TOPLEVELSTATEMACHINE_H
