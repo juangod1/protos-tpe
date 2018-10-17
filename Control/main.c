@@ -205,7 +205,8 @@ void interaction(int fd)
         }
         buffer[strcspn(buffer,"\r\n")];
         size_t length = strlen(buffer);
-        int ret = 0;//sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+        int ret = 0;
+        sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
         if(ret == -1)
         {
             printf("An error has ocurred sending the message\n");
