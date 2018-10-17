@@ -42,7 +42,21 @@ state getRec(node curr, file_descriptor fd){
     if(curr==NULL)
         return NULL;
 
-    if(curr->st->socket_read_fd == fd || curr->st->socket_write_fd == fd || curr->st->pipe_read_fd == fd || curr->st->pipe_write_fd == fd){
+    int i, match=0;
+    for(i=0;i<3;i++){
+        if(curr->st->read_fds[i]==fd){
+            match=1;
+            break;
+        }
+    }
+    for(i=0;i<2&&!match;i++){
+        if(curr->st->write_fds[i]==fd){
+            match=1;
+            break;
+        }
+    }
+
+    if(match){
         return curr->st;
     }
 

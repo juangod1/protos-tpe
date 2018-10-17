@@ -18,10 +18,8 @@ typedef enum {
 } execution_state;
 
 struct stateStruct {
-    file_descriptor socket_read_fd;
-    file_descriptor socket_write_fd;
-    file_descriptor pipe_read_fd;
-    file_descriptor pipe_write_fd;
+    file_descriptor read_fds[3];
+    file_descriptor write_fds[2];
     execution_state exec_state;
     state_code id;
     error_code error;

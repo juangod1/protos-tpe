@@ -8,19 +8,30 @@
 #include <sys/select.h>
 
 #define SELECT_STATE 1
+/* FD List
+ *  read_fds[0] = MUA_CONNECT_SOCKET
+ */
 #define CONNECT_CLIENT_STATE 2
+/* FD List
+ *  read_fds[0] = ADMIN_read_fd
+ */
 #define ATTEND_ADMIN_STATE 3
+/* FD List
+ *  read_fds[0] = ADMIN_CONNECT_SOCKET
+ */
 #define CONNECT_ADMIN_STATE 4
+/* FD List
+ *  read_fds[0] = MUA_read_fd
+ *  write_fds[0] = MUA_write_fd
+ *  read_fds[1] = ORIGIN_read_fd
+ *  write_fds[1] = ORIGIN_write_fd
+ *  read_fds[2] = pipe_fd
+ */
 #define ATTEND_CLIENT_STATE 5
+/*  FD List
+ *  All fds are -2
+ */
 #define ERROR_STATE 6
-
-#define ATTEND_CLIENT_READ_MUA 1
-#define WRITE_ORIGIN 2
-#define READ_ORIGIN 3
-#define OK_MUA 4
-#define SEND_TRANSFORM 5
-#define RECV_TRANSFORM 6
-#define WRITE_MUA 7
 
 state_machine * initialize_master_machine(file_descriptor MUA_sock);
 void set_up_fd_sets(fd_set * read_fds, fd_set * write_fds);

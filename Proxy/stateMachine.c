@@ -10,10 +10,13 @@
 
 state new_state(state_code id, execution_state (*on_arrive)(state s, file_descriptor fd), execution_state (*on_resume)(state s, file_descriptor fd), state_code (*on_leave)(state s)){
     state new = malloc(sizeof(struct stateStruct));
-    new->socket_read_fd=-1;
-    new->socket_write_fd=-1;
-    new->pipe_read_fd=-1;
-    new->pipe_write_fd=-1;
+    int i;
+    for(i=0;i<3;i++){
+        new->read_fds[i]=-1;
+    }
+    for(i=0;i<2;i++){
+        new->write_fds[i]=-1;
+    }
     new->id = id;
     new->error = 0;
     new->on_arrive = on_arrive;
@@ -21,14 +24,6 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
     new->on_leave = on_leave;
     new->exec_state = NOT_WAITING;
     return new;
-}
-
-void set_write_fd(state st, file_descriptor fd){
-    st->socket_write_fd=fd;
-}
-
-void set_read_fd(state st, file_descriptor fd){
-    st->socket_read_fd=fd;
 }
 
 void free_state(state st){
@@ -50,9 +45,9 @@ void run_state(state_machine * sm)
     state previous = sm->previous_state;
 
     if(previous!=NULL&&previous->error){
-        // error state has fd -1
-        state err = get(sm->states,-1);
-        err->on_arrive(err,-1);
+        // error state has fd -2
+        state err = get(sm->states,-2);
+        err->on_arrive(err,-2);
         err->on_leave();
     }
 
