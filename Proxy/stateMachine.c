@@ -24,6 +24,9 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
     new->on_resume = on_resume;
     new->on_leave = on_leave;
     new->exec_state = NOT_WAITING;
+    new->buffers[0]=NULL;
+    new->buffers[1]=NULL;
+    new->buffers[2]=NULL;
     return new;
 }
 

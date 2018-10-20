@@ -7,6 +7,9 @@
 
 #include <unistd.h>
 #include "main.h"
+#include "../../Shared/include/buffer.h"
+
+#define BUFFER_SIZE 50
 
 typedef int state_code;
 typedef int error_code;
@@ -27,6 +30,8 @@ struct stateStruct {
     execution_state (*on_arrive)(state st, file_descriptor fd, int is_read);
     execution_state (*on_resume)(state st, file_descriptor fd, int is_read);
     state_code (*on_leave)(state st);
+    buffer_p buffers[3];
 };
+
 
 #endif //PROTOS_TPE_STATE_H

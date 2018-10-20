@@ -12,6 +12,7 @@
 #include "include/MasterStateMachine.h"
 #include "include/list.h"
 #include "include/stateSelector.h"
+#include "../Shared/include/buffer.h"
 #include <sys/select.h>
 
 state_machine * sm;
@@ -79,9 +80,11 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
 
     state st = new_state(ATTEND_CLIENT_STATE,ATTEND_CLIENT_on_arrive,ATTEND_CLIENT_on_resume,ATTEND_CLIENT_on_leave);
     st->read_fds[0] = accept_ret;
+    buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
+    buffer_initialize(&(st->buffers[1]), BUFFER_SIZE);
+    buffer_initialize(&(st->buffers[2]), BUFFER_SIZE);
+
     add_state(sm,st);
-
-
 
     return NOT_WAITING;
 }
@@ -99,29 +102,30 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
         case 1: // True
             if (s->read_fds[0] == fd)
             {
-                // Mua Read
+                buffer_read(fd,s->buffers[0]);
             }
             if (s->read_fds[1] == fd)
             {
-                // Origin Read
+                buffer_read(fd,s->buffers[1]);
             }
             if (s->read_fds[2] == fd)
             {
-                // Transform Read
+                buffer_read(fd,s->buffers[2]);
             }
             break;
         case 0: // False
             if (s->write_fds[0] == fd)
             {
+                buffer_write(fd,s->buffers[0]);
                 // Mua Write
             }
             if (s->write_fds[1] == fd)
             {
-                // Origin Write
+                buffer_write(fd,s->buffers[1]);
             }
             if (s->write_fds[2] == fd)
             {
-                // Transform Write
+                buffer_write(fd,s->buffers[2]);
             }
             break;
     }
@@ -167,5 +171,13 @@ void set_up_fd_sets_rec(fd_set * read_fds, fd_set * write_fds, node curr){
 }
 
 void set_up_fd_sets(fd_set * read_fds, fd_set * write_fds){
+    if(sm==NULL)
+    {
+        printf("Found null\n");fflush(stdout);
+    }
+    if(sm->states==NULL)
+    {
+        printf("Found null2\n");fflush(stdout);
+    }
     set_up_fd_sets_rec(read_fds,write_fds,sm->states->head);
 }

@@ -34,7 +34,7 @@ int main(int argc, char ** argv)
             execute_options();
             server_string(argv[argc-1]);
             app_context=get_app_context();
-
+        /*
             int pipes[2];
             int pid= start_parser(app_context->command_specification,pipes);
 
@@ -55,10 +55,10 @@ int main(int argc, char ** argv)
                 printf("Program encountered an error.\n");
             }
 
-            buffer_finalize(buffer);
+            buffer_finalize(buffer);*/
 
 
-            //run_server();
+            run_server();
             break;
         case HELP:
             help();
