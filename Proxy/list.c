@@ -7,6 +7,7 @@ list new_list(){
     list new = malloc(sizeof(struct listStruct));
     new->head = NULL;
     new->size = 0;
+    return new;
 }
 
 node new_node(state s){
