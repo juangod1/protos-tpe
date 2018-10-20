@@ -1,10 +1,8 @@
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/sctp.h>
 #include <arpa/inet.h>
 #include "include/main.h"
-#include "include/options.h"
 #include "../Shared/include/executionValidator.h"
 #include "../Shared/include/lib.h"
 

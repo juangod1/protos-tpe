@@ -14,6 +14,7 @@
 #include "include/stateMachine.h"
 #include "include/MasterStateMachine.h"
 #include "include/stateSelector.h"
+#include "../Shared/include/buffer.h"
 #include "include/mediaTypes.h"
 #include "include/options.h"
 
@@ -52,8 +53,8 @@ int main(int argc, char ** argv)
 
             printf("%s\n",buffer);
             free(buffer);
-
-            run_server();
+            
+            //run_server();
             break;
         case HELP:
             help();
