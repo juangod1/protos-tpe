@@ -23,6 +23,7 @@ struct stateStruct {
     execution_state exec_state;
     state_code id;
     error_code error;
+    int processing_mail;
     execution_state (*on_arrive)(state st, file_descriptor fd, int is_read);
     execution_state (*on_resume)(state st, file_descriptor fd, int is_read);
     state_code (*on_leave)(state st);

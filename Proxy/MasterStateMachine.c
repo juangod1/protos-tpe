@@ -95,20 +95,35 @@ state_code CONNECT_CLIENT_on_leave(state s){
 }
 
 execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read){
-    if(fd==s->read_fds[0]) {
-
-    }
-    if(fd==s->read_fds[1]) {
-
-    }
-    if(fd==s->read_fds[2]) {
-
-    }
-    if(fd==s->write_fds[0]) {
-
-    }
-    if(fd==s->write_fds[1]) {
-
+    switch(is_read) {
+        case 1: // True
+            if (s->read_fds[0] == fd)
+            {
+                // Mua Read
+            }
+            if (s->read_fds[1] == fd)
+            {
+                // Origin Read
+            }
+            if (s->read_fds[2] == fd)
+            {
+                // Transform Read
+            }
+            break;
+        case 0: // False
+            if (s->write_fds[0] == fd)
+            {
+                // Mua Write
+            }
+            if (s->write_fds[1] == fd)
+            {
+                // Origin Write
+            }
+            if (s->write_fds[2] == fd)
+            {
+                // Transform Write
+            }
+            break;
     }
 }
 

@@ -19,6 +19,7 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
     }
     new->id = id;
     new->error = 0;
+    new->processing_mail=0;
     new->on_arrive = on_arrive;
     new->on_resume = on_resume;
     new->on_leave = on_leave;
