@@ -9,7 +9,7 @@
 int run_parser(char * command)
 {
     int status = system(command);
-    if(WIFSTOPPED(status)==true && WSTOPSIG(status)==127)
+    if(WSTOPSIG(status)==127) //todo: man says I shouldn't
     {
       perror("Invalid command");
       exit(BAD_EXIT_STATUS);

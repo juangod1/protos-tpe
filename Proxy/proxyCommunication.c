@@ -7,7 +7,7 @@
  *  Executes Parser Process.
  *  Returns PROXY_READ_PIPE and Parser's Pid
  */
-int start_parser(char * cmd,char * msg, size_t size, int * pid_ret)
+int start_parser(char * cmd, int pipe_ret[2])
 {
     int pipes[NUM_PIPES][2];
 
@@ -19,12 +19,6 @@ int start_parser(char * cmd,char * msg, size_t size, int * pid_ret)
     if(pipe(pipes[PROXY_WRITE_PIPE])==-1)
     {
         perror("pipe");
-        return ERROR;
-    }
-
-    if(write(PROXY_WRITE_FD,msg,size)==-1)
-    {
-        perror("write");
         return ERROR;
     }
 
@@ -50,17 +44,15 @@ int start_parser(char * cmd,char * msg, size_t size, int * pid_ret)
         close(PARSER_WRITE_FD);
         close(PROXY_WRITE_FD);
 
-        *pid_ret=pid;
+        pipe_ret[0]=PROXY_READ_FD;
+        pipe_ret[1]=PROXY_WRITE_FD;
+
     }
-    return PROXY_READ_FD;
+    return pid;
 }
 
-/*
- *   Recieves a buffer and it's current size, the pid of the child Process and the File_Descriptor of the pipe
- *   Returns the pipes content in the buffer parameter and the new size of the buffer.
- *
- */
-int read_parser(char ** buffer, int size, int parser_pid, int proxy_read_fd)
+
+int check_parser_exit_status(int parser_pid)
 {
     int status;
     waitpid(parser_pid,&status,0);
@@ -68,19 +60,7 @@ int read_parser(char ** buffer, int size, int parser_pid, int proxy_read_fd)
     if(WIFEXITED(status)==false || WEXITSTATUS(status)!=GOOD_EXIT_STATUS)
     {
         perror("Parser failed, no content written");
-        close(proxy_read_fd);
         return ERROR;
     }
-    FILE * fstream = fdopen(proxy_read_fd, "r");
-
-    size =fetchInputFromFile(buffer,fstream, (size_t) size);
-
-    if(size<0)
-    {
-        perror("read");
-        return ERROR;
-    }
-
-    close(proxy_read_fd);
-    return size;
+    return STANDARD;
 }

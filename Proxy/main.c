@@ -35,25 +35,29 @@ int main(int argc, char ** argv)
             server_string(argv[argc-1]);
             app_context=get_app_context();
 
-            int pid;
-            char * buffer = calloc(1,INITIAL_INPUT_SIZE);
-            int fd = start_parser(app_context->command_specification,"holaquetal",11,&pid);
-            if(fd==ERROR)
+            int pipes[2];
+            int pid= start_parser(app_context->command_specification,pipes);
+
+            buffer_p buffer;
+            buffer_initialize(&buffer,1000);
+
+            buffer_read(pipes[READ_FD],buffer);
+
+            buffer_write(STDOUT_FILENO,buffer);
+
+            int response = check_parser_exit_status(pid);
+            if(response==STANDARD)
             {
-                free(buffer);
-                return ERROR;
+                printf("Program exited normally.\n");
+            }
+            else
+            {
+                printf("Program encountered an error.\n");
             }
 
-            int size = read_parser(&buffer,INITIAL_INPUT_SIZE,pid,fd);
-            if(size<0)
-            {
-                free(buffer);
-                return ERROR;
-            }
+            buffer_finalize(buffer);
 
-            printf("%s\n",buffer);
-            free(buffer);
-            
+
             //run_server();
             break;
         case HELP:

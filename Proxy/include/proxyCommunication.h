@@ -17,6 +17,8 @@
 #define PARSER_READ_FD  ( pipes[PROXY_WRITE_PIPE][READ_FD]   )
 #define PROXY_WRITE_FD ( pipes[PROXY_WRITE_PIPE][WRITE_FD] )
 
-int start_parser(char * cmd,char * msg, size_t size, int * pid);
-int read_parser(char ** buffer, int size, int parser_pid, int proxy_read_fd);
+
+int start_parser(char * cmd, int pipe_ret[2]);
+int check_parser_exit_status(int parser_pid);
+
 #endif
