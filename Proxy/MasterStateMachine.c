@@ -45,11 +45,11 @@ state_machine * initialize_master_machine(file_descriptor MUA_sock){
     return sm;
 }
 
-execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd){
+execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read){
 
 }
 
-execution_state ATTEND_ADMIN_on_resume(state s, file_descriptor fd){
+execution_state ATTEND_ADMIN_on_resume(state s, file_descriptor fd, int is_read){
 
 }
 
@@ -57,11 +57,11 @@ state_code ATTEND_ADMIN_on_leave(state s){
 
 }
 
-execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd){
+execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read){
 
 }
 
-execution_state CONNECT_ADMIN_on_resume(state s, file_descriptor fd){
+execution_state CONNECT_ADMIN_on_resume(state s, file_descriptor fd, int is_read){
 
 }
 
@@ -69,7 +69,7 @@ state_code CONNECT_ADMIN_on_leave(state s){
 
 }
 
-execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd){
+execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_read){
     int accept_ret = accept(MUA_sock,NULL,NULL);
 
     if(accept_ret<0){
@@ -86,7 +86,7 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd){
     return NOT_WAITING;
 }
 
-execution_state CONNECT_CLIENT_on_resume(state s, file_descriptor fd){
+execution_state CONNECT_CLIENT_on_resume(state s, file_descriptor fd, int is_read){
 
 }
 
@@ -94,7 +94,7 @@ state_code CONNECT_CLIENT_on_leave(state s){
 
 }
 
-execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd){
+execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read){
     if(fd==s->read_fds[0]) {
 
     }
@@ -112,19 +112,19 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd){
     }
 }
 
-execution_state ATTEND_CLIENT_on_resume(state s, file_descriptor fd){
-    ATTEND_CLIENT_on_arrive(s,fd);
+execution_state ATTEND_CLIENT_on_resume(state s, file_descriptor fd, int is_read){
+    ATTEND_CLIENT_on_arrive(s,fd, is_read);
 }
 
 state_code ATTEND_CLIENT_on_leave(state s){
 
 }
 
-execution_state ERROR_on_arrive(state s, file_descriptor fd){
+execution_state ERROR_on_arrive(state s, file_descriptor fd, int is_read){
 
 }
 
-execution_state ERROR_on_resume(state s, file_descriptor fd){
+execution_state ERROR_on_resume(state s, file_descriptor fd, int is_read){
 
 }
 

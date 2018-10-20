@@ -23,9 +23,9 @@ struct stateStruct {
     execution_state exec_state;
     state_code id;
     error_code error;
-    execution_state (*on_arrive)(state st, file_descriptor fd);
-    execution_state (*on_resume)(state st, file_descriptor fd);
-    state_code (*on_leave)();
+    execution_state (*on_arrive)(state st, file_descriptor fd, int is_read);
+    execution_state (*on_resume)(state st, file_descriptor fd, int is_read);
+    state_code (*on_leave)(state st);
 };
 
 #endif //PROTOS_TPE_STATE_H

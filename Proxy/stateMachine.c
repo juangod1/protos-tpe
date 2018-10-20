@@ -8,7 +8,7 @@
 #include "include/stateSelector.h"
 #include "include/state.h"
 
-state new_state(state_code id, execution_state (*on_arrive)(state s, file_descriptor fd), execution_state (*on_resume)(state s, file_descriptor fd), state_code (*on_leave)(state s)){
+state new_state(state_code id, execution_state (*on_arrive)(state s, file_descriptor fd, int is_read), execution_state (*on_resume)(state s, file_descriptor fd, int is_read), state_code (*on_leave)(state s)){
     state new = malloc(sizeof(struct stateStruct));
     int i;
     for(i=0;i<3;i++){
@@ -47,8 +47,8 @@ void run_state(state_machine * sm)
     if(previous!=NULL&&previous->error){
         // error state has fd -2
         state err = get(sm->states,-2,1);
-        err->on_arrive(err,-2);
-        err->on_leave();
+        err->on_arrive(err,-2,1);
+        err->on_leave(err);
     }
 
     int next[2]={0};
@@ -63,18 +63,18 @@ void run_state(state_machine * sm)
     switch(st->exec_state)
     {
         case NOT_WAITING:
-            switch(st->on_arrive(st, next[0])){
+            switch(st->on_arrive(st, next[0], next[1])){
                 case NOT_WAITING:
-                    st->on_leave();
+                    st->on_leave(st);
                     break;
                 case WAITING:
                     break;
             }
             break;
         case WAITING:
-            switch(st->on_resume(st, next[0])){
+            switch(st->on_resume(st, next[0], next[1])){
                 case NOT_WAITING:
-                    st->on_leave();
+                    st->on_leave(st);
                     break;
                 case WAITING:
                     break;
