@@ -23,8 +23,7 @@ node new_node(state s);
 void put(list l, state s);
 
 node putRec(node curr, state s);
-state get(list l, file_descriptor fd);
-state getRec(node curr, file_descriptor fd);
+state get(list l, file_descriptor fd, int is_read);
 int remove_node(list l, state s);
 int removeRec(node curr, state s);
 

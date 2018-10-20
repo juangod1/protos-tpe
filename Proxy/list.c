@@ -34,33 +34,32 @@ node putRec(node curr, state s){
     return putRec(curr->next,s);
 }
 
-state get(list l, file_descriptor fd){
-    return getRec(l->head, fd);
-}
-
-state getRec(node curr, file_descriptor fd){
+state getRec(node curr, file_descriptor fd, int is_read){
     if(curr==NULL)
         return NULL;
 
-    int i, match=0;
-    for(i=0;i<3;i++){
-        if(curr->st->read_fds[i]==fd){
-            match=1;
-            break;
+    int i;
+
+    if(is_read){
+        for(i=0;i<3;i++){
+            if(curr->st->read_fds[i]==fd){
+                return curr->st;
+            }
         }
     }
-    for(i=0;i<2&&!match;i++){
-        if(curr->st->write_fds[i]==fd){
-            match=1;
-            break;
+    else {
+        for(i=0;i<3;i++){
+            if(curr->st->write_fds[i]==fd){
+                return curr->st;
+            }
         }
     }
 
-    if(match){
-        return curr->st;
-    }
+    return getRec(curr->next,fd,is_read);
+}
 
-    return getRec(curr->next,fd);
+state get(list l, file_descriptor fd, int is_read){
+    return getRec(l->head, fd, is_read);
 }
 
 int remove_node(list l, state s){

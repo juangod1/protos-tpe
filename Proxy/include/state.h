@@ -19,7 +19,7 @@ typedef enum {
 
 struct stateStruct {
     file_descriptor read_fds[3];
-    file_descriptor write_fds[2];
+    file_descriptor write_fds[3];
     execution_state exec_state;
     state_code id;
     error_code error;

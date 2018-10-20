@@ -28,7 +28,10 @@ void add_write_fd(file_descriptor fd){
     FD_SET(fd, &write_fds);
 }
 
-file_descriptor select_state(){
+/*
+ * Return value: Char array { file_descriptor, is_read }
+ */
+void select_state(int ret[2]){
     set_up_fd_sets(&read_fds,&write_fds);
 
     int select_ret;
@@ -42,14 +45,16 @@ file_descriptor select_state(){
     int i;
     for(i=0;i<MAX_FD;i++){
         if(FD_ISSET(i,&read_fds)){
-            return i;
+            ret[0]=i;
+            ret[1]=1;
+            return;
         }
         if(FD_ISSET(i,&write_fds)){
-            return i;
+            ret[0]=i;
+            ret[1]=0;
+            return;
         }
     }
-
-    return select_ret;
 }
 
 void remove_read_fd(file_descriptor fd){

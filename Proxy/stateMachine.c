@@ -14,7 +14,7 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
     for(i=0;i<3;i++){
         new->read_fds[i]=-1;
     }
-    for(i=0;i<2;i++){
+    for(i=0;i<3;i++){
         new->write_fds[i]=-1;
     }
     new->id = id;
@@ -46,13 +46,15 @@ void run_state(state_machine * sm)
 
     if(previous!=NULL&&previous->error){
         // error state has fd -2
-        state err = get(sm->states,-2);
+        state err = get(sm->states,-2,1);
         err->on_arrive(err,-2);
         err->on_leave();
     }
 
-    file_descriptor next = select_state();
-    state st = get(sm->states,next);
+    int next[2]={0};
+    select_state(next);
+
+    state st = get(sm->states,next[0],next[1]);
     if(st==NULL){
         perror("Error, no state with file descriptor found.");
     }
@@ -61,7 +63,7 @@ void run_state(state_machine * sm)
     switch(st->exec_state)
     {
         case NOT_WAITING:
-            switch(st->on_arrive(st, next)){
+            switch(st->on_arrive(st, next[0])){
                 case NOT_WAITING:
                     st->on_leave();
                     break;
@@ -70,7 +72,7 @@ void run_state(state_machine * sm)
             }
             break;
         case WAITING:
-            switch(st->on_resume(st, next)){
+            switch(st->on_resume(st, next[0])){
                 case NOT_WAITING:
                     st->on_leave();
                     break;
