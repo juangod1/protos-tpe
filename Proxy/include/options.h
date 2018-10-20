@@ -6,6 +6,7 @@
 #define PROTOS_TPE_OPTIONS_H
 
 typedef struct {
+    char * server_string;
     char * error_path;
     int pop3_path;
     int management_path;
@@ -37,6 +38,7 @@ void command_specification(char * arg);
 
 void help();
 void version();
+void server_string(char * server_string);
 
 
 #endif //PROTOS_TPE_OPTIONS_H

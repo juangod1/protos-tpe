@@ -31,6 +31,7 @@ int main(int argc, char ** argv)
         case STANDARD:
             
             execute_options();
+            server_string(argv[argc-1]);
             app_context=get_app_context();
 
             int pid;

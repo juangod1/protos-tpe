@@ -123,3 +123,9 @@ void help()
     printf("OPTIONS:\n");
     option_help();
 }
+
+void server_string(char * server_string)
+{
+    printf("This is server string!\n");fflush(stdout);
+    app_context->server_string=server_string;
+}
