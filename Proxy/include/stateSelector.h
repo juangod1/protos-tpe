@@ -12,7 +12,7 @@
 void select_state(int ret[2]);
 void remove_read_fd(file_descriptor fd);
 void remove_write_fd(file_descriptor fd);
-void initialize_selector(file_descriptor mua);
+void initialize_selector();
 void add_read_fd(file_descriptor fd);
 void add_write_fd(file_descriptor fd);
 

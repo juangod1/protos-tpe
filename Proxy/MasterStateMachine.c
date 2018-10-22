@@ -17,8 +17,6 @@
 
 state_machine * sm;
 
-file_descriptor MUA_sock;
-
 state_machine * initialize_master_machine(file_descriptor MUA_sock){
     sm = new_machine();
     sm->states=new_list();
@@ -71,7 +69,7 @@ state_code CONNECT_ADMIN_on_leave(state s){
 }
 
 execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_read){
-    int accept_ret = accept(MUA_sock,NULL,NULL);
+    int accept_ret = accept(s->read_fds[0],NULL,NULL);
 
     if(accept_ret<0){
         perror("accept");
