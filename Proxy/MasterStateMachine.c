@@ -155,38 +155,53 @@ void set_up_fd_sets_rec(fd_set * read_fds, fd_set * write_fds, node curr){
     if(curr==NULL)
         return;
 
-    if(curr->st->buffers[0]!=NULL)
-    {
-        if(buffer_is_empty(curr->st->buffers[0])){
-            if(curr->st->read_fds[0]>0)
-                add_read_fd(curr->st->read_fds[0]); // MUA read
-        }
-        else{
-            if(curr->st->write_fds[1]>0)
-                add_write_fd(curr->st->write_fds[1]); // Origin write
-        }
-    }
-    if(curr->st->buffers[1]!=NULL)
-    {
-        if(buffer_is_empty(curr->st->buffers[1])){
-            if(curr->st->read_fds[1]>0)
-                add_read_fd(curr->st->read_fds[1]); // ORIGIN read
-        }
-        else{
-            if(curr->st->write_fds[2]>0)
-                add_write_fd(curr->st->write_fds[2]); // Transform write
-        }
-    }
-    if(curr->st->buffers[2]!=NULL)
-    {
-        if(buffer_is_empty(curr->st->buffers[2])){
-            if(curr->st->read_fds[2]>0)
-                add_read_fd(curr->st->read_fds[2]); // Transform read
-        }
-        else{
-            if(curr->st->write_fds[0]>0)
-                add_write_fd(curr->st->write_fds[0]); // MUA write
-        }
+    switch(curr->st->id){
+        case ATTEND_CLIENT_STATE:
+            if(curr->st->buffers[0]!=NULL)
+            {
+                if(buffer_is_empty(curr->st->buffers[0])){
+                    if(curr->st->read_fds[0]>0)
+                        add_read_fd(curr->st->read_fds[0]); // MUA read
+                }
+                else{
+                    if(curr->st->write_fds[1]>0)
+                        add_write_fd(curr->st->write_fds[1]); // Origin write
+                }
+            }
+            if(curr->st->buffers[1]!=NULL)
+            {
+                if(buffer_is_empty(curr->st->buffers[1])){
+                    if(curr->st->read_fds[1]>0)
+                        add_read_fd(curr->st->read_fds[1]); // ORIGIN read
+                }
+                else{
+                    if(curr->st->write_fds[2]>0)
+                        add_write_fd(curr->st->write_fds[2]); // Transform write
+                }
+            }
+            if(curr->st->buffers[2]!=NULL)
+            {
+                if(buffer_is_empty(curr->st->buffers[2])){
+                    if(curr->st->read_fds[2]>0)
+                        add_read_fd(curr->st->read_fds[2]); // Transform read
+                }
+                else{
+                    if(curr->st->write_fds[0]>0)
+                        add_write_fd(curr->st->write_fds[0]); // MUA write
+                }
+            }
+            break;
+        default:
+            ;int i;
+            for(i=0;i<3;i++){
+                if(curr->st->read_fds[i]!=-1&&curr->st->read_fds[i]!=-2)
+                    add_read_fd(curr->st->read_fds[i]);
+            }
+            for(i=0;i<3;i++){
+                if(curr->st->write_fds[i]!=-1&&curr->st->write_fds[i]!=-2)
+                    add_write_fd(curr->st->write_fds[i]);
+            }
+            break;
     }
 
     set_up_fd_sets_rec(read_fds,write_fds,curr->next);
