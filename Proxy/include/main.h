@@ -9,7 +9,7 @@ typedef int file_descriptor;
 #define MAXIMUM_PENDING_CONNECTIONS 50
 
 file_descriptor setup_MUA_socket();
-file_descriptor setup_origin_socket(char * origin_address);
+file_descriptor setup_origin_socket();
 void error();
 void run_server();
 int max(int a, int b);

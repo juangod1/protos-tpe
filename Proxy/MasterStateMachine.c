@@ -13,15 +13,17 @@
 #include "include/list.h"
 #include "include/stateSelector.h"
 #include "../Shared/include/buffer.h"
+#include "include/options.h"
 #include <sys/select.h>
+#include <netinet/in.h>
 
 state_machine * sm;
 
-state_machine * initialize_master_machine(file_descriptor MUA_sock){
+state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descriptor origin_sock){
     sm = new_machine();
     sm->states=new_list();
 
-    sm->states_amount=0;
+    sm->states_amount=1;
     sm->previous_state=NULL;
     sm->next_state=NULL;
 
@@ -39,6 +41,7 @@ state_machine * initialize_master_machine(file_descriptor MUA_sock){
 
     state connect_client = new_state(CONNECT_CLIENT_STATE, CONNECT_CLIENT_on_arrive, CONNECT_CLIENT_on_resume,CONNECT_CLIENT_on_leave);
     connect_client->read_fds[0]=MUA_sock;
+    connect_client->persistent_data=origin_sock;
     put(sm->states,connect_client);
 
     return sm;
@@ -69,22 +72,20 @@ state_code CONNECT_ADMIN_on_leave(state s){
 }
 
 execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_read){
-    int accept_ret = accept(s->read_fds[0],NULL,NULL);
+        int accept_ret = accept(s->read_fds[0],NULL,NULL);
 
-    if(accept_ret<0){
-        perror("accept");
-        error();
-    }
+        if(accept_ret<0){
+            perror("accept");
+            error();
+        }
 
-    state st = new_state(ATTEND_CLIENT_STATE,ATTEND_CLIENT_on_arrive,ATTEND_CLIENT_on_resume,ATTEND_CLIENT_on_leave);
-    st->read_fds[0] = accept_ret;
-    buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
-    buffer_initialize(&(st->buffers[1]), BUFFER_SIZE);
-    buffer_initialize(&(st->buffers[2]), BUFFER_SIZE);
+        state st = new_state(CONNECT_CLIENT_STAGE_TWO_STATE,CONNECT_CLIENT_STAGE_TWO_on_arrive,CONNECT_CLIENT_STAGE_TWO_on_resume,CONNECT_CLIENT_STAGE_TWO_on_leave);
+        st->read_fds[0]=accept_ret;
+        st->read_fds[1]=s->persistent_data;
 
-    add_state(sm,st);
+        add_state(sm,st);
 
-    return NOT_WAITING;
+        return NOT_WAITING;
 }
 
 execution_state CONNECT_CLIENT_on_resume(state s, file_descriptor fd, int is_read){
@@ -95,34 +96,68 @@ state_code CONNECT_CLIENT_on_leave(state s){
 
 }
 
+execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read){
+    struct sockaddr_in address;
+    memset(&address, 0, sizeof(address));
+    address.sin_port = htons((uint16_t)get_app_context()->origin_port);
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl((uint32_t)get_app_context()->server_string);
+
+    //Connect to remote server
+    if (connect(s->read_fds[1], (struct sockaddr *)&address , sizeof(address)) < 0)
+    {
+        perror("Connect to origin error");
+        error();
+    }
+
+    state st = new_state(ATTEND_CLIENT_STATE,ATTEND_CLIENT_on_arrive,ATTEND_CLIENT_on_resume,ATTEND_CLIENT_on_leave);
+    st->read_fds[0] = s->read_fds[0];
+    st->read_fds[1] = fd;
+    st->write_fds[1] = fd;
+    buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
+    buffer_initialize(&(st->buffers[1]), BUFFER_SIZE);
+    buffer_initialize(&(st->buffers[2]), BUFFER_SIZE);
+
+    add_state(sm,st);
+
+    return NOT_WAITING;
+}
+
+execution_state CONNECT_CLIENT_STAGE_TWO_on_resume(state s, file_descriptor fd, int is_read){
+
+}
+
+state_code CONNECT_CLIENT_STAGE_TWO_on_leave(state s){
+    remove_state(sm,s);
+}
+
 execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read){
     switch(is_read) {
         case 1: // True
             if (s->read_fds[0] == fd)
-            {
+            {   // MUA READ
                 buffer_read(fd,s->buffers[0]);
             }
-            if (s->read_fds[1] == fd)
-            {
+            else if (s->read_fds[1] == fd)
+            {   // Origin READ
                 buffer_read(fd,s->buffers[1]);
             }
-            if (s->read_fds[2] == fd)
-            {
+            else if (s->read_fds[2] == fd)
+            {   // Transform READ
                 buffer_read(fd,s->buffers[2]);
             }
             break;
         case 0: // False
             if (s->write_fds[0] == fd)
-            {
+            {   // MUA WRITE
                 buffer_write(fd,s->buffers[0]);
-                // Mua Write
             }
-            if (s->write_fds[1] == fd)
-            {
+            else if (s->write_fds[1] == fd)
+            {   // Origin WRITE
                 buffer_write(fd,s->buffers[1]);
             }
-            if (s->write_fds[2] == fd)
-            {
+            else if (s->write_fds[2] == fd)
+            {   // Transform WRITE
                 buffer_write(fd,s->buffers[2]);
             }
             break;
@@ -188,6 +223,12 @@ void set_up_fd_sets_rec(fd_set * read_fds, fd_set * write_fds, node curr){
                         add_write_fd(curr->st->write_fds[0]); // MUA write
                 }
             }
+            break;
+        case CONNECT_CLIENT_STATE:
+            add_read_fd(curr->st->read_fds[0]);
+            break;
+        case CONNECT_CLIENT_STAGE_TWO_STATE:
+            add_read_fd(curr->st->read_fds[1]);
             break;
         default:
             ;int i;

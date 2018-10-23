@@ -31,6 +31,7 @@ struct stateStruct {
     execution_state (*on_resume)(state st, file_descriptor fd, int is_read);
     state_code (*on_leave)(state st);
     buffer_p buffers[3];
+    int persistent_data;
 };
 
 

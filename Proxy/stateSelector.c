@@ -21,17 +21,19 @@ const struct timespec timeout={ //TODO: como hacer que no timeoutee?
 file_descriptor MUA_sock;
 
 void add_read_fd(file_descriptor fd){
+    printf("Adding fd %d\n",fd);fflush(stdout);
     FD_SET(fd, &read_fds);
 }
 
 void add_write_fd(file_descriptor fd){
+    printf("Adding fd %d\n",fd);fflush(stdout);
     FD_SET(fd, &write_fds);
 }
 
 /*
  * Return value: Char array { file_descriptor, is_read }
  */
-void select_state(int ret[2]){
+void select_state(int * ret){
     set_up_fd_sets(&read_fds,&write_fds);
 
     int select_ret;

@@ -63,27 +63,35 @@ state get(list l, file_descriptor fd, int is_read){
     return getRec(l->head, fd, is_read);
 }
 
+int removeRec(node curr, state s, list l) {
+    if (curr->st == s) {
+        free_node(curr->next);
+        l->head = NULL;
+        return 0;
+    }
+
+    if (curr->next == NULL)
+        return -1;
+
+    if (curr->next->st == s) {
+        node n = curr->next->next;
+        free_node(curr->next);
+        curr->next = n;
+        return 0;
+    }
+
+    return removeRec(curr->next, s, l);
+}
+
 int remove_node(list l, state s){
     if(l==NULL)
         return -1;
 
-    if(removeRec(l->head,s)){
+    if(removeRec(l->head,s,l)){
         return -1;
     }
     else{
         l->size--;
-        return 0;
-    }
-}
-
-int removeRec(node curr, state s){
-    if(curr->next==NULL)
-        return -1;
-
-    if(curr->next->st == s){
-        node n = curr->next->next;
-        free_node(curr->next);
-        curr->next=n;
         return 0;
     }
 }

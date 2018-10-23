@@ -42,6 +42,9 @@ int buffer_read(int file_descriptor, buffer_p buffer)
     {
         buffer->count+=amount;
     }
+    else{
+        perror("Read error");
+    }
     return amount;
 }
 

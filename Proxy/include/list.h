@@ -25,7 +25,6 @@ void put(list l, state s);
 node putRec(node curr, state s);
 state get(list l, file_descriptor fd, int is_read);
 int remove_node(list l, state s);
-int removeRec(node curr, state s);
 
 void free_node(node n);
 void free_list(list l);

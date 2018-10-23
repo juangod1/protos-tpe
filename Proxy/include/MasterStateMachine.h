@@ -12,11 +12,17 @@
  */
 #define CONNECT_CLIENT_STATE 2
 
+/* FD List
+ *  read_fds[0] = MUA_CONNECT_SOCKET
+ *  write_fds[0] = connect_origin_sock
+ */
+#define CONNECT_CLIENT_STAGE_TWO_STATE 3
+
 
 /* FD List
  *  read_fds[0] = ADMIN_read_fd
  */
-#define ATTEND_ADMIN_STATE 3
+#define ATTEND_ADMIN_STATE 7
 
 
 /* FD List
@@ -41,9 +47,12 @@
  */
 #define ERROR_STATE 6
 
-state_machine * initialize_master_machine(file_descriptor MUA_sock);
+state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descriptor origin_sock);
 void set_up_fd_sets(fd_set * read_fds, fd_set * write_fds);
 
+execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read);
+execution_state CONNECT_CLIENT_STAGE_TWO_on_resume(state s, file_descriptor fd, int is_read);
+state_code CONNECT_CLIENT_STAGE_TWO_on_leave(state s);
 execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read);
 execution_state ATTEND_ADMIN_on_resume(state s, file_descriptor fd, int is_read);
 state_code ATTEND_ADMIN_on_leave(state s);

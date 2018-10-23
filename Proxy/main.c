@@ -6,6 +6,8 @@
 #include <sys/param.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <fcntl.h>
 #include "include/proxyCommunication.h"
 #include "include/main.h"
 #include "../Shared/include/executionValidator.h"
@@ -128,7 +130,8 @@ void read_user_test()
 void run_server()
 {
     file_descriptor mua = setup_MUA_socket();
-    state_machine * machine = initialize_master_machine(mua);
+    file_descriptor origin = setup_origin_socket();
+    state_machine * machine = initialize_master_machine(mua, origin);
     initialize_selector(mua);
 
     for(;;){
@@ -136,13 +139,7 @@ void run_server()
     }
 }
 
-file_descriptor setup_origin_socket(char * origin_address){
-    struct sockaddr_in address;
-    memset(&address, 0, sizeof(address));
-    address.sin_port = htons(ORIGIN_PORT);
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = htonl(INADDR_ANY);
-
+file_descriptor setup_origin_socket() {
     file_descriptor sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     if(sock < 0)
@@ -151,13 +148,11 @@ file_descriptor setup_origin_socket(char * origin_address){
         error();
     }
 
-    if (connect(sock, (struct sockaddr *)&address, sizeof(address)) < 0)
-    {
-        perror("Unable to connect to origin server.");
+    int status = fcntl(sock, F_SETFL, fcntl(sock, F_GETFL, 0) | O_NONBLOCK);
+
+    if (status == -1){
+        perror("fcntl error");
         error();
-    }
-    else{
-        printf("Connected to server %s",origin_address);
     }
 
     return sock;

@@ -40,15 +40,15 @@ app_context_p get_app_context()
 
 void initialize_options()
 {
-    option_register("Error Path",'e',error_specification,"/dev/null","Specifies the file where stderr is rerouted to. By defect /dev/null",error_specification_validation, 1);
+    option_register("Error Path",'e',error_specification,"/dev/null","Specifies the file where stderr is rerouted to. By default /dev/null",error_specification_validation, 1);
     option_register("Pop3 Path",'l',pop3_direction,"all","Specifies the route where the Proxy will act.",pop3_direction_validation, 1);
     option_register("Management Path",'L',management_direction,"loopback","Specifies the route where the Management service will act.",management_direction_validation, 1);
     option_register("Replacement Message",'m',replacement_message,"Replaced Part","Specifies the message to replace filtered text.",replacement_message_validation, 1);
     option_register("Censored Mediatype",'M',censored_mediatype,"","Censored media type list",censored_mediatype_validation, 1);
-    option_register("Management port",'o',management_port,"9090","Specifies the SCTP port the management server listens to. By defect 9090",management_port_validation, 1);
-    option_register("Local Port",'p',local_port,"1110","Specifies the TCP port for incoming POP3 connections. By defect 1110",local_port_validation, 1);
-    option_register("Origin Port",'P',origin_port,"110","Specifies the TCP port where the POP3 server is found in the origin server. By defect 110",origin_port_validation, 1);
-    option_register("Command Specification",'t',command_specification,"cat","Command utilized for external transformations. Compatible with system(3). By defect applies no transformations.", command_specification_validation, 1);
+    option_register("Management port",'o',management_port,"9090","Specifies the SCTP port the management server listens to. By default 9090",management_port_validation, 1);
+    option_register("Local Port",'p',local_port,"1110","Specifies the TCP port for incoming POP3 connections. By default 1110",local_port_validation, 1);
+    option_register("Origin Port",'P',origin_port,"110","Specifies the TCP port where the POP3 server is found in the origin server. By default 110",origin_port_validation, 1);
+    option_register("Command Specification",'t',command_specification,"cat","Command utilized for external transformations. Compatible with system(3). By default applies no transformations.", command_specification_validation, 1);
 }
 
 void pop3_direction(char * arg)
@@ -96,13 +96,13 @@ void local_port(char * arg)
 {
     //TODO: has to receive a port and specify
     printf("This is local port!\n");fflush(stdout);
-    app_context->local_port=10;
+    app_context->local_port=1110;
 }
 void origin_port(char * arg)
 {
     //TODO: has to receive a port and specify it as the origin server POP3 port
     printf("This is origin port!\n");fflush(stdout);
-    app_context->origin_port=10;
+    app_context->origin_port=110;
 }
 void command_specification(char * arg)
 {

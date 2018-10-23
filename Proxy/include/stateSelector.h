@@ -9,7 +9,7 @@
 
 #include "stateMachine.h"
 
-void select_state(int ret[2]);
+void select_state(int * ret);
 void remove_read_fd(file_descriptor fd);
 void remove_write_fd(file_descriptor fd);
 void initialize_selector();

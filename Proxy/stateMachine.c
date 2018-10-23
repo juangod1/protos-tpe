@@ -27,6 +27,7 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
     new->buffers[0]=NULL;
     new->buffers[1]=NULL;
     new->buffers[2]=NULL;
+    new->persistent_data=0;
     return new;
 }
 
@@ -46,14 +47,6 @@ state_machine * new_machine(){
 
 void run_state(state_machine * sm)
 {
-    state previous = sm->previous_state;
-
-    if(previous!=NULL&&previous->error){
-        // error state has fd -2
-        state err = get(sm->states,-2,1);
-        err->on_arrive(err,-2,1);
-        err->on_leave(err);
-    }
 
     int next[2]={0};
     select_state(next);
@@ -87,7 +80,6 @@ void run_state(state_machine * sm)
         default:
             break;
     }
-    sm->previous_state=st;
 }
 
 void add_state(state_machine * sm, state s){
@@ -96,7 +88,7 @@ void add_state(state_machine * sm, state s){
 }
 
 int remove_state(state_machine * sm, state s){
-    if(!remove_node(sm->states,s)){
+    if(!remove_node(sm->states,s)) {
         sm->states_amount--;
         return 0;
     }
