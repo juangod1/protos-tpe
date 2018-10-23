@@ -15,7 +15,7 @@ fd_set read_fds;
 fd_set write_fds;
 
 const struct timespec timeout={ //TODO: como hacer que no timeoutee?
-        .tv_sec=99999999999, .tv_nsec=0
+        .tv_sec=999999999999999999, .tv_nsec=0
 };
 
 file_descriptor MUA_sock;

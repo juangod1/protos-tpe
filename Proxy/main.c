@@ -140,20 +140,20 @@ void run_server()
 }
 
 file_descriptor setup_origin_socket() {
-    file_descriptor sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    file_descriptor sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     if(sock < 0)
     {
         perror("Unable to create socket.\n");
         error();
     }
-
+/*
     int status = fcntl(sock, F_SETFL, fcntl(sock, F_GETFL, 0) | O_NONBLOCK);
 
     if (status == -1){
         perror("fcntl error");
         error();
-    }
+    }*/
 
     return sock;
 }

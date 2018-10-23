@@ -16,6 +16,7 @@
 #include "include/options.h"
 #include <sys/select.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 state_machine * sm;
 
@@ -101,7 +102,7 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
     memset(&address, 0, sizeof(address));
     address.sin_port = htons((uint16_t)get_app_context()->origin_port);
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = htonl((uint32_t)get_app_context()->server_string);
+    address.sin_addr.s_addr = inet_addr(get_app_context()->server_string);
 
     //Connect to remote server
     if (connect(s->read_fds[1], (struct sockaddr *)&address , sizeof(address)) < 0)
@@ -112,6 +113,7 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
 
     state st = new_state(ATTEND_CLIENT_STATE,ATTEND_CLIENT_on_arrive,ATTEND_CLIENT_on_resume,ATTEND_CLIENT_on_leave);
     st->read_fds[0] = s->read_fds[0];
+    st->write_fds[0] = s->read_fds[0];
     st->read_fds[1] = fd;
     st->write_fds[1] = fd;
     buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
@@ -137,14 +139,17 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
             if (s->read_fds[0] == fd)
             {   // MUA READ
                 buffer_read(fd,s->buffers[0]);
+                print_buffer(s->buffers[0]);
             }
             else if (s->read_fds[1] == fd)
             {   // Origin READ
                 buffer_read(fd,s->buffers[1]);
+                print_buffer(s->buffers[1]);
             }
             else if (s->read_fds[2] == fd)
             {   // Transform READ
                 buffer_read(fd,s->buffers[2]);
+                print_buffer(s->buffers[2]);
             }
             break;
         case 0: // False
