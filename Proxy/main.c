@@ -130,8 +130,7 @@ void read_user_test()
 void run_server()
 {
     file_descriptor mua = setup_MUA_socket();
-    file_descriptor origin = setup_origin_socket();
-    state_machine * machine = initialize_master_machine(mua, origin);
+    state_machine * machine = initialize_master_machine(mua);
     initialize_selector(mua);
 
     for(;;){

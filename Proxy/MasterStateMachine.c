@@ -20,11 +20,11 @@
 
 state_machine * sm;
 
-state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descriptor origin_sock){
+state_machine * initialize_master_machine(file_descriptor MUA_sock){
     sm = new_machine();
     sm->states=new_list();
 
-    sm->states_amount=1;
+    sm->states_amount=0;
     sm->previous_state=NULL;
     sm->next_state=NULL;
 
@@ -38,12 +38,11 @@ state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descrip
         s->write_fds[i]=-2;
     }
 
-    put(sm->states,s);
+    add_state(sm,s);
 
     state connect_client = new_state(CONNECT_CLIENT_STATE, CONNECT_CLIENT_on_arrive, CONNECT_CLIENT_on_resume,CONNECT_CLIENT_on_leave);
     connect_client->read_fds[0]=MUA_sock;
-    connect_client->persistent_data=origin_sock;
-    put(sm->states,connect_client);
+    add_state(sm,connect_client);
 
     return sm;
 }
@@ -82,7 +81,7 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
 
         state st = new_state(CONNECT_CLIENT_STAGE_TWO_STATE,CONNECT_CLIENT_STAGE_TWO_on_arrive,CONNECT_CLIENT_STAGE_TWO_on_resume,CONNECT_CLIENT_STAGE_TWO_on_leave);
         st->read_fds[0]=accept_ret;
-        st->read_fds[1]=s->persistent_data;
+        st->read_fds[1]=setup_origin_socket();
 
         add_state(sm,st);
 

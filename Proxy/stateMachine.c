@@ -55,7 +55,7 @@ void run_state(state_machine * sm)
     if(st==NULL){
         perror("Error, no state with file descriptor found.");
     }
-    printf("State %d was chosen.",st->id);fflush(stdout);
+    printf("State %d was chosen.\n",st->id);fflush(stdout);
 
     switch(st->exec_state)
     {

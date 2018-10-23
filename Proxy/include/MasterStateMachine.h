@@ -47,7 +47,7 @@
  */
 #define ERROR_STATE 6
 
-state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descriptor origin_sock);
+state_machine * initialize_master_machine(file_descriptor MUA_sock);
 void set_up_fd_sets(fd_set * read_fds, fd_set * write_fds);
 
 execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read);
