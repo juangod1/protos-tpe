@@ -68,5 +68,6 @@ state_code ATTEND_CLIENT_on_leave(state s);
 execution_state ERROR_on_arrive(state s, file_descriptor fd, int is_read);
 execution_state ERROR_on_resume(state s, file_descriptor fd, int is_read);
 state_code ERROR_on_leave(state s);
+void debug_print_state(int state);
 
 #endif //PROTOS_TPE_TOPLEVELSTATEMACHINE_H

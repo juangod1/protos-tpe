@@ -261,3 +261,31 @@ void set_up_fd_sets(fd_set * read_fds, fd_set * write_fds){
     }
     set_up_fd_sets_rec(read_fds,write_fds,sm->states->head);
 }
+
+void debug_print_state(int state){
+    char * msg;
+    switch(state){
+        case CONNECT_CLIENT_STATE:
+            msg="CONNECT_CLIENT_STATE";
+            break;
+        case CONNECT_CLIENT_STAGE_TWO_STATE:
+            msg="CONNECT_CLIENT_STAGE_TWO_STATE";
+            break;
+        case ATTEND_ADMIN_STATE:
+            msg="ATTEND_ADMIN_STATE";
+            break;
+        case CONNECT_ADMIN_STATE:
+            msg="CONNECT_ADMIN_STATE";
+            break;
+        case ATTEND_CLIENT_STATE:
+            msg="ATTEND_CLIENT_STATE";
+            break;
+        case ERROR_STATE:
+            msg="ERROR_STATE";
+            break;
+        default:
+            msg="State not found in debug print";
+            break;
+    }
+    printf("State %s was chosen.\n",msg);fflush(stdout);
+}

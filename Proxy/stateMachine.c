@@ -7,6 +7,7 @@
 #include "include/stateMachine.h"
 #include "include/stateSelector.h"
 #include "include/state.h"
+#include "include/MasterStateMachine.h"
 
 state new_state(state_code id, execution_state (*on_arrive)(state s, file_descriptor fd, int is_read), execution_state (*on_resume)(state s, file_descriptor fd, int is_read), state_code (*on_leave)(state s)){
     state new = malloc(sizeof(struct stateStruct));
@@ -55,7 +56,7 @@ void run_state(state_machine * sm)
     if(st==NULL){
         perror("Error, no state with file descriptor found.");
     }
-    printf("State %d was chosen.\n",st->id);fflush(stdout);
+    debug_print_state(st->id);
 
     switch(st->exec_state)
     {
