@@ -162,18 +162,21 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
             {   // MUA WRITE
                 printf("--------------------------------------------------------\n");
                 printf("Wrote buffer content to MUA: \n");
+                print_buffer(s->buffers[2]);
                 buffer_write(fd,s->buffers[2]);
             }
             else if (s->write_fds[1] == fd)
             {   // Origin WRITE
                 printf("--------------------------------------------------------\n");
                 printf("Wrote buffer content to Origin: \n");
+                print_buffer(s->buffers[0]);
                 buffer_write(fd,s->buffers[0]);
             }
             else if (s->write_fds[2] == fd)
             {   // Transform WRITE
                 printf("--------------------------------------------------------\n");
                 printf("Wrote buffer content to Transform: \n");
+                print_buffer(s->buffers[1]);
                 buffer_write(fd,s->buffers[1]);
             }
             break;
@@ -275,6 +278,8 @@ void set_up_fd_sets_rec(fd_set * read_fds, fd_set * write_fds, node curr){
 }
 
 void set_up_fd_sets(fd_set * read_fds, fd_set * write_fds){
+    FD_ZERO(read_fds);
+    FD_ZERO(write_fds);
     if(sm==NULL)
     {
         printf("Found null\n");fflush(stdout);

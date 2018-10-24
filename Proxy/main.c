@@ -172,10 +172,6 @@ file_descriptor setup_MUA_socket()
         perror("Unable to create socket.");
         error();
     }
-    else
-    {
-        printf("Listening on port %d...",MUA_PORT);
-    }
 
     //setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
 
