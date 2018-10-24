@@ -52,6 +52,7 @@ void run_state(state_machine * sm)
     int next[2]={0};
     select_state(next);
 
+
     state st = get(sm->states,next[0],next[1]);
     if(st==NULL){
         perror("Error, no state with file descriptor found.");

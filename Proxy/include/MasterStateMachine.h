@@ -14,7 +14,7 @@
 
 /* FD List
  *  read_fds[0] = MUA_CONNECT_SOCKET
- *  write_fds[0] = connect_origin_sock
+ *  read_fds[1] = connect_origin_sock
  */
 #define CONNECT_CLIENT_STAGE_TWO_STATE 3
 

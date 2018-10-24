@@ -77,56 +77,6 @@ int main(int argc, char ** argv)
     return response;
 }
 
-void read_user_test()
-{
-    file_descriptor MUA_sock = setup_MUA_socket();
-    fd_set read_fds;
-    fd_set write_fds;
-    fd_set except_fds;
-
-    const struct timespec timeout={
-            .tv_sec=5, .tv_nsec=0
-    };
-
-    FD_ZERO(&read_fds);
-    FD_ZERO(&write_fds);
-    FD_ZERO(&except_fds);
-
-    FD_SET(MUA_sock, &read_fds);
-
-    int select_ret;
-    for(;;){
-        select_ret = pselect(MUA_sock+1,&read_fds,&write_fds,&except_fds,&timeout,NULL);
-        if(select_ret == -1)
-        {
-            perror("Poll error.");
-            error();
-        }
-
-        int i;
-        for(i=0;i<FD_SETSIZE;i++){
-            if(FD_ISSET(i,&read_fds)){
-                if(i==MUA_sock){
-                    printf("llego");fflush(stdout);
-                    int accept_ret = accept(MUA_sock,NULL,NULL);
-
-                    if(accept_ret<0){
-                        perror("accept");
-                        error();
-                    }while(1){
-                        char buff[2];
-                        if((int)read(accept_ret,buff,1)<0){
-                            perror("read error");
-                        }
-                        buff[1]='\0';
-                        printf("%s",buff);
-                        memcpy(buff,"0",1);}
-                }
-            }
-        }
-    }
-}
-
 void run_server()
 {
     file_descriptor mua = setup_MUA_socket();

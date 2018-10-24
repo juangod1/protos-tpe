@@ -42,7 +42,6 @@ int start_parser(char * cmd, int pipe_ret[2])
     {
         close(PARSER_READ_FD);
         close(PARSER_WRITE_FD);
-        close(PROXY_WRITE_FD);
 
         pipe_ret[0]=PROXY_READ_FD;
         pipe_ret[1]=PROXY_WRITE_FD;

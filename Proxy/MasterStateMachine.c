@@ -14,6 +14,7 @@
 #include "include/stateSelector.h"
 #include "../Shared/include/buffer.h"
 #include "include/options.h"
+#include "include/proxyCommunication.h"
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -115,6 +116,10 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
     st->write_fds[0] = s->read_fds[0];
     st->read_fds[1] = fd;
     st->write_fds[1] = fd;
+    int ret[2];
+    start_parser("cat",ret);
+    st->read_fds[2]=ret[0];
+    st->write_fds[2]=ret[1];
     buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
     buffer_initialize(&(st->buffers[1]), BUFFER_SIZE);
     buffer_initialize(&(st->buffers[2]), BUFFER_SIZE);
