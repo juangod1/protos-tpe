@@ -123,11 +123,9 @@ int find_substring(char * buffer, int size, char * substring)
 void print_buffer(buffer_p b){
     int i;
 
-    printf("\n----------------------------\n");
-    printf("----Printing Buffer Content--\n");
-    printf("----------------------------\n");
+    printf("--------------------------------------------------------\n");
     for(i=0;i<b->count;i++){
         putchar(b->data_start[i]);
     }
-    printf("----------------------------\n");
+    printf("--------------------------------------------------------\n");
 }

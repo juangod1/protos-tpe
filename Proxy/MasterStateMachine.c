@@ -138,31 +138,43 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
             if (s->read_fds[0] == fd)
             {   // MUA READ
                 buffer_read(fd,s->buffers[0]);
+                printf("--------------------------------------------------------\n");
+                printf("Read buffer content from MUA: \n");
                 print_buffer(s->buffers[0]);
             }
             else if (s->read_fds[1] == fd)
             {   // Origin READ
                 buffer_read(fd,s->buffers[1]);
+                printf("--------------------------------------------------------\n");
+                printf("Read buffer content from Origin: \n");
                 print_buffer(s->buffers[1]);
             }
             else if (s->read_fds[2] == fd)
             {   // Transform READ
                 buffer_read(fd,s->buffers[2]);
+                printf("--------------------------------------------------------\n");
+                printf("Read buffer content from Transform: \n");
                 print_buffer(s->buffers[2]);
             }
             break;
         case 0: // False
             if (s->write_fds[0] == fd)
             {   // MUA WRITE
-                buffer_write(fd,s->buffers[0]);
+                printf("--------------------------------------------------------\n");
+                printf("Wrote buffer content to MUA: \n");
+                buffer_write(fd,s->buffers[2]);
             }
             else if (s->write_fds[1] == fd)
             {   // Origin WRITE
-                buffer_write(fd,s->buffers[1]);
+                printf("--------------------------------------------------------\n");
+                printf("Wrote buffer content to Origin: \n");
+                buffer_write(fd,s->buffers[0]);
             }
             else if (s->write_fds[2] == fd)
             {   // Transform WRITE
-                buffer_write(fd,s->buffers[2]);
+                printf("--------------------------------------------------------\n");
+                printf("Wrote buffer content to Transform: \n");
+                buffer_write(fd,s->buffers[1]);
             }
             break;
     }
@@ -197,34 +209,46 @@ void set_up_fd_sets_rec(fd_set * read_fds, fd_set * write_fds, node curr){
             if(curr->st->buffers[0]!=NULL)
             {
                 if(buffer_is_empty(curr->st->buffers[0])){
-                    if(curr->st->read_fds[0]>0)
+                    if(curr->st->read_fds[0]>0) {
+                        printf("Buffer 1 is empty ==> ");
                         add_read_fd(curr->st->read_fds[0]); // MUA read
+                    }
                 }
                 else{
-                    if(curr->st->write_fds[1]>0)
+                    if(curr->st->write_fds[1]>0) {
+                        printf("Buffer 1 is not empty ==> ");
                         add_write_fd(curr->st->write_fds[1]); // Origin write
+                    }
                 }
             }
             if(curr->st->buffers[1]!=NULL)
             {
                 if(buffer_is_empty(curr->st->buffers[1])){
-                    if(curr->st->read_fds[1]>0)
+                    if(curr->st->read_fds[1]>0) {
+                        printf("Buffer 2 is empty ==> ");
                         add_read_fd(curr->st->read_fds[1]); // ORIGIN read
+                    }
                 }
                 else{
-                    if(curr->st->write_fds[2]>0)
+                    if(curr->st->write_fds[2]>0) {
+                        printf("Buffer 2 is not empty ==> ");
                         add_write_fd(curr->st->write_fds[2]); // Transform write
+                    }
                 }
             }
             if(curr->st->buffers[2]!=NULL)
             {
                 if(buffer_is_empty(curr->st->buffers[2])){
-                    if(curr->st->read_fds[2]>0)
+                    if(curr->st->read_fds[2]>0) {
+                        printf("Buffer 3 is empty ==> ");
                         add_read_fd(curr->st->read_fds[2]); // Transform read
+                    }
                 }
                 else{
-                    if(curr->st->write_fds[0]>0)
+                    if(curr->st->write_fds[0]>0) {
+                        printf("Buffer 3 is not empty ==> ");
                         add_write_fd(curr->st->write_fds[0]); // MUA write
+                    }
                 }
             }
             break;
