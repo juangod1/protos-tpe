@@ -19,6 +19,7 @@
 #include "../Shared/include/buffer.h"
 #include "include/mediaTypes.h"
 #include "include/options.h"
+#include "include/adminControl.h"
 
 static app_context_p app_context;
 
@@ -59,8 +60,8 @@ int main(int argc, char ** argv)
 
             buffer_finalize(buffer);*/
 
-
-            run_server();
+            createConection();
+            //run_server();
             break;
         case HELP:
             help();
