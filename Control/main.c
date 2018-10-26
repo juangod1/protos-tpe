@@ -56,7 +56,7 @@ int createConnection()
 
 
     //Creo una conexion SCTP con los valores (default 9090, 127.0.0.1)
-    if((fd = socket(AF_UNSPEC,SOCK_STREAM,IPPROTO_SCTP)) == -1 )
+    if((fd = socket(AF_INET,SOCK_STREAM,IPPROTO_SCTP)) == -1 )
     {
     printf("An error has ocurred while creating SCTP socket\n");
     perror("socket");
