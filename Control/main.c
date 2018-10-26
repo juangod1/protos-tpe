@@ -43,7 +43,7 @@ int main(int argc, char ** argv)
 
 void initialize_options()
 {
-    memcpy((void*)&addr,0, sizeof(addr));
+    memset((void*)&addr,0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(9090);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
