@@ -36,8 +36,6 @@ int main(int argc, char ** argv)
     }
     //CierreDeConexion
     closeConnection(fd);
-    //Saludo de despedida
-    printf("Goodbye, hope to see you soon!\n");
     return 0;
 }
 
@@ -151,8 +149,9 @@ char requestLoginToProxy(int fd){
     fetchLineFromStdin(&passwordInput,INITIAL_INPUT_SIZE);
     prepareForSending(&usernameInput,&passwordInput);
 
+
     //En la conexion 9090 le envia con USER name el parametro obtenido del usuario
-    int ret = sctp_sendmsg(fd,usernameInput,sizeof(usernameInput), NULL, 0, 0, 0, 0, 0, 0);
+    int ret = sctp_sendmsg(fd,usernameInput,strlen(usernameInput), NULL, 0, 0, 0, 0, 0, 0);
     if(ret == -1)
     {
         printf("An error has ocurred sending USER info\n");
@@ -161,7 +160,7 @@ char requestLoginToProxy(int fd){
     }
 
     //Luego le envia la contraseña con PASS string
-    ret = sctp_sendmsg(fd,passwordInput,sizeof(passwordInput), NULL, 0, 0, 0, 0, 0, 0);
+    ret = sctp_sendmsg(fd,passwordInput,strlen(passwordInput), NULL, 0, 0, 0, 0, 0, 0);
     if(ret == -1) {
         printf("An error has ocurred sending PASS info\n");
         perror("sctp_sendmsg");
@@ -196,7 +195,7 @@ void interaction(int fd)
 
     while(1)
     {
-        if(fgets(buffer,1024,stdin))
+        if(fgets(buffer,1024,stdin) == NULL)
         {
             closeConnection(fd);
             exit(-1);
@@ -207,12 +206,12 @@ void interaction(int fd)
         if(ret == -1)
         {
             printf("An error has ocurred sending the message\n");
-            perror("sctp_sendmsg");
             exit(1);
         }
     }
 }
 void closeConnection(int fd)
 {
-    closeConnection(fd);
+    printf("Goodbye, hope to see you soon!\n");
+    close(fd);
 }
