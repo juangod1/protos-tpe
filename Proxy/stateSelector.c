@@ -10,6 +10,7 @@
 #include <memory.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <signal.h>
 
 fd_set read_fds;
 fd_set write_fds;
@@ -24,14 +25,33 @@ void add_write_fd(file_descriptor fd){
     FD_SET(fd, &write_fds);
 }
 
+void signal_handler(int signal){
+
+}
+
 /*
  * Return value: Char array { file_descriptor, is_read }
  */
 void select_state(int * ret){
-    set_up_fd_sets(&read_fds,&write_fds);
+    // https://lwn.net/Articles/176911/
+    struct sigaction sa;
+    sigset_t emptyset, blockset;
 
+    sigemptyset(&blockset);
+    sigaddset(&blockset, SIGINT);
+    sigprocmask(SIG_BLOCK, &blockset, NULL);
+
+    sa.sa_handler = signal_handler;
+    sa.sa_flags = 0;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGINT, &sa, NULL);
+
+    set_up_fd_sets(&read_fds,&write_fds);
     int select_ret;
-    select_ret = pselect(MAX_FD+1,&read_fds,&write_fds,NULL,NULL,NULL);
+
+    sigemptyset(&emptyset);
+
+    select_ret = pselect(MAX_FD+1,&read_fds,&write_fds,NULL,NULL,&emptyset);
     if(select_ret == -1)
     {
         perror("pselect error.");
