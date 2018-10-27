@@ -7,8 +7,8 @@
 #include "../Shared/include/lib.h"
 #include "include/options.h"
 
-#define MAX_STREAMS 64;
-#define MAX_BUFFER 1024;
+#define MAX_STREAMS 64
+#define MAX_BUFFER 1024
 void prepareForSending(char **username, char **password);
 
 //config socket_config;
@@ -23,6 +23,7 @@ int main(int argc, char ** argv)
     if(!valid)
     {
         printf("Error creating connection");
+        free_struct();
         exit(1);
     }
     admin_context = get_admin_context();
@@ -51,7 +52,6 @@ int main(int argc, char ** argv)
 }
 
 
-
 void socket_config()
 {
     memset((void*)&addr,0, sizeof(addr));
@@ -69,36 +69,40 @@ int createConnection()
     //Creo una conexion SCTP con los valores (default 9090, 127.0.0.1)
     if((fd = socket(AF_INET,SOCK_STREAM,IPPROTO_SCTP)) == -1 )
     {
-    printf("An error has ocurred while creating SCTP socket\n");
-    perror("socket");
-    exit(1);
+        printf("An error has ocurred while creating SCTP socket\n");
+        perror("socket");
+        closeConnection(fd);
+        exit(1);
     }
     //Configuro la cantidad de streams disponible para el socket
-    memset(&initmsg,0, sizeof(struct sctp_initmsg));
-    initmsg.sinit_num_ostreams  = MAX_STREAMS;
-    initmsg.sinit_max_instreams = MAX_STREAMS;
-    initmsg.sinit_max_attempts  = MAX_STREAMS;
-    ret = setsockopt(fd,IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(struct sctp_initmsg));
-    if(ret<0)
-    {
-        perror("setsockopt SCTP_INITMSG");
-        exit(1);
-    }
+//    memset(&initmsg,0, sizeof(struct sctp_initmsg));
+//    initmsg.sinit_num_ostreams  = MAX_STREAMS;
+//    initmsg.sinit_max_instreams = MAX_STREAMS;
+//    initmsg.sinit_max_attempts  = MAX_STREAMS;
+//    ret = setsockopt(fd,IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(struct sctp_initmsg));
+//    if(ret<0)
+//    {
+//        perror("setsockopt SCTP_INITMSG");
+//        closeConnection(fd);
+//        exit(1);
+//    }
 
     //Configuro los eventos
-    events.sctp_association_event = 1;
-    events.sctp_data_io_event = 1;
-    ret = setsockopt(fd,IPPROTO_SCTP,SCTP_EVENTS, &events, sizeof(events));
-    if(ret<0)
-    {
-        perror("setsockopt SCTP_EVENTS");
-        exit(1);
-    }
+//    events.sctp_association_event = 1;
+//    events.sctp_data_io_event = 1;
+//    ret = setsockopt(fd,IPPROTO_SCTP,SCTP_EVENTS, &events, sizeof(events));
+//    if(ret<0)
+//    {
+//        perror("setsockopt SCTP_EVENTS");
+//        closeConnection(fd);
+//        exit(1);
+//    }
     //Realizo la conexion
     if((ret = connect(fd,(struct sockaddr*)&addr, sizeof(addr))) == -1)
     {
     printf(("An error has ocurred while connecting the SCTP socket\n"));
     perror("connect");
+    closeConnection(fd);
     exit(1);
     }
     return fd;
@@ -169,6 +173,7 @@ char requestLoginToProxy(int fd){
     {
         printf("An error has ocurred sending USER info\n");
         perror("sctp_sendmsg");
+        closeConnection(fd);
         exit(1);
     }
 
@@ -177,15 +182,27 @@ char requestLoginToProxy(int fd){
     if(ret == -1) {
         printf("An error has ocurred sending PASS info\n");
         perror("sctp_sendmsg");
+        closeConnection(fd);
         exit(1);
     }
     //Parsea la respuesta del proxy
+    char buffer[MAX_BUFFER] = {0};
+
+    ret = sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
+
+    free(usernameInput);
+    free(passwordInput);
+
+    if( ret == '1')
+    {
+        return 1;
+    } else
+    {
+        return 0;
+    }
     //Devuelve 1 si fue exitoso
     //Devuelve 0 si falla
     //Libera memoria
-    free(usernameInput);
-    free(passwordInput);
-    return 1;
 }
 
 void prepareForSending(char **username, char **password) {
@@ -204,11 +221,11 @@ void prepareForSending(char **username, char **password) {
 void interaction(int fd)
 {
 
-    char buffer[1024];
+    char buffer[MAX_BUFFER];
 
     while(1)
     {
-        if(fgets(buffer,1024,stdin) == NULL)
+        if(fgets(buffer,MAX_BUFFER,stdin) == NULL)
         {
             closeConnection(fd);
             exit(-1);
@@ -227,5 +244,6 @@ void interaction(int fd)
 void closeConnection(int fd)
 {
     printf("Goodbye, hope to see you soon!\n");
+    free_struct();
     close(fd);
 }

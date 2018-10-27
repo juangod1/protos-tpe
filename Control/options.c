@@ -88,3 +88,9 @@ int listen_address_validation(char* address)
 {
     return 1;
 }
+
+void free_struct()
+{
+    free(admin_context->listenaddress);
+    free(admin_context);
+}

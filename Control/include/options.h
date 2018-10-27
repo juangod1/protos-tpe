@@ -17,5 +17,6 @@ void listen_address(char* address);
 uint16_t connection_port(char* port);
 int connection_port_validation(uint16_t port);
 int listen_address_validation(char * address);
+void free_struct();
 
 #endif //PROTOS_TPE_OPTIONS_H
