@@ -5,6 +5,7 @@
 #include "include/main.h"
 #include "../Shared/include/executionValidator.h"
 #include "../Shared/include/lib.h"
+#include "include/options.h"
 
 #define MAX_STREAMS 64;
 #define MAX_BUFFER 1024;
@@ -12,10 +13,20 @@ void prepareForSending(char **username, char **password);
 
 //config socket_config;
 struct sockaddr_in addr;
+static admin_context_p admin_context;
+
 
 int main(int argc, char ** argv)
 {
-    initialize_options();
+    initialize_app_context();
+    int valid = parse_arguments(argc, argv);
+    if(!valid)
+    {
+        printf("Error creating connection");
+        exit(1);
+    }
+    admin_context = get_admin_context();
+    socket_config();
 
     //Saludo al usuario y le informo que se va a intentar hacer una conexion al proxy
     printf("Hello! Starting connection...\n");
@@ -39,12 +50,14 @@ int main(int argc, char ** argv)
     return 0;
 }
 
-void initialize_options()
+
+
+void socket_config()
 {
     memset((void*)&addr,0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(9090);
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    addr.sin_port = htons(admin_context->port);
+    addr.sin_addr.s_addr = inet_addr(admin_context->listenaddress);
 }
 int createConnection()
 {
@@ -206,6 +219,7 @@ void interaction(int fd)
         if(ret == -1)
         {
             printf("An error has ocurred sending the message\n");
+            closeConnection(fd);
             exit(1);
         }
     }

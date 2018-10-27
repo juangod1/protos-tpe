@@ -9,7 +9,7 @@ typedef enum {
     STATS, COMMAND, EXIT
 } function;
 
-void initialize_options();
+void socket_config();
 int createConnection();
 void requestForLogin(int fd, char* status);
 void loginError(int fd, char* status);
