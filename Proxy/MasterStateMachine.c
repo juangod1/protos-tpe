@@ -55,7 +55,13 @@ state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descrip
 execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read){
     switch(is_read){
         case 1:
-            buffer_read(fd,s->buffers[0]);
+            if(buffer_read(fd,s->buffers[0])==0){
+                printf("--------------------------------------------------------\n");
+                printf("Administrator disconnected \n");
+                printf("--------------------------------------------------------\n");
+                client_disconnected(s);
+                return WAITING;
+            }
             printf("--------------------------------------------------------\n");
             printf("Read buffer content from ADMIN: \n");
             print_buffer(s->buffers[0]);
@@ -171,7 +177,13 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
         case 1: // True
             if (s->read_fds[0] == fd)
             {   // MUA READ
-                buffer_read(fd,s->buffers[0]);
+                if(buffer_read(fd,s->buffers[0])==0){
+                    printf("--------------------------------------------------------\n");
+                    printf("Client disconnected \n");
+                    printf("--------------------------------------------------------\n");
+                    client_disconnected(s);
+                    return WAITING;
+                }
                 printf("--------------------------------------------------------\n");
                 printf("Read buffer content from MUA: \n");
                 print_buffer(s->buffers[0]);
@@ -361,4 +373,14 @@ void debug_print_state(int state){
             break;
     }
     printf("State %s was chosen.\n",msg);fflush(stdout);
+}
+
+void client_disconnected(state st){
+    close(st->read_fds[0]);
+    close(st->write_fds[0]);
+    close(st->read_fds[1]);
+    close(st->write_fds[1]);
+    close(st->read_fds[2]);
+    close(st->write_fds[2]);
+    remove_state(sm,st);
 }
