@@ -129,3 +129,53 @@ void print_buffer(buffer_p b){
     }
     printf("\n--------------------------------------------------------\n");
 }
+
+int buffer_write_string(char * string, buffer_p buffer)
+{
+    int characters_to_write = buffer->count;
+    char * write_ptr = buffer->data_ptr;
+
+    while(characters_to_write>0){
+        *string=*(buffer->data_ptr);
+        buffer->data_ptr++;
+        characters_to_write--;
+    }
+    buffer->count=0;
+    buffer->data_ptr=buffer->data_start;
+
+    return characters_to_write;
+}
+
+int buffer_read_string(char * string, buffer_p buffer)
+{
+    int characters_to_read = buffer->size-(buffer->data_ptr-buffer->data_start);
+    char * read_ptr = buffer->data_ptr;
+
+    int count=characters_to_read;
+
+    while(count>0 && *string!=0)
+    {
+        *(buffer->data_ptr)=*string;
+        string++;
+        buffer->data_ptr++;
+        buffer->count++;
+        count--;
+    }
+
+    return characters_to_read-count;
+}
+
+int buffer_starts_with_string(char * string,buffer_p buffer){
+    char * pointer = buffer->data_ptr;
+    char c= *pointer;
+    while(c!=0)
+    {
+        c=*string;
+        if(c!=*string){
+            return 0;
+        }
+        string++;
+        pointer++;
+    }
+    return 1;
+}
