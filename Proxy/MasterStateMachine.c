@@ -18,6 +18,7 @@
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 state_machine * sm;
 
@@ -55,7 +56,8 @@ state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descrip
 execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read){
     switch(is_read){
         case 1:
-            if(buffer_read(fd,s->buffers[0])==0){
+            ;int ret = buffer_read(fd,s->buffers[0]);
+            if(ret==0 || (ret==-1 && errno==ECONNRESET) ){
                 printf("--------------------------------------------------------\n");
                 printf("Administrator disconnected \n");
                 printf("--------------------------------------------------------\n");

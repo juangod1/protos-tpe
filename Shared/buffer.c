@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <asm/errno.h>
+#include <errno.h>
 #include "include/buffer.h"
 
 int buffer_initialize(buffer_p * buffer,size_t size)
@@ -41,6 +43,9 @@ int buffer_read(int file_descriptor, buffer_p buffer)
     if(amount!=-1)
     {
         buffer->count+=amount;
+    }
+    else if(errno==ECONNRESET){
+        return amount;
     }
     else{
         perror("Read error");
