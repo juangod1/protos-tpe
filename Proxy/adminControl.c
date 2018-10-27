@@ -48,12 +48,9 @@ void successfullConection(int parametros){
 }
 
 file_descriptor setup_admin_socket(){
-    int listenSock, connSock, ret, in, flags, i;
+    int listenSock, ret;
     struct sockaddr_in servaddr;
     struct sctp_initmsg initmsg;
-    struct sctp_event_subscribe events;
-    struct sctp_sndrcvinfo sndrcvinfo;
-    char buffer[MAX_BUFFER + 1];
 
     listenSock = socket (AF_INET, SOCK_STREAM, IPPROTO_SCTP);
     if(listenSock == -1)
