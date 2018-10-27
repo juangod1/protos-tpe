@@ -13,6 +13,11 @@ struct buffer_t{
 int buffer_initialize(buffer_p * buffer,size_t size);
 int buffer_finalize(buffer_p buffer);
 
+int buffer_starts_with_string(char * string,buffer_p buffer);
+
+int buffer_write_string(char * string, size_t length, buffer_p buffer);
+int buffer_read_string(char * string, size_t length, buffer_p buffer);
+
 int buffer_is_empty(buffer_p buffer);
 int buffer_read(int file_descriptor, buffer_p buffer);
 int buffer_write(int file_descriptor, buffer_p buffer);
