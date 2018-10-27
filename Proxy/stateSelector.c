@@ -14,12 +14,6 @@
 fd_set read_fds;
 fd_set write_fds;
 
-const struct timespec timeout={ //TODO: como hacer que no timeoutee?
-        .tv_sec=999999999999999999, .tv_nsec=0
-};
-
-file_descriptor MUA_sock;
-
 void add_read_fd(file_descriptor fd){
     printf("Adding fd %d to selector as READ\n",fd);fflush(stdout);
     FD_SET(fd, &read_fds);
@@ -37,7 +31,7 @@ void select_state(int * ret){
     set_up_fd_sets(&read_fds,&write_fds);
 
     int select_ret;
-    select_ret = pselect(MAX_FD+1,&read_fds,&write_fds,NULL,&timeout,NULL);
+    select_ret = pselect(MAX_FD+1,&read_fds,&write_fds,NULL,NULL,NULL);
     if(select_ret == -1)
     {
         perror("pselect error.");
