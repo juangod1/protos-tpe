@@ -69,7 +69,7 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
         case 0:
             buffer_write(fd,s->buffers[0]);
             printf("--------------------------------------------------------\n");
-            printf("Read buffer content from MUA: \n");
+            printf("Wrote buffer content to ADMIN: \n");
             print_buffer(s->buffers[0]);
             break;
     }
