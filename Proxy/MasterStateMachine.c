@@ -61,7 +61,7 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
                 printf("--------------------------------------------------------\n");
                 printf("Administrator disconnected \n");
                 printf("--------------------------------------------------------\n");
-                client_disconnected(s);
+                disconnect(s);
                 return WAITING;
             }
             printf("--------------------------------------------------------\n");
@@ -183,7 +183,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
                     printf("--------------------------------------------------------\n");
                     printf("Client disconnected \n");
                     printf("--------------------------------------------------------\n");
-                    client_disconnected(s);
+                    disconnect(s);
                     return WAITING;
                 }
                 printf("--------------------------------------------------------\n");
@@ -192,14 +192,26 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
             }
             else if (s->read_fds[1] == fd)
             {   // Origin READ
-                buffer_read(fd,s->buffers[1]);
+                if(buffer_read(fd,s->buffers[1])==0){
+                    printf("--------------------------------------------------------\n");
+                    printf("Origin disconnected \n");
+                    printf("--------------------------------------------------------\n");
+                    disconnect(s);
+                    return WAITING;
+                }
                 printf("--------------------------------------------------------\n");
                 printf("Read buffer content from Origin: \n");
                 print_buffer(s->buffers[1]);
             }
             else if (s->read_fds[2] == fd)
             {   // Transform READ
-                buffer_read(fd,s->buffers[2]);
+                if(buffer_read(fd,s->buffers[2])==0){
+                    printf("--------------------------------------------------------\n");
+                    printf("Transform disconnected \n");
+                    printf("--------------------------------------------------------\n");
+                    disconnect(s);
+                    return WAITING;
+                }
                 printf("--------------------------------------------------------\n");
                 printf("Read buffer content from Transform: \n");
                 print_buffer(s->buffers[2]);
@@ -377,7 +389,7 @@ void debug_print_state(int state){
     printf("State %s was chosen.\n",msg);fflush(stdout);
 }
 
-void client_disconnected(state st){
+void disconnect(state st){
     close(st->read_fds[0]);
     close(st->write_fds[0]);
     close(st->read_fds[1]);

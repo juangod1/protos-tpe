@@ -49,7 +49,7 @@
 
 state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descriptor admin_sock);
 void set_up_fd_sets(fd_set * read_fds, fd_set * write_fds);
-void client_disconnected(state st);
+void disconnect(state st);
 execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read);
 execution_state CONNECT_CLIENT_STAGE_TWO_on_resume(state s, file_descriptor fd, int is_read);
 state_code CONNECT_CLIENT_STAGE_TWO_on_leave(state s);
