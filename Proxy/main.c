@@ -60,8 +60,8 @@ int main(int argc, char ** argv)
 
             buffer_finalize(buffer);*/
 
-            createConection();
-            //run_server();
+            //createConection();
+            run_server();
             break;
         case HELP:
             help();
@@ -81,8 +81,9 @@ int main(int argc, char ** argv)
 void run_server()
 {
     file_descriptor mua = setup_MUA_socket();
-    state_machine * machine = initialize_master_machine(mua);
-    initialize_selector(mua);
+    file_descriptor admin = setup_admin_socket();
+    state_machine * machine = initialize_master_machine(mua, admin);
+    initialize_selector();
 
     for(;;){
         run_state(machine);

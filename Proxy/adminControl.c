@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include "include/adminControl.h"
+#include "include/main.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,7 +47,7 @@ void successfullConection(int parametros){
     procesarRequest();
 }
 
-void createConection(){
+file_descriptor setup_admin_socket(){
     int listenSock, connSock, ret, in, flags, i;
     struct sockaddr_in servaddr;
     struct sctp_initmsg initmsg;
@@ -126,6 +127,8 @@ void createConection(){
         exit(1);
     }
 
+    return listenSock;
+/*
     while (1)
     {
 
@@ -167,7 +170,7 @@ void createConection(){
             printf (" Data : %s\n", (char *) buffer);
         }
         close (connSock);
-    }
+    }*/
 }
 
 void saludo(int parametros){

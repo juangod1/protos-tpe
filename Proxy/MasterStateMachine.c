@@ -21,7 +21,7 @@
 
 state_machine * sm;
 
-state_machine * initialize_master_machine(file_descriptor MUA_sock){
+state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descriptor admin_sock){
     sm = new_machine();
     sm->states=new_list();
 
@@ -44,6 +44,10 @@ state_machine * initialize_master_machine(file_descriptor MUA_sock){
     state connect_client = new_state(CONNECT_CLIENT_STATE, CONNECT_CLIENT_on_arrive, CONNECT_CLIENT_on_resume,CONNECT_CLIENT_on_leave);
     connect_client->read_fds[0]=MUA_sock;
     add_state(sm,connect_client);
+
+    state connect_admin = new_state(CONNECT_ADMIN_STATE, CONNECT_ADMIN_on_arrive, CONNECT_ADMIN_on_resume,CONNECT_ADMIN_on_leave);
+    connect_admin->read_fds[0]=admin_sock;
+    add_state(sm,connect_admin);
 
     return sm;
 }

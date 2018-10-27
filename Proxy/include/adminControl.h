@@ -5,6 +5,7 @@
 #ifndef PROTOS_TPE_ADMINCONTROL_H
 #define PROTOS_TPE_ADMINCONTROL_H
 #include <stdlib.h>
+#include "main.h"
 
 typedef enum {
     AUTENTICACION, INTERCAMBIO, CIERRE
@@ -48,6 +49,7 @@ int setEstadoTransformacion(int estado);
 char* getFiltroTransformacion();
 int setFiltroTransformacion(char* filtro);
 void errorDeScope();
+file_descriptor setup_admin_socket();
 void errorDeFormato();
 int parseMesaje(const char *str, char sep, char**comando, char** parametro);
 void createConection();
