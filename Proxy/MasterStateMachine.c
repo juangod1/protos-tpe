@@ -53,7 +53,20 @@ state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descrip
 }
 
 execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read){
-
+    switch(is_read){
+        case 1:
+            buffer_read(fd,s->buffers[0]);
+            printf("--------------------------------------------------------\n");
+            printf("Read buffer content from ADMIN: \n");
+            print_buffer(s->buffers[0]);
+            break;
+        case 0:
+            buffer_write(fd,s->buffers[0]);
+            printf("--------------------------------------------------------\n");
+            printf("Read buffer content from MUA: \n");
+            print_buffer(s->buffers[0]);
+            break;
+    }
 }
 
 execution_state ATTEND_ADMIN_on_resume(state s, file_descriptor fd, int is_read){
@@ -65,7 +78,19 @@ state_code ATTEND_ADMIN_on_leave(state s){
 }
 
 execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read){
+    int accept_ret = accept (s->read_fds[0], (struct sockaddr *) NULL, NULL);
+    if (accept_ret== -1)
+    {
+        perror("accept()");
+    }
 
+    state st = new_state(ATTEND_ADMIN_STATE,ATTEND_ADMIN_on_arrive,ATTEND_ADMIN_on_resume,ATTEND_ADMIN_on_leave);
+    st->read_fds[0]=accept_ret;
+    st->write_fds[0]=accept_ret;
+    buffer_initialize(&(st->buffers[0]),BUFFER_SIZE);
+    add_state(sm,st);
+
+    return NOT_WAITING;
 }
 
 execution_state CONNECT_ADMIN_on_resume(state s, file_descriptor fd, int is_read){
@@ -269,6 +294,16 @@ void set_up_fd_sets_rec(fd_set * read_fds, fd_set * write_fds, node curr){
             break;
         case CONNECT_CLIENT_STAGE_TWO_STATE:
             add_read_fd(curr->st->read_fds[1]);
+            break;
+        case ATTEND_ADMIN_STATE:
+            if(buffer_is_empty(curr->st->buffers[0])){
+                printf("Admin buffer is empty ==> ");
+                add_read_fd(curr->st->read_fds[0]);
+            }
+            else{
+                printf("Admin buffer is not empty ==> ");
+                add_write_fd(curr->st->write_fds[0]);
+            }
             break;
         default:
             ;int i;

@@ -140,14 +140,7 @@ file_descriptor setup_admin_socket(){
 
         printf ("Awaiting a new connection\n");
 
-        connSock = accept (listenSock, (struct sockaddr *) NULL, NULL);
-        if (connSock == -1)
-        {
-            printf("accept() failed\n");
-            perror("accept()");
-            close(connSock);
-            continue;
-        }
+
         else
             printf ("New client connected....\n");
 
