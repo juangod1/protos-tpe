@@ -2,6 +2,8 @@
 #include <netinet/in.h>
 #include <netinet/sctp.h>
 #include <arpa/inet.h>
+#include <wordexp.h>
+#include <ctype.h>
 #include "include/main.h"
 #include "../Shared/include/executionValidator.h"
 #include "../Shared/include/lib.h"
@@ -193,13 +195,14 @@ char requestLoginToProxy(int fd){
     free(usernameInput);
     free(passwordInput);
 
-    if( ret == '1')
-    {
-        return 1;
-    } else
-    {
-        return 0;
-    }
+//    if( ret == '1')
+//    {
+//        return 1;
+//    } else
+//    {
+//        return 0;
+//    }
+    return 1;
     //Devuelve 1 si fue exitoso
     //Devuelve 0 si falla
     //Libera memoria
@@ -222,7 +225,10 @@ void interaction(int fd)
 {
 
     char buffer[MAX_BUFFER];
-
+    int ret;
+    wordexp_t p;
+    char **w;
+    int count;
     while(1)
     {
         if(fgets(buffer,MAX_BUFFER,stdin) == NULL)
@@ -230,9 +236,110 @@ void interaction(int fd)
             closeConnection(fd);
             exit(-1);
         }
-        buffer[strcspn(buffer,"\r\n")];
         size_t length = strlen(buffer);
-        int ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+        char * pos;
+        if((pos = strchr(buffer,'\n')) != NULL)
+        {
+            *pos = '\0';
+        }
+
+        if(strcmp(buffer,"LISTS")==0)
+        {
+            ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+        }
+        else if(strncmp(buffer,"STATS",5)==0)
+        {
+            int response = wordexp(buffer,&p,0);
+            if(response != 0)
+            {
+                printf("There seems to be an internal error\n");
+            }
+            else
+            {
+                count = (int)p.we_wordc;
+                w = p.we_wordv;
+                if(count!=2 || !isdigit(w[1]))
+                {
+                    printf("Usage: STATS number, number must be a digit\n");
+                }
+                else
+                {
+                    ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+                }
+            }
+            wordfree(&p);
+        }
+        else if(strncmp(buffer,"ACTIVE",6)==0)
+        {
+            int response = wordexp(buffer,&p,0);
+            if(response != 0)
+            {
+                printf("There seems to be an internal error\n");
+            }
+            else
+            {
+                count = (int)p.we_wordc;
+                w = p.we_wordv;
+                if(count==1)
+                {
+                    ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+                }
+                else if(count==2)
+                {
+                    if(strcmp(w[1],"1")==0 || strcmp(w[1],"0")==0)
+                    {
+                        ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+                    } else
+                    {
+                        printf("Usage: ACTIVE [BOOL], bool must be 0 or 1");
+                    }
+                }
+            }
+
+            wordfree(&p);
+        }
+        else if(strncmp(buffer,"FILTER",6)==0)
+        {
+            int response = wordexp(buffer,&p,0);
+            if(response != 0)
+            {
+                printf("There seems to be an internal error\n");
+            }
+            else
+            {
+                count = (int)p.we_wordc;
+                w = p.we_wordv;
+                if(count==1 || count==2)
+                {
+                    ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+                }
+            }
+            wordfree(&p);
+        }
+        else if(strcmp(buffer,"HELP")==0)
+        {
+            printf("LISTS---------------- Lists the possible monitoring options along with its corresponding number\n");
+            printf("STATS number--------- Returns the monitoring information corresponding to number\n");
+            printf("ACTIVE [BOOL]-------- With no BOOL, returns the current transformation filter's status\n"
+                   "                      With BOOL, activates (1) or deactivates (0) the current filter\n");
+            printf("FILTER [CMD]--------- With no CMD, returns current transformation filter\n"
+                   "                      With CMD (a command name compatible with system(3)) changes the current tranformation filter into CMD\n");
+            printf("QUIT----------------- Closes the connection\n");
+            printf("HELP----------------- Lists the possible input options\n");
+
+
+        }
+        else if(strcmp(buffer,"QUIT")==0)
+        {
+            ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+
+        }
+        else
+        {
+            printf("Incorrect input, try HELP for options\n");
+            ret = -2;
+        }
+
         if(ret == -1)
         {
             printf("An error has ocurred sending the message\n");
@@ -240,6 +347,11 @@ void interaction(int fd)
             exit(1);
         }
     }
+}
+
+void parseToArgv()
+{
+
 }
 void closeConnection(int fd)
 {
