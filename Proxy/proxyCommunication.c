@@ -5,7 +5,7 @@
 
 /*
  *  Executes Parser Process.
- *  Returns PROXY_READ_PIPE and Parser's Pid
+ *  Returns PROXY_PIPES and Parser's Pid
  */
 int start_parser(char * cmd, int pipe_ret[2])
 {
@@ -36,7 +36,9 @@ int start_parser(char * cmd, int pipe_ret[2])
         close(PARSER_WRITE_FD);
 
         char *argv[]={"parser",cmd,NULL};
-        if(execv("parser",argv)<0) exit(BAD_EXIT_STATUS);
+        if(execv("/home/pablo/ITBA/2018C2/Protos/TP/protos-tpe/parser",argv)<0){
+            exit(BAD_EXIT_STATUS);
+        }
     }
     else /* pid!=0; parent process */
     {

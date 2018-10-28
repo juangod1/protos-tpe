@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <stdbool.h>
 #include "include/stateMachine.h"
 #include "include/stateSelector.h"
 #include "include/state.h"
@@ -29,6 +30,10 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
     new->buffers[1]=NULL;
     new->buffers[2]=NULL;
     new->protocol_state=0;
+    new->data_1=false;
+    new->data_2=true;
+    new->data_3=false;
+    new->parser_pid=-1;
     new->user = NULL;
     new->pass = NULL;
     return new;

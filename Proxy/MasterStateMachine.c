@@ -17,9 +17,11 @@
 #include "include/options.h"
 #include "include/proxyCommunication.h"
 #include "include/adminControl.h"
+#include "../Shared/include/lib.h"
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <pthread.h>
 #include <netdb.h>
@@ -166,7 +168,7 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
     st->read_fds[1] = fd;
     st->write_fds[1] = fd;
     int ret[2];
-    start_parser("cat",ret);
+    st->parser_pid=start_parser(get_app_context()->command_specification,ret);
     st->read_fds[2]=ret[0];
     st->write_fds[2]=ret[1];
     buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
@@ -233,6 +235,7 @@ state_code CONNECT_CLIENT_STAGE_TWO_on_leave(state s){
 }
 
 execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read){
+
     switch(is_read) {
         case 1: // True
             if (s->read_fds[0] == fd)
@@ -258,6 +261,13 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
                 printf("--------------------------------------------------------\n");
                 printf("Read buffer content from Origin: \n");
                 print_buffer(s->buffers[1]);
+                if(buffer_starts_with_string("+OK",s->buffers[1]) ||
+                        buffer_starts_with_string("-ERR",s->buffers[1]) ){
+                    s->data_1=true;//INDICATES NEW MESSAGE
+                }
+                if(buffer_indicates_parsable_message(s->buffers[1])){
+                    s->data_3=true; //INDICATES MESSAGE MUST BE TRANSFORMED
+                }
             }
             else if (s->read_fds[2] == fd)
             {   // Transform READ
@@ -270,6 +280,20 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
                 printf("--------------------------------------------------------\n");
                 printf("Read buffer content from Transform: \n");
                 print_buffer(s->buffers[2]);
+                if(buffer_indicates_end_of_message(s->buffers[2])){
+                    s->data_2=true;
+                    close(s->read_fds[2]);
+                    s->read_fds[2]=-1;
+                    s->write_fds[2]=-1;
+
+                    int ret = check_parser_exit_status(s->parser_pid);
+                    if(ret==STANDARD){
+                        printf("OK: Parser exited correctly\n");
+                    }
+                    else{
+                        printf("FAIL: BAD PARSER EXIT\n");
+                    }
+                }
             }
             break;
         case 0: // False
@@ -292,9 +316,25 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
                 printf("--------------------------------------------------------\n");
                 printf("Wrote buffer content to Transform: \n");
                 print_buffer(s->buffers[1]);
+                int will_close=buffer_indicates_end_of_message(s->buffers[1]);
                 buffer_write(fd,s->buffers[1]);
+                if(will_close){
+                    close(s->write_fds[2]);
+                }
             }
             break;
+    }
+    if(s->data_1 && s->data_2) //CREATE TRANSFORM
+    {
+        char * command = (s->data_3)?get_app_context()->command_specification:"cat";
+        int pipes[2];
+        s->parser_pid = start_parser(command,pipes);
+        s->read_fds[2]=pipes[0];
+        s->write_fds[2]=pipes[1];
+        s->data_1=false;
+        s->data_2=false;
+        s->data_3=false;
+        printf("Created new Transform Process. With command %s",command);
     }
     return WAITING;
 }
@@ -351,7 +391,15 @@ void set_up_fd_sets_rec(fd_set * read_fds, fd_set * write_fds, node curr){
                 else{
                     if(curr->st->write_fds[2]>0) {
                         printf("Buffer 2 is not empty ==> ");
-                        add_write_fd(curr->st->write_fds[2]); // Transform write
+                        if(!curr->st->data_1)
+                        {
+                            printf("Will write to transform process.\n");
+                            add_write_fd(curr->st->write_fds[2]); // Transform write
+                        }
+                        else
+                        {
+                            printf("Can't write, waiting for new transform process.\n");
+                        }
                     }
                 }
             }
@@ -452,11 +500,17 @@ void debug_print_state(int state){
 }
 
 void disconnect(state st){
-    close(st->read_fds[0]);
-    close(st->write_fds[0]);
-    close(st->read_fds[1]);
-    close(st->write_fds[1]);
-    close(st->read_fds[2]);
+    write(st->write_fds[0],"+OK Logging out\r\n",18);
+    shutdown(st->read_fds[0],SHUT_RDWR);
+    shutdown(st->write_fds[0],SHUT_RDWR);
+    shutdown(st->read_fds[1],SHUT_RDWR);
+    shutdown(st->write_fds[1],SHUT_RDWR);
     close(st->write_fds[2]);
+
+    if(st->parser_pid!=-1){
+        check_parser_exit_status(st->parser_pid);
+    }
+
+    close(st->read_fds[2]);
     remove_state(sm,st);
 }

@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <asm/errno.h>
 #include <errno.h>
+#include <ctype.h>
+#include <stdbool.h>
 #include "include/buffer.h"
 
 int buffer_initialize(buffer_p * buffer,size_t size)
@@ -53,6 +55,32 @@ int buffer_read(int file_descriptor, buffer_p buffer)
     return amount;
 }
 
+
+int buffer_indicates_parsable_message(buffer_p buffer){
+    if(buffer->count<13){
+        return false;
+    }
+    char * ptr = buffer->data_ptr;
+    if(*ptr++!='+') return false;
+    if(*ptr++!='O') return false;
+    if(*ptr++!='K') return false;
+    if(*ptr++!=' ') return false;
+    if(!isdigit(*ptr++)) return false;
+    while(isdigit(*ptr)){
+        *ptr++;
+    }
+    if(*ptr++!=' ') return false;
+    if(*ptr++!='o') return false;
+    if(*ptr++!='c') return false;
+    if(*ptr++!='t') return false;
+    if(*ptr++!='e') return false;
+    if(*ptr++!='t') return false;
+    if(*ptr++!='s') return false;
+    if(*ptr++!='\r') return false;
+    if(*ptr!='\n') return false;
+    return true;
+}
+
 int buffer_write(int file_descriptor, buffer_p buffer)
 {
     int characters_to_write = buffer->count;
@@ -72,6 +100,19 @@ int buffer_write(int file_descriptor, buffer_p buffer)
     }
 
     return amount;
+}
+
+int buffer_indicates_end_of_message(buffer_p buffer)
+{
+    size_t count = buffer->count;
+    char * ptr = buffer->data_ptr;
+    while(count>2){
+        count--;
+        ptr++;
+    }
+    if(*ptr++!='\r') return false;
+    if(*ptr!='\n') return false;
+    return true;
 }
 
 
@@ -174,15 +215,15 @@ int buffer_read_string(char * string, buffer_p buffer)
 
 int buffer_starts_with_string(char * string,buffer_p buffer){
     char * pointer = buffer->data_ptr;
-    char c= *pointer;
+    char c= *string;
     while(c!=0)
     {
-        c=*string;
-        if(c!=*string){
+        if(c!=*pointer){
             return 0;
         }
         string++;
         pointer++;
+        c=*string;
     }
     return 1;
 }

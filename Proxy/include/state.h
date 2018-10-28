@@ -29,11 +29,15 @@ struct stateStruct {
     state_code id;
     error_code error;
     int processing_mail;
+    int parser_pid;
     execution_state (*on_arrive)(state st, file_descriptor fd, int is_read);
     execution_state (*on_resume)(state st, file_descriptor fd, int is_read);
     state_code (*on_leave)(state st);
     buffer_p buffers[3];
     int protocol_state;
+    int data_1;
+    int data_2;
+    int data_3;
     char* user;
     char* pass;
 };
