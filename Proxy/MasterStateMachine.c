@@ -114,7 +114,6 @@ execution_state CONNECT_ADMIN_on_resume(state s, file_descriptor fd, int is_read
 }
 
 state_code CONNECT_ADMIN_on_leave(state s){
-
 }
 
 execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_read){
@@ -129,17 +128,21 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
         st->read_fds[0]=accept_ret;
         st->read_fds[1]=setup_origin_socket();
 
-        add_state(sm,st);
+        int ret = pipe(s->pipes);
+        if(ret<0){
+            perror("pipe error on dns query");
+        }
+
+        int dummy[2]={0};
+        execute_state(st,dummy);
 
         return NOT_WAITING;
 }
 
 execution_state CONNECT_CLIENT_on_resume(state s, file_descriptor fd, int is_read){
-
 }
 
 state_code CONNECT_CLIENT_on_leave(state s){
-
 }
 
 execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd, int is_read){
@@ -204,15 +207,8 @@ void * query_dns(void * pipes){
 
 execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read){
     if(get_app_context()->has_to_query_dns){
-        int pipes[2];
-
-        int ret = pipe(pipes);
-        if(ret<0){
-            perror("pipe error on dns query");
-        }
-
-        pthread_create(&(s->tid),NULL,query_dns,(void*)pipes);
-        s->read_fds[2]=pipes[0];
+        pthread_create(&(s->tid),NULL,query_dns,(void*)s->pipes);
+        s->read_fds[2]=s->pipes[0];
         return WAITING;
     }
     else{
@@ -231,7 +227,7 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_resume(state s, file_descriptor fd, 
 }
 
 state_code CONNECT_CLIENT_STAGE_TWO_on_leave(state s){
-    remove_state(sm,s);
+    free_state(s);
 }
 
 execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read){

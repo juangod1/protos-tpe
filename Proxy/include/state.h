@@ -22,6 +22,7 @@ typedef enum {
 } execution_state;
 
 struct stateStruct {
+    int pipes[2];
     pthread_t tid;
     file_descriptor read_fds[3];
     file_descriptor write_fds[3];

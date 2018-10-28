@@ -16,6 +16,7 @@ typedef struct {
     state next_state;
 } state_machine;
 
+void execute_state(state st, int next[2]);
 state new_state(state_code id, execution_state (*on_arrive)(state s, file_descriptor fd, int is_read), execution_state (*on_resume)(state s, file_descriptor fd, int is_read), state_code (*on_leave)(state s));
 void free_state(state st);
 void free_machine(state_machine * machine);

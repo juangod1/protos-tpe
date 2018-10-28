@@ -66,6 +66,10 @@ void run_state(state_machine * sm)
     }
     debug_print_state(st->id);
 
+    execute_state(st, next);
+}
+
+void execute_state(state st, int next[2]){
     switch(st->exec_state)
     {
         case NOT_WAITING:

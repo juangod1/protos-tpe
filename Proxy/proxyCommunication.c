@@ -36,7 +36,7 @@ int start_parser(char * cmd, int pipe_ret[2])
         close(PARSER_WRITE_FD);
 
         char *argv[]={"parser",cmd,NULL};
-        if(execv("/home/pablo/ITBA/2018C2/Protos/TP/protos-tpe/parser",argv)<0){
+        if(execv("/home/juangod/ITBA/Protos/TPE/protos-tpe/parser",argv)<0){
             exit(BAD_EXIT_STATUS);
         }
     }
