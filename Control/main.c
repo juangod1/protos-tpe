@@ -102,10 +102,10 @@ int createConnection()
     //Realizo la conexion
     if((ret = connect(fd,(struct sockaddr*)&addr, sizeof(addr))) == -1)
     {
-    printf(("An error has ocurred while connecting the SCTP socket\n"));
-    perror("connect");
-    closeConnection(fd);
-    exit(1);
+        printf(("An error has ocurred while connecting the SCTP socket\n"));
+        perror("connect");
+        closeConnection(fd);
+        exit(1);
     }
     return fd;
 }
@@ -168,7 +168,15 @@ char requestLoginToProxy(int fd){
     fetchLineFromStdin(&passwordInput,INITIAL_INPUT_SIZE);
     prepareForSending(&usernameInput,&passwordInput);
 
-
+    char * pos;
+    if((pos = strchr(usernameInput,'\0')) != NULL)
+    {
+        *pos = '\n';
+    }
+    if((pos = strchr(passwordInput,'\0')) != NULL)
+    {
+        *pos = '\n';
+    }
     //En la conexion 9090 le envia con USER name el parametro obtenido del usuario
     int ret = sctp_sendmsg(fd,usernameInput,strlen(usernameInput), NULL, 0, 0, 0, 0, 0, 0);
     if(ret == -1)
@@ -191,11 +199,12 @@ char requestLoginToProxy(int fd){
     char buffer[MAX_BUFFER] = {0};
 
     ret = sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
+    ret = sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
 
     free(usernameInput);
     free(passwordInput);
 
-    if( strcmp(buffer,"+OK") == 0)
+    if( strncmp(buffer,"+OK",3) == 0)
     {
         return 1;
     } else
@@ -210,11 +219,11 @@ char requestLoginToProxy(int fd){
 
 void prepareForSending(char **username, char **password) {
     char * user = calloc(1,INITIAL_INPUT_SIZE + 6);
-    strcpy(user,"USER: ");
+    strcpy(user,"USER ");
     strcat(user, *username);
     strcpy(*username,user);
     char * pass = calloc(1,INITIAL_INPUT_SIZE + 5);
-    strcpy(pass,"PASS: ");
+    strcpy(pass,"PASS ");
     strcat(pass, *password);
     strcpy(*password,pass);
     free(user);
@@ -225,6 +234,7 @@ void interaction(int fd)
 {
 
     char buffer[MAX_BUFFER];
+    char responseBuffer[MAX_BUFFER] = {0};
     int ret;
     wordexp_t p;
     char **w;
@@ -245,7 +255,14 @@ void interaction(int fd)
 
         if(strcmp(buffer,"LISTS")==0)
         {
+            char * pos;
+            if((pos = strchr(buffer,'\0')) != NULL)
+            {
+                *pos = '\n';
+            }
             ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+            sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
+            printf("%s",responseBuffer);
         }
         else if(strncmp(buffer,"STATS",5)==0)
         {
@@ -264,7 +281,14 @@ void interaction(int fd)
                 }
                 else
                 {
+                    char * pos;
+                    if((pos = strchr(buffer,'\0')) != NULL)
+                    {
+                        *pos = '\n';
+                    }
                     ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+                    sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
+                    printf("%s",responseBuffer);
                 }
             }
             wordfree(&p);
@@ -282,17 +306,34 @@ void interaction(int fd)
                 w = p.we_wordv;
                 if(count==1)
                 {
+                    char * pos;
+                    if((pos = strchr(buffer,'\0')) != NULL)
+                    {
+                        *pos = '\n';
+                    }
                     ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+                    sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
+                    printf("%s",responseBuffer);
                 }
                 else if(count==2)
                 {
                     if(strcmp(w[1],"1")==0 || strcmp(w[1],"0")==0)
                     {
+                        char * pos;
+                        if((pos = strchr(buffer,'\0')) != NULL)
+                        {
+                            *pos = '\n';
+                        }
                         ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+                        sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
+                        printf("%s",responseBuffer);
                     } else
                     {
                         printf("Usage: ACTIVE [BOOL], bool must be 0 or 1");
                     }
+                } else
+                {
+                    printf("Usage ACTIVE [BOOL]");
                 }
             }
 
@@ -311,7 +352,14 @@ void interaction(int fd)
                 w = p.we_wordv;
                 if(count==1 || count==2)
                 {
+                    char * pos;
+                    if((pos = strchr(buffer,'\0')) != NULL)
+                    {
+                        *pos = '\n';
+                    }
                     ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+                    sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
+                    printf("%s",responseBuffer);
                 }
             }
             wordfree(&p);
@@ -331,6 +379,11 @@ void interaction(int fd)
         }
         else if(strcmp(buffer,"QUIT")==0)
         {
+            char * pos;
+            if((pos = strchr(buffer,'\0')) != NULL)
+            {
+                *pos = '\n';
+            }
             ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
             closeConnection(fd);
 
