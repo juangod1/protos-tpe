@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include "main.h"
 #include "../../Shared/include/buffer.h"
+#include <pthread.h>
 
 #define BUFFER_SIZE 50
 
@@ -21,6 +22,7 @@ typedef enum {
 } execution_state;
 
 struct stateStruct {
+    pthread_t tid;
     file_descriptor read_fds[3];
     file_descriptor write_fds[3];
     execution_state exec_state;

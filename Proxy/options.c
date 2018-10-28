@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "include/options.h"
 #include "../Shared/include/executionValidator.h"
 #include "../Shared/include/lib.h"
@@ -25,6 +26,9 @@ void initialize_app_context()
     app_context->management_port=0;
     app_context->origin_port=0;
     app_context->replacement_message=NULL;
+    app_context->address_server_string=NULL;
+    app_context->addr=NULL;
+    app_context->has_to_query_dns=0;
 }
 
 void destroy_app_context()
@@ -127,5 +131,25 @@ void help()
 void server_string(char * server_string)
 {
     printf("This is server string!\n");fflush(stdout);
-    app_context->server_string=server_string;
+    int n1,n2,n3,n4;
+    unsigned int m1,m2,m3,m4,m5,m6,m7,m8;
+    int ret = sscanf(server_string,"%d.%d.%d.%d",&n1,&n2,&n3,&n4);
+    if(ret==4){
+        get_app_context()->has_to_query_dns=true;
+        printf("IPv4 Address received.\n");
+        app_context->address_server_string=server_string;
+    }
+    else{
+        ret = sscanf(server_string,"%x:%x:%x:%x:%x:%x:%x:%x",&m1,&m2,&m3,&m4,&m5,&m6,&m7,&m8);
+        if(ret==8){
+            get_app_context()->has_to_query_dns=true;
+            printf("IPv6 Address received.\n");
+            app_context->address_server_string=server_string;
+        }
+        else{
+            printf("Origin name requires DNS query.\n");
+            get_app_context()->has_to_query_dns=false;
+        }
+    }
+
 }

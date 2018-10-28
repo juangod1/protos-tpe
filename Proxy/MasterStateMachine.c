@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include "include/state.h"
+#include "include/options.h"
 #include "include/stateMachine.h"
 #include "include/MasterStateMachine.h"
 #include "include/list.h"
@@ -20,6 +21,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <pthread.h>
+#include <netdb.h>
 
 state_machine * sm;
 
@@ -62,8 +65,7 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
                 printf("--------------------------------------------------------\n");
                 printf("Administrator disconnected \n");
                 printf("--------------------------------------------------------\n");
-                disconnect(s);
-                return WAITING;
+                return NOT_WAITING;
             }
             printf("--------------------------------------------------------\n");
             printf("Read buffer content from ADMIN: \n");
@@ -86,7 +88,7 @@ execution_state ATTEND_ADMIN_on_resume(state s, file_descriptor fd, int is_read)
 }
 
 state_code ATTEND_ADMIN_on_leave(state s){
-
+    disconnect(s);
 }
 
 execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read){
@@ -138,12 +140,18 @@ state_code CONNECT_CLIENT_on_leave(state s){
 
 }
 
-execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read){
+execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd, int is_read){
     struct sockaddr_in address;
     memset(&address, 0, sizeof(address));
     address.sin_port = htons((uint16_t)get_app_context()->origin_port);
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = inet_addr(get_app_context()->server_string);
+
+    if(get_app_context()->has_to_query_dns){
+        address.sin_addr.s_addr = inet_addr(get_app_context()->addr->ai_addr->sa_data);
+    }
+    else{
+        address.sin_addr.s_addr = inet_addr(get_app_context()->address_server_string);
+    }
 
     //Connect to remote server
     if (connect(s->read_fds[1], (struct sockaddr *)&address , sizeof(address)) < 0)
@@ -170,8 +178,54 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
     return NOT_WAITING;
 }
 
-execution_state CONNECT_CLIENT_STAGE_TWO_on_resume(state s, file_descriptor fd, int is_read){
+execution_state CONNECT_CLIENT_STAGE_THREE_on_resume(state s, file_descriptor fd, int is_read){
 
+}
+
+state_code CONNECT_CLIENT_STAGE_THREE_on_leave(state s){
+    remove_state(sm,s);
+}
+
+void * query_dns(void * pipes){
+    struct addrinfo hints = {
+            .ai_family    = AF_UNSPEC,
+            .ai_socktype  = SOCK_STREAM,
+            .ai_flags     = AI_PASSIVE,
+            .ai_protocol  = 0,
+            .ai_canonname = NULL,
+            .ai_addr      = NULL,
+            .ai_next      = NULL,
+    };
+    getaddrinfo(get_app_context()->address_server_string,NULL,&hints,&(get_app_context()->addr));
+    write(((int *)pipes)[1],"1",1);
+}
+
+execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read){
+    if(get_app_context()->has_to_query_dns){
+        int pipes[2];
+
+        int ret = pipe(pipes);
+        if(ret<0){
+            perror("pipe error on dns query");
+        }
+
+        pthread_create(&(s->tid),NULL,query_dns,(void*)pipes);
+        s->read_fds[2]=pipes[0];
+        return WAITING;
+    }
+    else{
+        CONNECT_CLIENT_STAGE_TWO_on_resume(s,fd,is_read);
+        return NOT_WAITING;
+    }
+}
+
+execution_state CONNECT_CLIENT_STAGE_TWO_on_resume(state s, file_descriptor fd, int is_read){
+    state st = new_state(CONNECT_CLIENT_STAGE_THREE_STATE,CONNECT_CLIENT_STAGE_THREE_on_arrive,CONNECT_CLIENT_STAGE_THREE_on_resume,CONNECT_CLIENT_STAGE_THREE_on_leave);
+    st->read_fds[0]=s->read_fds[0];
+    st->read_fds[1]=s->read_fds[1];
+
+    add_state(sm,st);
+    return NOT_WAITING;
 }
 
 state_code CONNECT_CLIENT_STAGE_TWO_on_leave(state s){
@@ -187,8 +241,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
                     printf("--------------------------------------------------------\n");
                     printf("Client disconnected \n");
                     printf("--------------------------------------------------------\n");
-                    disconnect(s);
-                    return WAITING;
+                    return NOT_WAITING;
                 }
                 printf("--------------------------------------------------------\n");
                 printf("Read buffer content from MUA: \n");
@@ -200,8 +253,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
                     printf("--------------------------------------------------------\n");
                     printf("Origin disconnected \n");
                     printf("--------------------------------------------------------\n");
-                    disconnect(s);
-                    return WAITING;
+                    return NOT_WAITING;
                 }
                 printf("--------------------------------------------------------\n");
                 printf("Read buffer content from Origin: \n");
@@ -213,8 +265,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
                     printf("--------------------------------------------------------\n");
                     printf("Transform disconnected \n");
                     printf("--------------------------------------------------------\n");
-                    disconnect(s);
-                    return WAITING;
+                    return NOT_WAITING;
                 }
                 printf("--------------------------------------------------------\n");
                 printf("Read buffer content from Transform: \n");
@@ -245,6 +296,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
             }
             break;
     }
+    return WAITING;
 }
 
 execution_state ATTEND_CLIENT_on_resume(state s, file_descriptor fd, int is_read){
@@ -252,7 +304,7 @@ execution_state ATTEND_CLIENT_on_resume(state s, file_descriptor fd, int is_read
 }
 
 state_code ATTEND_CLIENT_on_leave(state s){
-
+    disconnect(s);
 }
 
 execution_state ERROR_on_arrive(state s, file_descriptor fd, int is_read){
@@ -323,6 +375,9 @@ void set_up_fd_sets_rec(fd_set * read_fds, fd_set * write_fds, node curr){
             add_read_fd(curr->st->read_fds[0]);
             break;
         case CONNECT_CLIENT_STAGE_TWO_STATE:
+            add_read_fd(curr->st->read_fds[2]);
+            break;
+        case CONNECT_CLIENT_STAGE_THREE_STATE:
             add_read_fd(curr->st->read_fds[1]);
             break;
         case ATTEND_ADMIN_STATE:
@@ -373,6 +428,9 @@ void debug_print_state(int state){
             break;
         case CONNECT_CLIENT_STAGE_TWO_STATE:
             msg="CONNECT_CLIENT_STAGE_TWO_STATE";
+            break;
+        case CONNECT_CLIENT_STAGE_THREE_STATE:
+            msg="CONNECT_CLIENT_STAGE_THREE_STATE";
             break;
         case ATTEND_ADMIN_STATE:
             msg="ATTEND_ADMIN_STATE";

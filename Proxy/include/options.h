@@ -6,7 +6,9 @@
 #define PROTOS_TPE_OPTIONS_H
 
 typedef struct {
-    char * server_string;
+    int has_to_query_dns;
+    char * address_server_string;
+    struct addrinfo * addr;
     char * error_path;
     int pop3_path;
     int management_path;

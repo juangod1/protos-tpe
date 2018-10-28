@@ -10,25 +10,32 @@
 /* FD List
  *  read_fds[0] = MUA_CONNECT_SOCKET
  */
-#define CONNECT_CLIENT_STATE 2
+#define CONNECT_CLIENT_STATE 1
+
+/* FD List
+ *  read_fds[0] = MUA_CONNECT_SOCKET
+ *  read_fds[1] = connect_origin_sock
+ *  read_fds[2] = thread_pipe
+ */
+#define CONNECT_CLIENT_STAGE_TWO_STATE 2
 
 /* FD List
  *  read_fds[0] = MUA_CONNECT_SOCKET
  *  read_fds[1] = connect_origin_sock
  */
-#define CONNECT_CLIENT_STAGE_TWO_STATE 3
+#define CONNECT_CLIENT_STAGE_THREE_STATE 3
 
 
 /* FD List
  *  read_fds[0] = ADMIN_read_fd
  */
-#define ATTEND_ADMIN_STATE 7
+#define ATTEND_ADMIN_STATE 4
 
 
 /* FD List
  *  read_fds[0] = ADMIN_CONNECT_SOCKET
  */
-#define CONNECT_ADMIN_STATE 4
+#define CONNECT_ADMIN_STATE 5
 
 
 /* FD List
@@ -39,17 +46,20 @@
  *  read_fds[2] = pipe_read_fd
  *  write_fds[2] = pipe_write_fd
  */
-#define ATTEND_CLIENT_STATE 5
+#define ATTEND_CLIENT_STATE 6
 
 
 /*  FD List
  *  All fds are -2
  */
-#define ERROR_STATE 6
+#define ERROR_STATE 7
 
 state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descriptor admin_sock);
 void set_up_fd_sets(fd_set * read_fds, fd_set * write_fds);
 void disconnect(state st);
+execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd, int is_read);
+execution_state CONNECT_CLIENT_STAGE_THREE_on_resume(state s, file_descriptor fd, int is_read);
+state_code CONNECT_CLIENT_STAGE_THREE_on_leave(state s);
 execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read);
 execution_state CONNECT_CLIENT_STAGE_TWO_on_resume(state s, file_descriptor fd, int is_read);
 state_code CONNECT_CLIENT_STAGE_TWO_on_leave(state s);
