@@ -195,14 +195,14 @@ char requestLoginToProxy(int fd){
     free(usernameInput);
     free(passwordInput);
 
-//    if( ret == '1')
-//    {
-//        return 1;
-//    } else
-//    {
-//        return 0;
-//    }
-    return 1;
+    if( strcmp(buffer,"+OK") == 0)
+    {
+        return 1;
+    } else
+    {
+        return 0;
+    }
+
     //Devuelve 1 si fue exitoso
     //Devuelve 0 si falla
     //Libera memoria
@@ -332,6 +332,7 @@ void interaction(int fd)
         else if(strcmp(buffer,"QUIT")==0)
         {
             ret = sctp_sendmsg(fd,(void*)buffer,length,NULL, 0, 0, 0, 0, 0, 0);
+            closeConnection(fd);
 
         }
         else
@@ -349,10 +350,6 @@ void interaction(int fd)
     }
 }
 
-void parseToArgv()
-{
-
-}
 void closeConnection(int fd)
 {
     printf("Goodbye, hope to see you soon!\n");
