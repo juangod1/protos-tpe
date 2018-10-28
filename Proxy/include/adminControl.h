@@ -46,7 +46,7 @@ int textResponseBS(int estadoDeRespuesta, char* contenido, buffer_p buffer);
 void procesarRequest(state s);
 int parseComando(const char* resp);
 variablesDeSesion_p inicializarVarSes();
-int autenticar();
+int autenticar(char *user, char *pass);
 int getMonitoreoArray();
 int monitoreo(int numero);
 int getEstadoTransformacion();

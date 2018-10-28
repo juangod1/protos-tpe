@@ -32,6 +32,8 @@ struct stateStruct {
     state_code (*on_leave)(state st);
     buffer_p buffers[3];
     int protocol_state;
+    char* user;
+    char* pass;
 };
 
 

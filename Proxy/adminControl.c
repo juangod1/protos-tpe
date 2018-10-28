@@ -187,6 +187,7 @@ int textResponseBS(int estadoDeRespuesta, char* contenido, buffer_p buffer){
     }
     //Enviar el la respuesta
     strcat(res , contenido);
+    strcat(res, "\n");
     buffer_read_string(res, buffer);
     return  0;
 
@@ -220,7 +221,7 @@ int parseMesaje(const char *str, char sep, char**comando, char** parametro)
         start = stop + 1;
         return 0;
     }
-    *parametro = calloc(1,stop-start);
+    *parametro = calloc(1,stop-start+1);
     memcpy(*parametro, str + start, stop - start);//Por ahi me falta uno para finalizar el string
     return 0;
 }
@@ -235,7 +236,7 @@ void procesarRequest(state s){
     char *parametro = NULL;
     if(parseMesaje(respuesta, ' ', &comando, &parametro) == 1){
         //Error de mensaje
-        textResponseBS(FALLO,"Message format error.\n", buffer);
+        textResponseBS(FALLO,"Message format error.", buffer);
         //TODO:Puedo cerrar la conexion o dejar que siga un poco mas.
     }
     switch(parseComando(comando)){
@@ -247,9 +248,12 @@ void procesarRequest(state s){
             }
             //Se procede
             if(parametro != NULL){
-                varSes->usuario = parametro;//Este tiene que ser el 2do string del mensaje enviado
+                s->user = calloc(1, strlen(parametro) + 1);
+                memcpy(s->user, parametro, strlen(parametro));
+                textResponseBS(EXITO,"Continue with PASS.", buffer);
+            } else {
+                textResponseBS(FALLO, "Missing argument", buffer);
             }
-            textResponseBS(EXITO,"Continue with PASS.", buffer);
             break;
         case PASS:
             if(s->protocol_state != AUTENTICACION){
@@ -258,19 +262,20 @@ void procesarRequest(state s){
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
             }
             //Tiene que haber ingresado un usuario previamente
-            if(varSes->usuario != NULL){
-                varSes->contra = parametro;
-                int auth = autenticar();
+            if(s->user != NULL){
+                s->pass = calloc(1, strlen(parametro) + 1);
+                memcpy(s->pass, parametro, strlen(parametro));
+                int auth = autenticar(s->user,s->pass);
                 if(auth == 0){
-                    textResponseBS(EXITO, "Entering EXCHAGE.\n", buffer);
+                    textResponseBS(EXITO, "Entering EXCHAGE.", buffer);
                     s->protocol_state = INTERCAMBIO;
                 } else if(auth == 1){
-                    textResponseBS(FALLO, "FAILED. Try again or QUIT.\n", buffer);
+                    textResponseBS(FALLO, "FAILED. Try again or QUIT.", buffer);
                 } else {
-                    textResponseBS(FALLO, "Conection error, try asgain later.\n", buffer);
+                    textResponseBS(FALLO, "Conection error, try asgain later.", buffer);
                 }
             } else {
-                textResponseBS(FALLO, "Missing USER.\n", buffer);
+                textResponseBS(FALLO, "Missing USER.", buffer);
             }
             break;
         case LISTS:
@@ -305,7 +310,7 @@ void procesarRequest(state s){
             }
             int resMonitoreo = monitoreo(paramNum);
             if(resMonitoreo == -1){
-                textResponseBS(FALLO,"Function not found, use LISTS.\n", buffer);
+                textResponseBS(FALLO,"Function not found, use LISTS.", buffer);
             } else {
                 char textoMonitoreo[15];
                 sprintf(textoMonitoreo, "%d", resMonitoreo);
@@ -322,7 +327,7 @@ void procesarRequest(state s){
             if(parametro == NULL){
                 //Significa que no paso parametro entonces quiere saber cual es el estado actual
                 int estadoT = getEstadoTransformacion();
-                textResponseBS(EXITO, strcat("Transformation is: ", (estadoT ? "Active\n":"Inactive\n")), buffer);
+                textResponseBS(EXITO, strcat("Transformation is: ", (estadoT ? "Active":"Inactive")), buffer);
             } else {
                 int paramNum = parsePosInt(parametro);
                 if ( paramNum != 1 && paramNum != 0 || paramNum == -1){
@@ -332,7 +337,7 @@ void procesarRequest(state s){
                 }
                 if(setEstadoTransformacion(paramNum) == 0) {
                     textResponseBS(EXITO, strcat("SUCCESS. Transformation: ",
-                                                 (paramNum ? "Active\n" : "Inactive\n")), buffer);
+                                                 (paramNum ? "Active" : "Inactive")), buffer);
                 } else {
                     //ERROR Interno
                     //TODO: Manejar errores internos y solicitar un nuevo request.
@@ -361,13 +366,13 @@ void procesarRequest(state s){
         case QUIT:
             s->protocol_state = CIERRE;
             //Es multiestado entonces no verifico
-            textResponseBS(EXITO, "Goodbye!\n", buffer);
+            textResponseBS(EXITO, "Goodbye!", buffer);
             //cerrar sesion cerrando el socket y dropeando la informacion de sesion
             break;
         //Y por ultimo tenemos el caso default por si falla por scope o por error
         default:
             //El comando ingresado no esta dentro de los disponibles.
-            textResponseBS(FALLO, "Command unknown. Refer to the RFC.\n", buffer);
+            textResponseBS(FALLO, "Command unknown. Refer to the RFC.", buffer);
             break;
     }
 }
@@ -395,9 +400,19 @@ int parseComando(const char* resp){
 
 
 
-int autenticar(){
+int autenticar(char *user, char* pass){
     //Usando las variable globales tiene que autenticar y luego proporcionar el codigo que resulto
-    return 0;
+    char *users[2] = {"pablito","juancito"};
+    char *passes[2] = {"pabs", "juans"};
+    for(int i=0;i<2;i++){
+        if(strcmp(users[i],user) == 0){
+            if(strcmp(passes[i], pass) == 0){
+                return 0;
+            }
+            return 1;
+        }
+    }
+    return 1;
 }
 
 //Retorna -1 si falla
