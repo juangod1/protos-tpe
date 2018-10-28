@@ -6,6 +6,8 @@
 #define PROTOS_TPE_ADMINCONTROL_H
 #include <stdlib.h>
 #include "main.h"
+#include "../../Shared/include/buffer.h"
+#include "state.h"
 
 typedef enum {
     AUTENTICACION, INTERCAMBIO, CIERRE
@@ -35,11 +37,14 @@ typedef variablesDeSesion * variablesDeSesion_p;
 #define FALLO 1
 #define ESPECIAL 2
 
+#define SCOPE_ERROR textResponseBS(FALLO, "El comando no se encuentra disponible en este estado de sesion.", buffer);
+#define FORMAT_ERROR textResponseBS(FALLO, "El ultimo mensaje no presenta el formato correcto.", buffer);
+
 //Funciones
 void saludo();
-int textResponseBS(int estadoDeRespuesta, char* contenido);
-void procesarRequest();
-int parseComando(char* resp);
+int textResponseBS(int estadoDeRespuesta, char* contenido, buffer_p buffer);
+void procesarRequest(state s);
+int parseComando(const char* resp);
 variablesDeSesion_p inicializarVarSes();
 int autenticar();
 int getMonitoreoArray();
@@ -48,9 +53,7 @@ int getEstadoTransformacion();
 int setEstadoTransformacion(int estado);
 char* getFiltroTransformacion();
 int setFiltroTransformacion(char* filtro);
-void errorDeScope();
 file_descriptor setup_admin_socket();
-void errorDeFormato();
 int parseMesaje(const char *str, char sep, char**comando, char** parametro);
 void createConection();
 int parsePosInt(char* string);

@@ -137,14 +137,16 @@ void print_buffer(buffer_p b){
 
 int buffer_write_string(char * string, buffer_p buffer)
 {
-    int characters_to_write = buffer->count;
+    int characters_to_write = buffer->count - 1;
     char * write_ptr = buffer->data_ptr;
+    int i =0;
 
     while(characters_to_write>0){
-        *string=*(buffer->data_ptr);
+        *(string+i++)=*(buffer->data_ptr);
         buffer->data_ptr++;
         characters_to_write--;
     }
+    *(string+i)='\0';
     buffer->count=0;
     buffer->data_ptr=buffer->data_start;
 
@@ -157,12 +159,12 @@ int buffer_read_string(char * string, buffer_p buffer)
     char * read_ptr = buffer->data_ptr;
 
     int count=characters_to_read;
+    int i = 0;
 
     while(count>0 && *string!=0)
     {
-        *(buffer->data_ptr)=*string;
+        *(buffer->data_ptr+i++)=*string;
         string++;
-        buffer->data_ptr++;
         buffer->count++;
         count--;
     }

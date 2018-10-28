@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include "include/adminControl.h"
+#include "include/state.h"
 #include "include/main.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +45,7 @@ void successfullConection(int parametros){
     //Dado que conecto exitosamente hago el greeting
     saludo(parametros);
 
-    procesarRequest();
+//    procesarRequest();
 }
 
 file_descriptor setup_admin_socket(){
@@ -168,25 +169,25 @@ void saludo(int parametros){
     //"Conexion establecida!";
     char* mensaje = "Conexion establecida!";
     //Enviar por conexion la respuesta.
-    textResponseBS(ESPECIAL,"Conexion establecida! Saludos!");
+    //textResponseBS(ESPECIAL,"Conexion establecida! Saludos!");
 }
 
-int textResponseBS(int estadoDeRespuesta, char* contenido){
-    char* res;
-    strcat(contenido, ".\r\n");
-    if(estadoDeRespuesta == 1){
-        res = strcat("+OK - ", contenido);
-    } else if(estadoDeRespuesta == 0) {
-        res = strcat("-ERR - ", contenido);
+int textResponseBS(int estadoDeRespuesta, char* contenido, buffer_p buffer){
+    char res[100] = {0};
+    char *ok = "+OK - ";
+    char *err = "-ERR - ";
+    char *esp = "* - ";
+    if(estadoDeRespuesta == 0){
+        strcat(res, ok);
+    } else if(estadoDeRespuesta == 1) {
+        strcat(res,err);
     } else {
         //Estado especial
-        res = strcat("* - ", contenido);
+        strcat(res,esp);
     }
     //Enviar el la respuesta
-    if(1) {//sctp_sendmsg(1,(void *)mensaje, sizeof(mensaje),to,tolen,ppid,flags,strem_no,timetolive,context);
-        //Si sale mal, retorno -1, sino 0
-        return -1;
-    }
+    strcat(res , contenido);
+    buffer_read_string(res, buffer);
     return  0;
 
 }
@@ -206,52 +207,54 @@ int parseMesaje(const char *str, char sep, char**comando, char** parametro)
         if (str[stop] == sep) {
             if(cuenta == 1)
                 return 1;
-            *comando = calloc(1,stop-start);//Por ahi me falta 1 para finalizar el string
+            *comando = calloc(1,stop-start+1);//Por ahi me falta 1 para finalizar el string
             memcpy(*comando, str + start, stop - start);
             cuenta++;
             start = stop + 1;
         }
+    }
+    if(cuenta == 0){
+        *comando = calloc(1,stop-start+1);//Por ahi me falta 1 para finalizar el string
+        memcpy(*comando, str + start, stop - start);
+        cuenta++;
+        start = stop + 1;
+        return 0;
     }
     *parametro = calloc(1,stop-start);
     memcpy(*parametro, str + start, stop - start);//Por ahi me falta uno para finalizar el string
     return 0;
 }
 
-void procesarRequest(){
-    //Esta funcion tiene que:
-    //-recibir la request
-    //-parsear la request
-    //-definir si es correcta en cuanto a forma y contexto
-    //-consultar la respuesta
-    //-generar la response
-
-    //Recibir la request
-    char * respuesta;//sctp_recvmsg(1,(void *)mensaje, sizeof(mensaje),to,tolen,ppid,flags,strem_no,timetolive,context);
+void procesarRequest(state s){
+    buffer_p buffer = s->buffers[0];
+    char respuesta[MAX_BUFFER] = {0};
+    buffer_write_string(respuesta,buffer);
+    printf("%s",respuesta);
     //Separo el string de respuesta por espacios y analizo cada cosa.
     char *comando = NULL;
     char *parametro = NULL;
     if(parseMesaje(respuesta, ' ', &comando, &parametro) == 1){
         //Error de mensaje
-        textResponseBS(FALLO,"El mensaje enviado contiene un error de formato.");
+        textResponseBS(FALLO,"Message format error.\n", buffer);
         //TODO:Puedo cerrar la conexion o dejar que siga un poco mas.
     }
     switch(parseComando(comando)){
         case USER:
-            if(varSes->eSesion != AUTENTICACION){
+            if(s->protocol_state != AUTENTICACION){
                 //Error de SCOPE
-                errorDeScope();
+                SCOPE_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
             }
             //Se procede
             if(parametro != NULL){
                 varSes->usuario = parametro;//Este tiene que ser el 2do string del mensaje enviado
             }
-            textResponseBS(EXITO,"Continue con PASS");
+            textResponseBS(EXITO,"Continue with PASS.", buffer);
             break;
         case PASS:
-            if(varSes->eSesion != AUTENTICACION){
+            if(s->protocol_state != AUTENTICACION){
                 //Error de SCOPE
-                errorDeScope();
+                SCOPE_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
             }
             //Tiene que haber ingresado un usuario previamente
@@ -259,77 +262,77 @@ void procesarRequest(){
                 varSes->contra = parametro;
                 int auth = autenticar();
                 if(auth == 0){
-                    textResponseBS(EXITO, "Autenticacion exitosa, se encuentra en INTERCAMBIO");
-                    varSes->eSesion = INTERCAMBIO;
+                    textResponseBS(EXITO, "Entering EXCHAGE.\n", buffer);
+                    s->protocol_state = INTERCAMBIO;
                 } else if(auth == 1){
-                    textResponseBS(FALLO, "Fallo la autenticacion. Intente nuevamente o finalize con QUIT");
+                    textResponseBS(FALLO, "FAILED. Try again or QUIT.\n", buffer);
                 } else {
-                    textResponseBS(FALLO, "El error producido fue de conexion, intente mas tarde");
+                    textResponseBS(FALLO, "Conection error, try asgain later.\n", buffer);
                 }
             } else {
-                textResponseBS(FALLO, "Tiene que proporcionar un usuario primero");
+                textResponseBS(FALLO, "Missing USER.\n", buffer);
             }
             break;
         case LISTS:
-            if(varSes->eSesion != INTERCAMBIO){
+            if(s->protocol_state != INTERCAMBIO){
                 //Error de SCOPE
-                errorDeScope();
+                SCOPE_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
             }
             if(parametro != NULL){
                 //Si hay parametros, presentar un ERROR DE FORMATO
-                errorDeFormato();
+                FORMAT_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
             }
-            char* contenido = "Lista";
+            char* contenido = "List:";
             for(int i = 0; i<getMonitoreoArray();i++){
                 strcat(contenido, "\n");
                 strcat(contenido, varSes->monitoreoArray[i]);
             }
-            textResponseBS(1, contenido);
+            textResponseBS(1, contenido, buffer);
             break;
         case STATS:
-            if(varSes->eSesion != INTERCAMBIO){
+            if(s->protocol_state != INTERCAMBIO){
                 //Error de SCOPE
-                errorDeScope();
+                SCOPE_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
             }
             int paramNum = parsePosInt(parametro);
             if(paramNum == -1){
                 //Si no es un numero presentar un ERROR DE FORMATO
-                errorDeFormato();
+                FORMAT_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
             }
             int resMonitoreo = monitoreo(paramNum);
             if(resMonitoreo == -1){
-                textResponseBS(FALLO,"No existe la funcion solicitada. Utilizar LISTS para mas informacion.");
+                textResponseBS(FALLO,"Function not found, use LISTS.\n", buffer);
             } else {
                 char textoMonitoreo[15];
                 sprintf(textoMonitoreo, "%d", resMonitoreo);
                 //Aca se puede hacer referencia a la funcion o al numero de funcion que fue llamado.
-                textResponseBS(EXITO, strcat("El resultdo es ", textoMonitoreo));
+                textResponseBS(EXITO, strcat("El resultdo es ", textoMonitoreo), buffer);//TODO: Hay que acomodar el strcat
             }
             break;
         case ACTIVE:
-            if(varSes->eSesion != INTERCAMBIO){
+            if(s->protocol_state != INTERCAMBIO){
                 //Error de SCOPE
-                errorDeScope();
+                SCOPE_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
             }
             if(parametro == NULL){
                 //Significa que no paso parametro entonces quiere saber cual es el estado actual
                 int estadoT = getEstadoTransformacion();
-                textResponseBS(EXITO, strcat("La transformacion se encuentra: ", (estadoT ? "Activa":"Inactiva")));
+                textResponseBS(EXITO, strcat("Transformation is: ", (estadoT ? "Active\n":"Inactive\n")), buffer);
             } else {
                 int paramNum = parsePosInt(parametro);
                 if ( paramNum != 1 && paramNum != 0 || paramNum == -1){
                     //ERROR DE FORMATO - parametros invalidos
-                    errorDeFormato();
+                    FORMAT_ERROR
                     //TODO:Cerrar la respuesta y solicitar un nuevo request.
                 }
                 if(setEstadoTransformacion(paramNum) == 0) {
-                    textResponseBS(EXITO, strcat("El cambio se realizo con exito. Transformacion: ",
-                                                 (paramNum ? "Activa" : "Inactiva")));
+                    textResponseBS(EXITO, strcat("SUCCESS. Transformation: ",
+                                                 (paramNum ? "Active\n" : "Inactive\n")), buffer);
                 } else {
                     //ERROR Interno
                     //TODO: Manejar errores internos y solicitar un nuevo request.
@@ -337,18 +340,18 @@ void procesarRequest(){
             }
             break;
         case FILTER:
-            if(varSes->eSesion != INTERCAMBIO){
+            if(s->protocol_state != INTERCAMBIO){
                 //Error de SCOPE
-                errorDeScope();
+                SCOPE_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
             }
             if(parametro == NULL){
                 //Significa que no paso parametro entonces quiere saber cual es el filter actual
                 char* filtro = getFiltroTransformacion();
-                textResponseBS(EXITO, strcat("La transformacion actual es: ", filtro));
+                textResponseBS(EXITO, strcat("Current transformation: ", filtro), buffer);
             } else {
                 if(setFiltroTransformacion(parametro) == 0) {
-                    textResponseBS(EXITO, strcat("El cambio se realizo con exito. Transformacion: ", parametro));
+                    textResponseBS(EXITO, strcat("SUCCESS. Current transformation: ", parametro), buffer);
                 } else {
                     //ERROR Interno
                     //TODO: Manejar errores internos y solicitar un nuevo request.
@@ -356,20 +359,23 @@ void procesarRequest(){
             }
             break;
         case QUIT:
-            varSes->eSesion = CIERRE;
+            s->protocol_state = CIERRE;
             //Es multiestado entonces no verifico
-            textResponseBS(EXITO, "Sesion finalizada");
+            textResponseBS(EXITO, "Goodbye!\n", buffer);
             //cerrar sesion cerrando el socket y dropeando la informacion de sesion
             break;
         //Y por ultimo tenemos el caso default por si falla por scope o por error
         default:
             //El comando ingresado no esta dentro de los disponibles.
-            textResponseBS(FALLO, "El comando no exite. Leer RFC para ver los preestablecidos");
+            textResponseBS(FALLO, "Command unknown. Refer to the RFC.\n", buffer);
             break;
     }
 }
 
-int parseComando(char* resp){
+int parseComando(const char* resp){
+    if(resp == NULL){
+        return -1;
+    }
     if(strcmp(resp, "USER") == 0)
         return 0;
     if(strcmp(resp, "PASS") == 0)
@@ -387,13 +393,7 @@ int parseComando(char* resp){
     return -1;
 }
 
-void errorDeScope(){
-    textResponseBS(FALLO, "El comando no se encuentra disponible en este estado de sesion.");
-}
 
-void errorDeFormato(){
-    textResponseBS(FALLO, "El ultimo mensaje no presenta el formato correcto.");
-}
 
 int autenticar(){
     //Usando las variable globales tiene que autenticar y luego proporcionar el codigo que resulto

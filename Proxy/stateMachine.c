@@ -28,7 +28,7 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
     new->buffers[0]=NULL;
     new->buffers[1]=NULL;
     new->buffers[2]=NULL;
-    new->persistent_data=0;
+    new->protocol_state=0;
     return new;
 }
 

@@ -15,6 +15,7 @@
 #include "../Shared/include/buffer.h"
 #include "include/options.h"
 #include "include/proxyCommunication.h"
+#include "include/adminControl.h"
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -69,10 +70,13 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
             print_buffer(s->buffers[0]);
             break;
         case 0:
+            printf("Processing command!\n");
+            procesarRequest(s);
+            print_buffer(s->buffers[0]);
             buffer_write(fd,s->buffers[0]);
             printf("--------------------------------------------------------\n");
             printf("Wrote buffer content to ADMIN: \n");
-            print_buffer(s->buffers[0]);
+
             break;
     }
 }
