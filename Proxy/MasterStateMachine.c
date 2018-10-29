@@ -125,7 +125,9 @@ void * query_dns(void * pipes){
             .ai_addr      = NULL,
             .ai_next      = NULL,
     };
-    getaddrinfo(get_app_context()->address_server_string,NULL,&hints,&(get_app_context()->addr));
+    char buff[7];
+    snprintf(buff, sizeof(buff), "%hu", get_app_context()->origin_port);
+    getaddrinfo(get_app_context()->address_server_string,buff,&hints,&(get_app_context()->addr));
     write(((int *)pipes)[1],"1",1);
 }
 
