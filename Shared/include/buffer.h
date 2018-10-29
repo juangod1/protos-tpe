@@ -27,5 +27,6 @@ int buffer_write(int file_descriptor, buffer_p buffer);
 int buffer_write_until_substring(int file_descriptor, buffer_p buffer, char * substring);
 void print_buffer(buffer_p b);
 int find_substring(char * buffer, int size, char * substring);
+int buffer_read_until_char(int file_descriptor,buffer_p buffer, char ch);
 
 #endif

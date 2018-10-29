@@ -235,7 +235,17 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
         case 1: // True
             if (s->read_fds[0] == fd)
             {   // MUA READ
-                if(buffer_read(fd,s->buffers[0])==0){
+                int read_response;
+                if(get_app_context()->pipelining)
+                {
+                    read_response= buffer_read(fd,s->buffers[0]);
+                }
+                else
+                {
+                    read_response= buffer_read_until_char(fd,s->buffers[0],'\n');
+                }
+                if(read_response==0)
+                {
                     printf("--------------------------------------------------------\n");
                     printf("Client disconnected \n");
                     printf("--------------------------------------------------------\n");
@@ -262,6 +272,9 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
                 }
                 if(buffer_indicates_parsable_message(s->buffers[1])){
                     s->data_3=true; //INDICATES MESSAGE MUST BE TRANSFORMED
+                }
+                if(!get_app_context()->pipelining){
+                    s->pipelining_data=true;
                 }
             }
             else if (s->read_fds[2] == fd)
@@ -301,10 +314,13 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
             }
             else if (s->write_fds[1] == fd)
             {   // Origin WRITE
-                printf("--------------------------------------------------------\n");
-                printf("Wrote buffer content to Origin: \n");
                 print_buffer(s->buffers[0]);
                 buffer_write(fd,s->buffers[0]);
+                if(!get_app_context()->pipelining) {
+                    s->pipelining_data = false;
+                }
+                printf("--------------------------------------------------------\n");
+                printf("Wrote buffer content to Origin: \n");
             }
             else if (s->write_fds[2] == fd)
             {   // Transform WRITE
@@ -371,7 +387,24 @@ void set_up_fd_sets_rec(fd_set * read_fds, fd_set * write_fds, node curr){
                 else{
                     if(curr->st->write_fds[1]>0) {
                         printf("Buffer 1 is not empty ==> ");
-                        add_write_fd(curr->st->write_fds[1]); // Origin write
+                        if(get_app_context()->pipelining)
+                        {
+                            printf("OS has Pipelining enabled. Added origin write\n");
+                            add_write_fd(curr->st->write_fds[1]); // Origin write
+                        }
+                        else
+                        {
+                            printf("OS has no Pipelining enabled. ");
+                            if(curr->st->pipelining_data)
+                            {
+                                printf("Added origin write\n");
+                                add_write_fd(curr->st->write_fds[1]); // Origin write
+                            }
+                            else
+                            {
+                                printf("Waiting for server to process\n");
+                            }
+                        }
                     }
                 }
             }

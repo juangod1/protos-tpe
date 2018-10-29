@@ -39,6 +39,7 @@ struct stateStruct {
     int data_1;
     int data_2;
     int data_3;
+    int pipelining_data;
     char* user;
     char* pass;
 };

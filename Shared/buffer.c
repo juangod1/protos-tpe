@@ -104,6 +104,8 @@ int buffer_write(int file_descriptor, buffer_p buffer)
 
 int buffer_indicates_end_of_message(buffer_p buffer)
 {
+    if(buffer->count<2) return false;
+
     size_t count = buffer->count;
     char * ptr = buffer->data_ptr;
     while(count>2){
@@ -115,6 +117,36 @@ int buffer_indicates_end_of_message(buffer_p buffer)
     return true;
 }
 
+int buffer_read_until_char(int file_descriptor,buffer_p buffer, char ch)
+{
+    int characters_to_read = buffer->size-(buffer->data_ptr-buffer->data_start);
+    char * read_ptr = buffer->data_ptr;
+    int amount = 0;
+
+    while(characters_to_read>0)
+    {
+        int count = read(file_descriptor,read_ptr,1);
+        if(count==1)
+        {
+            amount++;
+            if(*read_ptr==ch){
+                break;
+            }
+
+        }
+        else if(count==0 || errno==ECONNRESET){
+            break;
+        }
+        else{
+            perror("Read error");
+            break;
+        }
+        characters_to_read--;
+        read_ptr++;
+    }
+    buffer->count+=amount;
+    return amount;
+}
 
 int buffer_write_until_substring(int file_descriptor, buffer_p buffer, char * substring)
 {
@@ -123,16 +155,15 @@ int buffer_write_until_substring(int file_descriptor, buffer_p buffer, char * su
     int characters_to_write = (index==-1)?(int)buffer->count:index;
     char * write_ptr = buffer->data_ptr;
 
-    int amount = write(file_descriptor,buffer->data_ptr,characters_to_write);
+    int amount = write(file_descriptor,write_ptr,characters_to_write);
     if(amount!=characters_to_write)
     {
         perror("buffer_write: wrote less than expected");
-        buffer->count-=amount;
-        buffer->data_ptr+=amount;
     }
-    else
-    {
-        buffer->count=0;
+    buffer->count-=amount;
+    buffer->data_ptr+=amount;
+
+    if(buffer->data_ptr-buffer->data_start==buffer->size){
         buffer->data_ptr=buffer->data_start;
     }
 

@@ -29,6 +29,7 @@ void initialize_app_context()
     app_context->address_server_string=NULL;
     app_context->addr=NULL;
     app_context->has_to_query_dns=0;
+    app_context->pipelining=false;
     char *monitoreo[5] = {"1 - Conections", "2 - Connected Admins", "3 - Messages", "4 - Messages2", "5 - Messages3"};
     for(int i=0; i < 5; i++){
         int len = strlen(monitoreo[i]);
