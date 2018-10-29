@@ -284,21 +284,27 @@ void procesarRequest(state s, file_descriptor fd){
                 //Error de SCOPE
                 SCOPE_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
-            }
-            int paramNum = parsePosInt(parametro);
-            if(paramNum == -1){
-                //Si no es un numero presentar un ERROR DE FORMATO
-                FORMAT_ERROR
-                //TODO:Cerrar la respuesta y solicitar un nuevo request.
-            }
-            int resMonitoreo = monitoreo(paramNum);
-            if(resMonitoreo == -1){
-                textResponseBS(FALLO,"Function not found, use LISTS.", buffer, fd);
+            } else if(parametro != NULL){
+                int paramNum = parsePosInt(parametro);
+                if(paramNum == -1){
+                    //Si no es un numero presentar un ERROR DE FORMATO
+                    FORMAT_ERROR
+                    //TODO:Cerrar la respuesta y solicitar un nuevo request.
+                } else {
+                    int resMonitoreo = monitoreo(paramNum);
+                    if(resMonitoreo == -1){
+                        textResponseBS(FALLO,"Function not found, use LISTS.", buffer, fd);
+                    } else {
+                        char textoMonitoreo[5];
+                        char contenido[50] = "El resultdo es ";
+                        sprintf(textoMonitoreo, "%d", resMonitoreo);
+                        //Aca se puede hacer referencia a la funcion o al numero de funcion que fue llamado.
+                        textResponseBS(EXITO, strcat(contenido, textoMonitoreo), buffer,
+                                       fd);//TODO: Hay que acomodar el strcat
+                    }
+                }
             } else {
-                char textoMonitoreo[15];
-                sprintf(textoMonitoreo, "%d", resMonitoreo);
-                //Aca se puede hacer referencia a la funcion o al numero de funcion que fue llamado.
-                textResponseBS(EXITO, strcat("El resultdo es ", textoMonitoreo), buffer, fd);//TODO: Hay que acomodar el strcat
+                FORMAT_ERROR
             }
             break;
         case ACTIVE:
@@ -419,7 +425,7 @@ char** getMonitoreoArray(){
 
 //Busca la estadistica correspondiente al monitoreo(i)
 int monitoreo(int numero){
-    //getMonitoreoContext con el numero
+    //Tiene que buscar las metricas en el contexto
     return 0;
 }
 
