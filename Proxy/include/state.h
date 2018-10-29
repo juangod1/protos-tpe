@@ -42,6 +42,7 @@ struct stateStruct {
     int pipelining_data;
     char* user;
     char* pass;
+    struct addrinfo * current;
 };
 
 

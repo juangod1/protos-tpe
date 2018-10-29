@@ -115,7 +115,8 @@ execution_state CONNECT_ADMIN_on_resume(state s, file_descriptor fd, int is_read
 state_code CONNECT_ADMIN_on_leave(state s){
 }
 
-void * query_dns(void * pipes){
+void * query_dns(void * st){
+    state s = (state)st;
     struct addrinfo hints = {
             .ai_family    = AF_UNSPEC,
             .ai_socktype  = SOCK_STREAM,
@@ -128,7 +129,16 @@ void * query_dns(void * pipes){
     char buff[7];
     snprintf(buff, sizeof(buff), "%hu", get_app_context()->origin_port);
     getaddrinfo(get_app_context()->address_server_string,buff,&hints,&(get_app_context()->addr));
-    write(((int *)pipes)[1],"1",1);
+    s->current=get_app_context()->addr;
+    int ret=-1;
+    while( s->current!=NULL && (ret=connect(s->read_fds[1], s->current->ai_addr , s->current->ai_addrlen)) < 0)
+        s->current=s->current->ai_next;
+
+    int buff1=false,buff2=true;
+    if(ret<0)
+        write(((int *)s->pipes)[1],&buff1,1);
+    else
+        write(((int *)s->pipes)[1],&buff2,1);
 }
 
 execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_read){
@@ -149,7 +159,7 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
                 perror("pipe error on dns query");
             }
 
-            pthread_create(&(st->tid),NULL,query_dns,(void*)st->pipes);
+            pthread_create(&(st->tid),NULL,query_dns,(void*)st);
             st->read_fds[2]=st->pipes[0];
 
             add_state(sm,st);
@@ -172,12 +182,7 @@ state_code CONNECT_CLIENT_on_leave(state s){
 
 execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd, int is_read){
     if(get_app_context()->has_to_query_dns){
-        //Connect to remote server
-        if (connect(s->read_fds[1], get_app_context()->addr->ai_addr , get_app_context()->addr->ai_addrlen) < 0)
-        {
-            perror("Connect to origin error");
-            error();
-        }
+        // Connection happens in thread
     }
     else{
         struct sockaddr_in address;
@@ -222,6 +227,17 @@ state_code CONNECT_CLIENT_STAGE_THREE_on_leave(state s){
 
 execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read){
     pthread_join(s->tid,NULL);
+
+    int buff=false;
+    if(read(s->pipes[0],&buff,1)<0){
+        perror("read error");
+    }
+    if(buff){
+        printf("Connected to DNS origin host correctly.\n");
+    }
+    else{
+        printf("Unable to connect to dns origin host.\n");
+    };
 
     state st = new_state(CONNECT_CLIENT_STAGE_THREE_STATE,CONNECT_CLIENT_STAGE_THREE_on_arrive,CONNECT_CLIENT_STAGE_THREE_on_resume,CONNECT_CLIENT_STAGE_THREE_on_leave);
     st->read_fds[0]=s->read_fds[0];
@@ -354,7 +370,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
         s->data_1=false;
         s->data_2=false;
         s->data_3=false;
-        printf("Created new Transform Process. With command %s",command);
+        printf("Created new Transform Process with command %s.\n",command);
     }
     return WAITING;
 }
