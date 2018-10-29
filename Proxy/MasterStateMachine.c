@@ -115,6 +115,20 @@ execution_state CONNECT_ADMIN_on_resume(state s, file_descriptor fd, int is_read
 state_code CONNECT_ADMIN_on_leave(state s){
 }
 
+void * query_dns(void * pipes){
+    struct addrinfo hints = {
+            .ai_family    = AF_UNSPEC,
+            .ai_socktype  = SOCK_STREAM,
+            .ai_flags     = AI_PASSIVE,
+            .ai_protocol  = 0,
+            .ai_canonname = NULL,
+            .ai_addr      = NULL,
+            .ai_next      = NULL,
+    };
+    getaddrinfo(get_app_context()->address_server_string,NULL,&hints,&(get_app_context()->addr));
+    write(((int *)pipes)[1],"1",1);
+}
+
 execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_read){
         int accept_ret = accept(s->read_fds[0],NULL,NULL);
 
@@ -123,18 +137,28 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
             error();
         }
 
-        state st = new_state(CONNECT_CLIENT_STAGE_TWO_STATE,CONNECT_CLIENT_STAGE_TWO_on_arrive,CONNECT_CLIENT_STAGE_TWO_on_resume,CONNECT_CLIENT_STAGE_TWO_on_leave);
-        st->read_fds[0]=accept_ret;
-        st->read_fds[1]=setup_origin_socket();
+        if(get_app_context()->has_to_query_dns){
+            state st = new_state(CONNECT_CLIENT_STAGE_TWO_STATE,CONNECT_CLIENT_STAGE_TWO_on_arrive,CONNECT_CLIENT_STAGE_TWO_on_resume,CONNECT_CLIENT_STAGE_TWO_on_leave);
+            st->read_fds[0]=accept_ret;
+            st->read_fds[1]=setup_origin_socket();
 
-        int ret = pipe(s->pipes);
-        if(ret<0){
-            perror("pipe error on dns query");
+            int ret = pipe(st->pipes);
+            if(ret<0){
+                perror("pipe error on dns query");
+            }
+
+            pthread_create(&(st->tid),NULL,query_dns,(void*)st->pipes);
+            st->read_fds[2]=st->pipes[0];
+
+            add_state(sm,st);
         }
+        else{
+            state st = new_state(CONNECT_CLIENT_STAGE_THREE_STATE,CONNECT_CLIENT_STAGE_THREE_on_arrive,CONNECT_CLIENT_STAGE_THREE_on_resume,CONNECT_CLIENT_STAGE_THREE_on_leave);
+            st->read_fds[0]=accept_ret;
+            st->read_fds[1]=setup_origin_socket();
 
-        int dummy[2]={0};
-        execute_state(st,dummy);
-
+            add_state(sm,st);
+        }
         return NOT_WAITING;
 }
 
@@ -145,23 +169,27 @@ state_code CONNECT_CLIENT_on_leave(state s){
 }
 
 execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd, int is_read){
-    struct sockaddr_in address;
-    memset(&address, 0, sizeof(address));
-    address.sin_port = htons((uint16_t)get_app_context()->origin_port);
-    address.sin_family = AF_INET;
-
     if(get_app_context()->has_to_query_dns){
-        address.sin_addr.s_addr = inet_addr(get_app_context()->addr->ai_addr->sa_data);
+        //Connect to remote server
+        if (connect(s->read_fds[1], get_app_context()->addr->ai_addr , get_app_context()->addr->ai_addrlen) < 0)
+        {
+            perror("Connect to origin error");
+            error();
+        }
     }
     else{
+        struct sockaddr_in address;
+        memset(&address, 0, sizeof(address));
+        address.sin_port = htons((uint16_t)get_app_context()->origin_port);
+        address.sin_family = AF_INET;
         address.sin_addr.s_addr = inet_addr(get_app_context()->address_server_string);
-    }
 
-    //Connect to remote server
-    if (connect(s->read_fds[1], (struct sockaddr *)&address , sizeof(address)) < 0)
-    {
-        perror("Connect to origin error");
-        error();
+        //Connect to remote server
+        if (connect(s->read_fds[1], (struct sockaddr *)&address , sizeof(address)) < 0)
+        {
+            perror("Connect to origin error");
+            error();
+        }
     }
 
     state st = new_state(ATTEND_CLIENT_STATE,ATTEND_CLIENT_on_arrive,ATTEND_CLIENT_on_resume,ATTEND_CLIENT_on_leave);
@@ -190,33 +218,9 @@ state_code CONNECT_CLIENT_STAGE_THREE_on_leave(state s){
     remove_state(sm,s);
 }
 
-void * query_dns(void * pipes){
-    struct addrinfo hints = {
-            .ai_family    = AF_UNSPEC,
-            .ai_socktype  = SOCK_STREAM,
-            .ai_flags     = AI_PASSIVE,
-            .ai_protocol  = 0,
-            .ai_canonname = NULL,
-            .ai_addr      = NULL,
-            .ai_next      = NULL,
-    };
-    getaddrinfo(get_app_context()->address_server_string,NULL,&hints,&(get_app_context()->addr));
-    write(((int *)pipes)[1],"1",1);
-}
-
 execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read){
-    if(get_app_context()->has_to_query_dns){
-        pthread_create(&(s->tid),NULL,query_dns,(void*)s->pipes);
-        s->read_fds[2]=s->pipes[0];
-        return WAITING;
-    }
-    else{
-        CONNECT_CLIENT_STAGE_TWO_on_resume(s,fd,is_read);
-        return NOT_WAITING;
-    }
-}
+    pthread_join(s->tid,NULL);
 
-execution_state CONNECT_CLIENT_STAGE_TWO_on_resume(state s, file_descriptor fd, int is_read){
     state st = new_state(CONNECT_CLIENT_STAGE_THREE_STATE,CONNECT_CLIENT_STAGE_THREE_on_arrive,CONNECT_CLIENT_STAGE_THREE_on_resume,CONNECT_CLIENT_STAGE_THREE_on_leave);
     st->read_fds[0]=s->read_fds[0];
     st->read_fds[1]=s->read_fds[1];
@@ -225,8 +229,11 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_resume(state s, file_descriptor fd, 
     return NOT_WAITING;
 }
 
+execution_state CONNECT_CLIENT_STAGE_TWO_on_resume(state s, file_descriptor fd, int is_read){
+}
+
 state_code CONNECT_CLIENT_STAGE_TWO_on_leave(state s){
-    free_state(s);
+    remove_state(sm,s);
 }
 
 execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read){
