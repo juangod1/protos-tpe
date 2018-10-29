@@ -17,18 +17,6 @@ typedef enum {
     USER, PASS, LISTS, STATS, ACTIVE, FILTER, QUIT
 } comandos;
 
-typedef struct {
-    //cosas relacionadas con la conexion SCTP
-    estadoDeSesion eSesion;
-
-    char* usuario;
-    char* contra;
-    char** monitoreoArray;
-} variablesDeSesion;
-
-typedef variablesDeSesion * variablesDeSesion_p;
-
-
 
 //Definiciones de tamaños
 #define RESPONSE_SIZE sizeof(admin_response)
@@ -37,17 +25,15 @@ typedef variablesDeSesion * variablesDeSesion_p;
 #define FALLO 1
 #define ESPECIAL 2
 
-#define SCOPE_ERROR textResponseBS(FALLO, "El comando no se encuentra disponible en este estado de sesion.", buffer);
-#define FORMAT_ERROR textResponseBS(FALLO, "El ultimo mensaje no presenta el formato correcto.", buffer);
+#define SCOPE_ERROR textResponseBS(FALLO, "Commnad not available in state.", buffer, fd);
+#define FORMAT_ERROR textResponseBS(FALLO, "Wrong command format.", buffer, fd);
 
 //Funciones
-void saludo();
-int textResponseBS(int estadoDeRespuesta, char* contenido, buffer_p buffer);
-void procesarRequest(state s);
+int textResponseBS(int estadoDeRespuesta, char* contenido, buffer_p buffer, file_descriptor fd);
+void procesarRequest(state s, file_descriptor fd);
 int parseComando(const char* resp);
-variablesDeSesion_p inicializarVarSes();
 int autenticar(char *user, char *pass);
-int getMonitoreoArray();
+char ** getMonitoreoArray();
 int monitoreo(int numero);
 int getEstadoTransformacion();
 int setEstadoTransformacion(int estado);
@@ -55,7 +41,6 @@ char* getFiltroTransformacion();
 int setFiltroTransformacion(char* filtro);
 file_descriptor setup_admin_socket();
 int parseMesaje(const char *str, char sep, char**comando, char** parametro);
-void createConection();
 int parsePosInt(char* string);
 #endif //PROTOS_TPE_ADMINCONTROL_H
 

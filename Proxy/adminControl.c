@@ -9,6 +9,7 @@
 #include "include/adminControl.h"
 #include "include/state.h"
 #include "include/main.h"
+#include "include/options.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,20 +34,6 @@
 //int parametros a ESTRUCTURA de parametros
 #define MAX_BUFFER 1024
 #define MY_PORT_NUM 9090
-
-variablesDeSesion_p varSes;
-
-//Funcion general. Una vez que se establece una conexion sctp con el puerto
-void successfullConection(int parametros){
-
-    //Creo todo el contexto de conexion, los sockets y las variables globales;
-    varSes = inicializarVarSes();
-
-    //Dado que conecto exitosamente hago el greeting
-    saludo(parametros);
-
-//    procesarRequest();
-}
 
 file_descriptor setup_admin_socket(){
     int listenSock, ret;
@@ -164,41 +151,31 @@ file_descriptor setup_admin_socket(){
     }*/
 }
 
-void saludo(int parametros){
-    //Envio un saludo a traves de la conexion SCTP
-    //"Conexion establecida!";
-    char* mensaje = "Conexion establecida!";
-    //Enviar por conexion la respuesta.
-    //textResponseBS(ESPECIAL,"Conexion establecida! Saludos!");
-}
-
-int textResponseBS(int estadoDeRespuesta, char* contenido, buffer_p buffer){
+int textResponseBS(int estadoDeRespuesta, char* contenido, buffer_p buffer, file_descriptor fd) {
     char res[100] = {0};
     char *ok = "+OK - ";
     char *err = "-ERR - ";
     char *esp = "* - ";
-    if(estadoDeRespuesta == 0){
+    if (estadoDeRespuesta == 0) {
         strcat(res, ok);
-    } else if(estadoDeRespuesta == 1) {
-        strcat(res,err);
+    } else if (estadoDeRespuesta == 1) {
+        strcat(res, err);
     } else {
         //Estado especial
-        strcat(res,esp);
+        strcat(res, esp);
     }
     //Enviar el la respuesta
-    strcat(res , contenido);
+    strcat(res, contenido);
     strcat(res, "\n");
-    buffer_read_string(res, buffer);
+    int amount = (double)strlen(res)/(double)BUFFER_SIZE + ((((int)strlen(res)%(int)BUFFER_SIZE)==0)?0:1);
+    for(int i =0; i < amount; i++)
+    {
+        buffer_read_string(res+(i*BUFFER_SIZE), buffer);
+        buffer_write(fd, buffer);
+    }
     return  0;
-
 }
 
-variablesDeSesion_p inicializarVarSes(){
-    variablesDeSesion_p var = malloc(sizeof(variablesDeSesion));
-    var->eSesion = AUTENTICACION;
-    //Completar las demas cosas
-    var->usuario = NULL;
-}
 
 int parseMesaje(const char *str, char sep, char**comando, char** parametro)
 {
@@ -226,7 +203,7 @@ int parseMesaje(const char *str, char sep, char**comando, char** parametro)
     return 0;
 }
 
-void procesarRequest(state s){
+void procesarRequest(state s, file_descriptor fd){
     buffer_p buffer = s->buffers[0];
     char respuesta[MAX_BUFFER] = {0};
     buffer_write_string(respuesta,buffer);
@@ -236,7 +213,7 @@ void procesarRequest(state s){
     char *parametro = NULL;
     if(parseMesaje(respuesta, ' ', &comando, &parametro) == 1){
         //Error de mensaje
-        textResponseBS(FALLO,"Message format error.", buffer);
+        textResponseBS(FALLO,"Message format error.", buffer, fd);
         //TODO:Puedo cerrar la conexion o dejar que siga un poco mas.
     }
     switch(parseComando(comando)){
@@ -245,14 +222,15 @@ void procesarRequest(state s){
                 //Error de SCOPE
                 SCOPE_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
+                break;
             }
             //Se procede
             if(parametro != NULL){
                 s->user = calloc(1, strlen(parametro) + 1);
                 memcpy(s->user, parametro, strlen(parametro));
-                textResponseBS(EXITO,"Continue with PASS.", buffer);
+                textResponseBS(EXITO,"Continue with PASS.", buffer, fd);
             } else {
-                textResponseBS(FALLO, "Missing argument", buffer);
+                textResponseBS(FALLO, "Missing argument", buffer, fd);
             }
             break;
         case PASS:
@@ -260,6 +238,7 @@ void procesarRequest(state s){
                 //Error de SCOPE
                 SCOPE_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
+                break;
             }
             //Tiene que haber ingresado un usuario previamente
             if(s->user != NULL){
@@ -267,15 +246,15 @@ void procesarRequest(state s){
                 memcpy(s->pass, parametro, strlen(parametro));
                 int auth = autenticar(s->user,s->pass);
                 if(auth == 0){
-                    textResponseBS(EXITO, "Entering EXCHAGE.", buffer);
+                    textResponseBS(EXITO, "Entering EXCHAGE.", buffer, fd);
                     s->protocol_state = INTERCAMBIO;
                 } else if(auth == 1){
-                    textResponseBS(FALLO, "FAILED. Try again or QUIT.", buffer);
+                    textResponseBS(FALLO, "FAILED. Try again or QUIT.", buffer, fd);
                 } else {
-                    textResponseBS(FALLO, "Conection error, try asgain later.", buffer);
+                    textResponseBS(FALLO, "Conection error, try asgain later.", buffer, fd);
                 }
             } else {
-                textResponseBS(FALLO, "Missing USER.", buffer);
+                textResponseBS(FALLO, "Missing USER.", buffer, fd);
             }
             break;
         case LISTS:
@@ -283,18 +262,22 @@ void procesarRequest(state s){
                 //Error de SCOPE
                 SCOPE_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
+                break;
             }
             if(parametro != NULL){
                 //Si hay parametros, presentar un ERROR DE FORMATO
                 FORMAT_ERROR
                 //TODO:Cerrar la respuesta y solicitar un nuevo request.
+            } else {
+                char contenido[100] = {0};
+                strcat(contenido, "List:");
+                char** monitoreoArray = getMonitoreoArray();
+                for(int i = 0; i<5;i++){
+                    strcat(contenido, "\n");
+                    strcat(contenido, monitoreoArray[i]);
+                }
+                textResponseBS(1, contenido, buffer, fd);
             }
-            char* contenido = "List:";
-            for(int i = 0; i<getMonitoreoArray();i++){
-                strcat(contenido, "\n");
-                strcat(contenido, varSes->monitoreoArray[i]);
-            }
-            textResponseBS(1, contenido, buffer);
             break;
         case STATS:
             if(s->protocol_state != INTERCAMBIO){
@@ -310,12 +293,12 @@ void procesarRequest(state s){
             }
             int resMonitoreo = monitoreo(paramNum);
             if(resMonitoreo == -1){
-                textResponseBS(FALLO,"Function not found, use LISTS.", buffer);
+                textResponseBS(FALLO,"Function not found, use LISTS.", buffer, fd);
             } else {
                 char textoMonitoreo[15];
                 sprintf(textoMonitoreo, "%d", resMonitoreo);
                 //Aca se puede hacer referencia a la funcion o al numero de funcion que fue llamado.
-                textResponseBS(EXITO, strcat("El resultdo es ", textoMonitoreo), buffer);//TODO: Hay que acomodar el strcat
+                textResponseBS(EXITO, strcat("El resultdo es ", textoMonitoreo), buffer, fd);//TODO: Hay que acomodar el strcat
             }
             break;
         case ACTIVE:
@@ -327,7 +310,7 @@ void procesarRequest(state s){
             if(parametro == NULL){
                 //Significa que no paso parametro entonces quiere saber cual es el estado actual
                 int estadoT = getEstadoTransformacion();
-                textResponseBS(EXITO, strcat("Transformation is: ", (estadoT ? "Active":"Inactive")), buffer);
+                textResponseBS(EXITO, strcat("Transformation is: ", (estadoT ? "Active":"Inactive")), buffer, fd);
             } else {
                 int paramNum = parsePosInt(parametro);
                 if ( paramNum != 1 && paramNum != 0 || paramNum == -1){
@@ -337,7 +320,7 @@ void procesarRequest(state s){
                 }
                 if(setEstadoTransformacion(paramNum) == 0) {
                     textResponseBS(EXITO, strcat("SUCCESS. Transformation: ",
-                                                 (paramNum ? "Active" : "Inactive")), buffer);
+                                                 (paramNum ? "Active" : "Inactive")), buffer, fd);
                 } else {
                     //ERROR Interno
                     //TODO: Manejar errores internos y solicitar un nuevo request.
@@ -353,10 +336,10 @@ void procesarRequest(state s){
             if(parametro == NULL){
                 //Significa que no paso parametro entonces quiere saber cual es el filter actual
                 char* filtro = getFiltroTransformacion();
-                textResponseBS(EXITO, strcat("Current transformation: ", filtro), buffer);
+                textResponseBS(EXITO, strcat("Current transformation: ", filtro), buffer, fd);
             } else {
                 if(setFiltroTransformacion(parametro) == 0) {
-                    textResponseBS(EXITO, strcat("SUCCESS. Current transformation: ", parametro), buffer);
+                    textResponseBS(EXITO, strcat("SUCCESS. Current transformation: ", parametro), buffer, fd);
                 } else {
                     //ERROR Interno
                     //TODO: Manejar errores internos y solicitar un nuevo request.
@@ -366,13 +349,13 @@ void procesarRequest(state s){
         case QUIT:
             s->protocol_state = CIERRE;
             //Es multiestado entonces no verifico
-            textResponseBS(EXITO, "Goodbye!", buffer);
+            textResponseBS(EXITO, "Goodbye!", buffer, fd);
             //cerrar sesion cerrando el socket y dropeando la informacion de sesion
             break;
         //Y por ultimo tenemos el caso default por si falla por scope o por error
         default:
             //El comando ingresado no esta dentro de los disponibles.
-            textResponseBS(FALLO, "Command unknown. Refer to the RFC.", buffer);
+            textResponseBS(FALLO, "Command unknown. Refer to the RFC.", buffer, fd);
             break;
     }
 }
@@ -429,9 +412,9 @@ int parsePosInt(char* string){
 //Esta funcion tiene que estar hecha en el proxy exclusivamente y tiene que cargar
 //el array de monitoreo con strings que digan su numero espacio funcion ej: "1 usuariosOnline"
 //Devuelve el numero de funciones que hay
-int getMonitoreoArray(){
-    //getMonitoreoContext
-    return 0;
+char** getMonitoreoArray(){
+    app_context_p app = get_app_context();
+    return app->monitor;
 }
 
 //Busca la estadistica correspondiente al monitoreo(i)

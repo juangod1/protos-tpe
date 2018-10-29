@@ -18,6 +18,8 @@ typedef struct {
     int local_port;
     int origin_port;
     char * command_specification;
+    char *monitor[5];
+    int monitor_values[5];
 } app_context_t;
 
 typedef app_context_t * app_context_p;
