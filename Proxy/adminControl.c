@@ -10,6 +10,7 @@
 #include "include/state.h"
 #include "include/main.h"
 #include "include/options.h"
+#include "include/error.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,7 +46,7 @@ file_descriptor setup_admin_socket(){
     {
         printf("Failed to create socket\n");
         perror("socket()");
-        exit(1);
+        error_terminal();
     }
 
     bzero ((void *) &servaddr, sizeof (servaddr));
@@ -60,7 +61,7 @@ file_descriptor setup_admin_socket(){
         printf("Bind failed \n");
         perror("bind()");
         close(listenSock);
-        exit(1);
+        error_terminal();
     }
 
     /* Specify that a maximum of 5 streams will be available per socket */
@@ -75,7 +76,7 @@ file_descriptor setup_admin_socket(){
         printf("setsockopt() failed \n");
         perror("setsockopt()");
         close(listenSock);
-        exit(1);
+        error_terminal();
     }
 
     ret = listen (listenSock, 5);
@@ -84,7 +85,7 @@ file_descriptor setup_admin_socket(){
         printf("listen() failed \n");
         perror("listen()");
         close(listenSock);
-        exit(1);
+        error_terminal();
     }
 
     /* Specify that a maximum of 5 streams will be available per socket */
@@ -100,7 +101,7 @@ file_descriptor setup_admin_socket(){
         printf("setsockopt() failed \n");
         perror("setsockopt()");
         close(listenSock);
-        exit(1);
+        error_terminal();
     }
 
     ret = listen (listenSock, 5);
@@ -109,46 +110,10 @@ file_descriptor setup_admin_socket(){
         printf("listen() failed \n");
         perror("listen()");
         close(listenSock);
-        exit(1);
+        error_terminal();
     }
 
     return listenSock;
-/*
-    while (1)
-    {
-
-        char buffer[MAX_BUFFER + 1];
-        int len;
-
-        //Clear the buffer
-        bzero (buffer, MAX_BUFFER + 1);
-
-        printf ("Awaiting a new connection\n");
-
-
-        else
-            printf ("New client connected....\n");
-
-        in = sctp_recvmsg (connSock, buffer, sizeof (buffer),
-                           (struct sockaddr *) NULL, 0, &sndrcvinfo, &flags);
-
-        if( in == -1)
-        {
-            printf("Error in sctp_recvmsg\n");
-            perror("sctp_recvmsg()");
-            close(connSock);
-            continue;
-        }
-        else
-        {
-            //Add '\0' in case of text data
-            buffer[in] = '\0';
-
-            printf (" Length of Data received: %d\n", in);
-            printf (" Data : %s\n", (char *) buffer);
-        }
-        close (connSock);
-    }*/
 }
 
 int textResponseBS(int estadoDeRespuesta, char* contenido, buffer_p buffer, file_descriptor fd) {

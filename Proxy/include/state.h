@@ -9,7 +9,6 @@
 #include "main.h"
 #include "../../Shared/include/buffer.h"
 #include <pthread.h>
-
 #define BUFFER_SIZE 50
 
 typedef int state_code;

@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include "include/proxyCommunication.h"
 #include "include/main.h"
+#include "include/error.h"
 #include "../Shared/include/executionValidator.h"
 #include "../Shared/include/lib.h"
 #include "include/proxyParse.h"
@@ -20,6 +21,8 @@
 #include "include/mediaTypes.h"
 #include "include/options.h"
 #include "include/adminControl.h"
+#include "include/error.h"
+
 
 static app_context_p app_context;
 
@@ -84,6 +87,7 @@ void run_server()
     file_descriptor admin = setup_admin_socket();
     state_machine * machine = initialize_master_machine(mua, admin);
     initialize_selector();
+    init_error(machine);
 
     for(;;){
         run_state(machine);
@@ -96,15 +100,9 @@ file_descriptor setup_origin_socket() {
     if(sock < 0)
     {
         perror("Unable to create socket.\n");
-        error();
+        error_terminal();
+        return -1;
     }
-/*
-    int status = fcntl(sock, F_SETFL, fcntl(sock, F_GETFL, 0) | O_NONBLOCK);
-
-    if (status == -1){
-        perror("fcntl error");
-        error();
-    }*/
 
     return sock;
 }
@@ -122,29 +120,25 @@ file_descriptor setup_MUA_socket()
     if(sock < 0)
     {
         perror("Unable to create socket.");
-        error();
+        error_terminal();
+        return -1;
     }
-
-    //setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
 
     if(bind(sock, (struct sockaddr*) &address, sizeof(address)) < 0)
     {
         perror("Unable to bind socket.\n");
-        error();
+        error_terminal();
+        return -1;
     }
 
     if (listen(sock, MAXIMUM_PENDING_CONNECTIONS) < 0)
     {
         perror("Unable to listen.\n");
-        error();
+        error_terminal();
+        return -1;
     }
 
     return sock;
-}
-
-void error()
-{
-
 }
 
 int findMax(int * a, int size){

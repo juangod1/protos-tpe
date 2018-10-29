@@ -10,7 +10,6 @@ typedef int file_descriptor;
 
 file_descriptor setup_MUA_socket();
 file_descriptor setup_origin_socket();
-void error();
 void run_server();
 int max(int a, int b);
 int findMax(int * a, int size);

@@ -5,6 +5,7 @@
 #include "include/stateMachine.h"
 #include "include/stateSelector.h"
 #include "include/MasterStateMachine.h"
+#include "include/error.h"
 #include <sys/select.h>
 #include <stdio.h>
 #include <memory.h>
@@ -36,7 +37,8 @@ void select_state(int * ret){
     if(select_ret == -1)
     {
         perror("pselect error.");
-        error();
+        error_terminal();
+        return;
     }
 
     int i;

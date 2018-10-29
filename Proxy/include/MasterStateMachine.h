@@ -6,6 +6,7 @@
 #define PROTOS_TPE_TOPLEVELSTATEMACHINE_H
 
 #include <sys/select.h>
+#include "stateMachine.h"
 
 /* FD List
  *  read_fds[0] = MUA_CONNECT_SOCKET
@@ -49,11 +50,8 @@
 #define ATTEND_CLIENT_STATE 6
 
 
-/*  FD List
- *  All fds are -2
- */
-#define ERROR_STATE 7
-
+void disconnect_all(state_machine * sm);
+void disconnect(state st);
 state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descriptor admin_sock);
 void set_up_fd_sets(fd_set * read_fds, fd_set * write_fds);
 void disconnect(state st);

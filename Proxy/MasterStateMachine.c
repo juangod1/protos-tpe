@@ -17,7 +17,9 @@
 #include "include/options.h"
 #include "include/proxyCommunication.h"
 #include "include/adminControl.h"
+#include "include/error.h"
 #include "../Shared/include/lib.h"
+#include "include/error.h"
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -25,6 +27,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <netdb.h>
+
 
 state_machine * sm;
 
@@ -35,18 +38,6 @@ state_machine * initialize_master_machine(file_descriptor MUA_sock, file_descrip
     sm->states_amount=0;
     sm->previous_state=NULL;
     sm->next_state=NULL;
-
-    state s = new_state(ERROR_STATE, ERROR_on_arrive, ERROR_on_resume,ERROR_on_leave);
-    // Error state has fds set as -2
-    int i;
-    for(i=0;i<3;i++){
-        s->read_fds[i]=-2;
-    }
-    for(i=0;i<2;i++){
-        s->write_fds[i]=-2;
-    }
-
-    add_state(sm,s);
 
     state connect_client = new_state(CONNECT_CLIENT_STATE, CONNECT_CLIENT_on_arrive, CONNECT_CLIENT_on_resume,CONNECT_CLIENT_on_leave);
     connect_client->read_fds[0]=MUA_sock;
@@ -97,6 +88,8 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
     if (accept_ret== -1)
     {
         perror("accept()");
+        disconnect(s);
+        return NOT_WAITING;
     }
 
     state st = new_state(ATTEND_ADMIN_STATE,ATTEND_ADMIN_on_arrive,ATTEND_ADMIN_on_resume,ATTEND_ADMIN_on_leave);
@@ -146,7 +139,8 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
 
         if(accept_ret<0){
             perror("accept");
-            error();
+            error_disconnect_client(s);
+            return NOT_WAITING;
         }
 
         if(get_app_context()->has_to_query_dns){
@@ -157,6 +151,8 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
             int ret = pipe(st->pipes);
             if(ret<0){
                 perror("pipe error on dns query");
+                error_disconnect_client(s);
+                return NOT_WAITING;
             }
 
             pthread_create(&(st->tid),NULL,query_dns,(void*)st);
@@ -195,7 +191,8 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
         if (connect(s->read_fds[1], (struct sockaddr *)&address , sizeof(address)) < 0)
         {
             perror("Connect to origin error");
-            error();
+            error_disconnect_client(s);
+            return NOT_WAITING;
         }
     }
 
@@ -231,12 +228,16 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
     int buff=false;
     if(read(s->pipes[0],&buff,1)<0){
         perror("read error");
+        error_disconnect_client(s);
+        return WAITING;
     }
     if(buff){
         printf("Connected to DNS origin host correctly.\n");
     }
     else{
         printf("Unable to connect to dns origin host.\n");
+        error_disconnect_client(s);
+        return WAITING;
     };
 
     state st = new_state(CONNECT_CLIENT_STAGE_THREE_STATE,CONNECT_CLIENT_STAGE_THREE_on_arrive,CONNECT_CLIENT_STAGE_THREE_on_resume,CONNECT_CLIENT_STAGE_THREE_on_leave);
@@ -542,9 +543,6 @@ void debug_print_state(int state){
         case ATTEND_CLIENT_STATE:
             msg="ATTEND_CLIENT_STATE";
             break;
-        case ERROR_STATE:
-            msg="ERROR_STATE";
-            break;
         default:
             msg="State not found in debug print";
             break;
@@ -566,4 +564,17 @@ void disconnect(state st){
 
     close(st->read_fds[2]);
     remove_state(sm,st);
+}
+
+void disconnect_all_rec(state_machine * sm, node curr){
+    if(curr==NULL)
+        return;
+
+    disconnect_all_rec(sm,curr->next);
+
+    disconnect(curr->st);
+}
+
+void disconnect_all(state_machine * sm){
+    disconnect_all_rec(sm, sm->states->head);
 }

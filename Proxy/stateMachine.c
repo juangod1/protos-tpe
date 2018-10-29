@@ -6,9 +6,11 @@
 #include <sys/types.h>
 #include <stdbool.h>
 #include "include/stateMachine.h"
+#include "include/error.h"
 #include "include/stateSelector.h"
 #include "include/state.h"
 #include "include/MasterStateMachine.h"
+#include "include/error.h"
 
 state new_state(state_code id, execution_state (*on_arrive)(state s, file_descriptor fd, int is_read), execution_state (*on_resume)(state s, file_descriptor fd, int is_read), state_code (*on_leave)(state s)){
     state new = malloc(sizeof(struct stateStruct));
@@ -63,6 +65,8 @@ void run_state(state_machine * sm)
     state st = get(sm->states,next[0],next[1]);
     if(st==NULL){
         perror("Error, no state with file descriptor found.");
+        error_terminal();
+        return;
     }
     debug_print_state(st->id);
 
