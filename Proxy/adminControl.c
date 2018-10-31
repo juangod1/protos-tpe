@@ -25,14 +25,14 @@
 
 //Formatos de los mensajes
 //REQUEST
-//header: comando,tamaño
-//body: parametros
+//header: command,tamaño
+//body: parameters
 //RESPONSE
-//header: comando al que responde, estado de respuesta, tamaño
-//body: contenido
+//header: command al que responde, estado de response, tamaño
+//body: content
 
 //CAMBIOS A REALIZAR
-//int parametros a ESTRUCTURA de parametros
+//int parameters a ESTRUCTURA de parameters
 #define MAX_BUFFER 1024
 #define MY_PORT_NUM 9090
 
@@ -116,21 +116,21 @@ file_descriptor setup_admin_socket(){
     return listenSock;
 }
 
-int textResponseBS(int estadoDeRespuesta, char* contenido, buffer_p buffer, file_descriptor fd) {
+int text_response_BS(int response_state, char* content, buffer_p buffer, file_descriptor fd) {
     char res[100] = {0};
     char *ok = "+OK - ";
     char *err = "-ERR - ";
     char *esp = "* - ";
-    if (estadoDeRespuesta == 0) {
+    if (response_state == 0) {
         strcat(res, ok);
-    } else if (estadoDeRespuesta == 1) {
+    } else if (response_state == 1) {
         strcat(res, err);
     } else {
         //Estado especial
         strcat(res, esp);
     }
-    //Enviar el la respuesta
-    strcat(res, contenido);
+    //Enviar el la response
+    strcat(res, content);
     strcat(res, "\n");
     int amount = (double)strlen(res)/(double)BUFFER_SIZE + ((((int)strlen(res)%(int)BUFFER_SIZE)==0)?0:1);
     for(int i =0; i < amount; i++)
@@ -142,129 +142,129 @@ int textResponseBS(int estadoDeRespuesta, char* contenido, buffer_p buffer, file
 }
 
 
-int parseMesaje(const char *str, char sep, char**comando, char** parametro)
+int parse_message(const char *str, char sep, char**command, char** parameter)
 {
-    int cuenta =0;
+    int count =0;
     unsigned int start = 0, stop;
     for (stop = 0; str[stop]; stop++) {
         if (str[stop] == sep) {
-            if(cuenta == 1)
+            if(count == 1)
                 return 1;
-            *comando = calloc(1,stop-start+1);//Por ahi me falta 1 para finalizar el string
-            memcpy(*comando, str + start, stop - start);
-            cuenta++;
+            *command = calloc(1,stop-start+1);//Por ahi me falta 1 para finalizar el string
+            memcpy(*command, str + start, stop - start);
+            count++;
             start = stop + 1;
         }
     }
-    if(cuenta == 0){
-        *comando = calloc(1,stop-start+1);//Por ahi me falta 1 para finalizar el string
-        memcpy(*comando, str + start, stop - start);
-        cuenta++;
+    if(count == 0){
+        *command = calloc(1,stop-start+1);//Por ahi me falta 1 para finalizar el string
+        memcpy(*command, str + start, stop - start);
+        count++;
         start = stop + 1;
         return 0;
     }
-    *parametro = calloc(1,stop-start+1);
-    memcpy(*parametro, str + start, stop - start);//Por ahi me falta uno para finalizar el string
+    *parameter = calloc(1,stop-start+1);
+    memcpy(*parameter, str + start, stop - start);//Por ahi me falta uno para finalizar el string
     return 0;
 }
 
-void procesarRequest(state s, file_descriptor fd){
+void process_request(state s, file_descriptor fd){
     buffer_p buffer = s->buffers[0];
-    char respuesta[MAX_BUFFER] = {0};
-    buffer_write_string(respuesta,buffer);
-    printf("%s",respuesta);
-    //Separo el string de respuesta por espacios y analizo cada cosa.
-    char *comando = NULL;
-    char *parametro = NULL;
-    if(parseMesaje(respuesta, ' ', &comando, &parametro) == 1){
+    char response[MAX_BUFFER] = {0};
+    buffer_write_string(response,buffer);
+    printf("%s",response);
+    //Separo el string de response por espacios y analizo cada cosa.
+    char *command = NULL;
+    char *parameter = NULL;
+    if(parse_message(response, ' ', &command, &parameter) == 1){
         //Error de mensaje
-        textResponseBS(FALLO,"Message format error.", buffer, fd);
+        text_response_BS(FAILED,"Message format error.", buffer, fd);
         //TODO:Puedo cerrar la conexion o dejar que siga un poco mas.
     }
-    switch(parseComando(comando)){
+    switch(parse_admin_command(command)){
         case USER:
-            if(s->protocol_state != AUTENTICACION){
+            if(s->protocol_state != AUTENTICATION){
                 //Error de SCOPE
                 SCOPE_ERROR
-                //TODO:Cerrar la respuesta y solicitar un nuevo request.
+                //TODO:Cerrar la response y solicitar un nuevo request.
                 break;
             }
             //Se procede
-            if(parametro != NULL){
-                s->user = calloc(1, strlen(parametro) + 1);
-                memcpy(s->user, parametro, strlen(parametro));
-                textResponseBS(EXITO,"Continue with PASS.", buffer, fd);
+            if(parameter != NULL){
+                s->user = calloc(1, strlen(parameter) + 1);
+                memcpy(s->user, parameter, strlen(parameter));
+                text_response_BS(SUCCESS,"Continue with PASS.", buffer, fd);
             } else {
-                textResponseBS(FALLO, "Missing argument", buffer, fd);
+                text_response_BS(FAILED, "Missing argument", buffer, fd);
             }
             break;
         case PASS:
-            if(s->protocol_state != AUTENTICACION){
+            if(s->protocol_state != AUTENTICATION){
                 //Error de SCOPE
                 SCOPE_ERROR
-                //TODO:Cerrar la respuesta y solicitar un nuevo request.
+                //TODO:Cerrar la response y solicitar un nuevo request.
                 break;
             }
             //Tiene que haber ingresado un usuario previamente
             if(s->user != NULL){
-                s->pass = calloc(1, strlen(parametro) + 1);
-                memcpy(s->pass, parametro, strlen(parametro));
-                int auth = autenticar(s->user,s->pass);
+                s->pass = calloc(1, strlen(parameter) + 1);
+                memcpy(s->pass, parameter, strlen(parameter));
+                int auth = authenticate(s->user,s->pass);
                 if(auth == 0){
-                    textResponseBS(EXITO, "Entering EXCHAGE.", buffer, fd);
-                    s->protocol_state = INTERCAMBIO;
+                    text_response_BS(SUCCESS, "Entering EXCHAGE.", buffer, fd);
+                    s->protocol_state = EXCHANGE;
                 } else if(auth == 1){
-                    textResponseBS(FALLO, "FAILED. Try again or QUIT.", buffer, fd);
+                    text_response_BS(FAILED, "FAILED. Try again or QUIT.", buffer, fd);
                 } else {
-                    textResponseBS(FALLO, "Conection error, try asgain later.", buffer, fd);
+                    text_response_BS(FAILED, "Conection error, try asgain later.", buffer, fd);
                 }
             } else {
-                textResponseBS(FALLO, "Missing USER.", buffer, fd);
+                text_response_BS(FAILED, "Missing USER.", buffer, fd);
             }
             break;
         case LISTS:
-            if(s->protocol_state != INTERCAMBIO){
+            if(s->protocol_state != EXCHANGE){
                 //Error de SCOPE
                 SCOPE_ERROR
-                //TODO:Cerrar la respuesta y solicitar un nuevo request.
+                //TODO:Cerrar la response y solicitar un nuevo request.
                 break;
             }
-            if(parametro != NULL){
-                //Si hay parametros, presentar un ERROR DE FORMATO
+            if(parameter != NULL){
+                //Si hay parameters, presentar un ERROR DE FORMATO
                 FORMAT_ERROR
-                //TODO:Cerrar la respuesta y solicitar un nuevo request.
+                //TODO:Cerrar la response y solicitar un nuevo request.
             } else {
-                char contenido[100] = {0};
-                strcat(contenido, "List:");
-                char** monitoreoArray = getMonitoreoArray();
+                char content[100] = {0};
+                strcat(content, "List:");
+                char** monitorArray = get_monitor_array();
                 for(int i = 0; i<5;i++){
-                    strcat(contenido, "\n");
-                    strcat(contenido, monitoreoArray[i]);
+                    strcat(content, "\n");
+                    strcat(content, monitorArray[i]);
                 }
-                textResponseBS(1, contenido, buffer, fd);
+                text_response_BS(1, content, buffer, fd);
             }
             break;
         case STATS:
-            if(s->protocol_state != INTERCAMBIO){
+            if(s->protocol_state != EXCHANGE){
                 //Error de SCOPE
                 SCOPE_ERROR
-                //TODO:Cerrar la respuesta y solicitar un nuevo request.
-            } else if(parametro != NULL){
-                int paramNum = parsePosInt(parametro);
+                //TODO:Cerrar la response y solicitar un nuevo request.
+            } else if(parameter != NULL){
+                int paramNum = parse_positive_int(parameter);
                 if(paramNum == -1){
                     //Si no es un numero presentar un ERROR DE FORMATO
                     FORMAT_ERROR
-                    //TODO:Cerrar la respuesta y solicitar un nuevo request.
+                    //TODO:Cerrar la response y solicitar un nuevo request.
                 } else {
-                    int resMonitoreo = monitoreo(paramNum);
-                    if(resMonitoreo == -1){
-                        textResponseBS(FALLO,"Function not found, use LISTS.", buffer, fd);
+                    int resmonitor = monitor(paramNum);
+                    if(resmonitor == -1){
+                        text_response_BS(FAILED,"Function not found, use LISTS.", buffer, fd);
                     } else {
-                        char textoMonitoreo[5];
-                        char contenido[50] = "El resultdo es ";
-                        sprintf(textoMonitoreo, "%d", resMonitoreo);
+                        char textomonitor[5];
+                        char content[50] = "El resultdo es ";
+                        sprintf(textomonitor, "%d", resmonitor);
                         //Aca se puede hacer referencia a la funcion o al numero de funcion que fue llamado.
-                        textResponseBS(EXITO, strcat(contenido, textoMonitoreo), buffer,
+                        text_response_BS(SUCCESS, strcat(content, textomonitor), buffer,
                                        fd);//TODO: Hay que acomodar el strcat
                     }
                 }
@@ -273,24 +273,24 @@ void procesarRequest(state s, file_descriptor fd){
             }
             break;
         case ACTIVE:
-            if(s->protocol_state != INTERCAMBIO){
+            if(s->protocol_state != EXCHANGE){
                 //Error de SCOPE
                 SCOPE_ERROR
-                //TODO:Cerrar la respuesta y solicitar un nuevo request.
+                //TODO:Cerrar la response y solicitar un nuevo request.
             }
-            if(parametro == NULL){
-                //Significa que no paso parametro entonces quiere saber cual es el estado actual
-                int estadoT = getEstadoTransformacion();
-                textResponseBS(EXITO, strcat("Transformation is: ", (estadoT ? "Active":"Inactive")), buffer, fd);
+            if(parameter == NULL){
+                //Significa que no paso parameter entonces quiere saber cual es el estado actual
+                int estadoT = get_transformation_state();
+                text_response_BS(SUCCESS, strcat("Transformation is: ", (estadoT ? "Active":"Inactive")), buffer, fd);
             } else {
-                int paramNum = parsePosInt(parametro);
+                int paramNum = parse_positive_int(parameter);
                 if ( paramNum != 1 && paramNum != 0 || paramNum == -1){
-                    //ERROR DE FORMATO - parametros invalidos
+                    //ERROR DE FORMATO - parameters invalidos
                     FORMAT_ERROR
-                    //TODO:Cerrar la respuesta y solicitar un nuevo request.
+                    //TODO:Cerrar la response y solicitar un nuevo request.
                 }
-                if(setEstadoTransformacion(paramNum) == 0) {
-                    textResponseBS(EXITO, strcat("SUCCESS. Transformation: ",
+                if(set_transformation_state(paramNum) == 0) {
+                    text_response_BS(SUCCESS, strcat("SUCCESS. Transformation: ",
                                                  (paramNum ? "Active" : "Inactive")), buffer, fd);
                 } else {
                     //ERROR Interno
@@ -299,18 +299,18 @@ void procesarRequest(state s, file_descriptor fd){
             }
             break;
         case FILTER:
-            if(s->protocol_state != INTERCAMBIO){
+            if(s->protocol_state != EXCHANGE){
                 //Error de SCOPE
                 SCOPE_ERROR
-                //TODO:Cerrar la respuesta y solicitar un nuevo request.
+                //TODO:Cerrar la response y solicitar un nuevo request.
             }
-            if(parametro == NULL){
-                //Significa que no paso parametro entonces quiere saber cual es el filter actual
-                char* filtro = getFiltroTransformacion();
-                textResponseBS(EXITO, strcat("Current transformation: ", filtro), buffer, fd);
+            if(parameter == NULL){
+                //Significa que no paso parameter entonces quiere saber cual es el filter actual
+                char* filtro = get_transformation_filter();
+                text_response_BS(SUCCESS, strcat("Current transformation: ", filtro), buffer, fd);
             } else {
-                if(setFiltroTransformacion(parametro) == 0) {
-                    textResponseBS(EXITO, strcat("SUCCESS. Current transformation: ", parametro), buffer, fd);
+                if(set_transformation_filter(parameter) == 0) {
+                    text_response_BS(SUCCESS, strcat("SUCCESS. Current transformation: ", parameter), buffer, fd);
                 } else {
                     //ERROR Interno
                     //TODO: Manejar errores internos y solicitar un nuevo request.
@@ -318,20 +318,20 @@ void procesarRequest(state s, file_descriptor fd){
             }
             break;
         case QUIT:
-            s->protocol_state = CIERRE;
+            s->protocol_state = CLOSE;
             //Es multiestado entonces no verifico
-            textResponseBS(EXITO, "Goodbye!", buffer, fd);
+            text_response_BS(SUCCESS, "Goodbye!", buffer, fd);
             //cerrar sesion cerrando el socket y dropeando la informacion de sesion
             break;
         //Y por ultimo tenemos el caso default por si falla por scope o por error
         default:
-            //El comando ingresado no esta dentro de los disponibles.
-            textResponseBS(FALLO, "Command unknown. Refer to the RFC.", buffer, fd);
+            //El command ingresado no esta dentro de los disponibles.
+            text_response_BS(FAILED, "Command unknown. Refer to the RFC.", buffer, fd);
             break;
     }
 }
 
-int parseComando(const char* resp){
+int parse_admin_command(const char* resp){
     if(resp == NULL){
         return -1;
     }
@@ -354,8 +354,8 @@ int parseComando(const char* resp){
 
 
 
-int autenticar(char *user, char* pass){
-    //Usando las variable globales tiene que autenticar y luego proporcionar el codigo que resulto
+int authenticate(char *user, char* pass){
+    //Usando las variable globales tiene que authenticate y luego proporcionar el codigo que resulto
     char *users[2] = {"pablito","juancito"};
     char *passes[2] = {"pabs", "juans"};
     for(int i=0;i<2;i++){
@@ -370,7 +370,7 @@ int autenticar(char *user, char* pass){
 }
 
 //Retorna -1 si falla
-int parsePosInt(char* string){
+int parse_positive_int(char* string){
     char* remain;
     long ret = strtol(string, &remain,10);
     if(*remain != '\0'){
@@ -381,39 +381,39 @@ int parsePosInt(char* string){
 }
 
 //Esta funcion tiene que estar hecha en el proxy exclusivamente y tiene que cargar
-//el array de monitoreo con strings que digan su numero espacio funcion ej: "1 usuariosOnline"
+//el array de monitor con strings que digan su numero espacio funcion ej: "1 usuariosOnline"
 //Devuelve el numero de funciones que hay
-char** getMonitoreoArray(){
+char** get_monitor_array(){
     app_context_p app = get_app_context();
     return app->monitor;
 }
 
-//Busca la estadistica correspondiente al monitoreo(i)
-int monitoreo(int numero){
+//Busca la estadistica correspondiente al monitor(i)
+int monitor(int numero){
     //Tiene que buscar las metricas en el contexto
     return 0;
 }
 
 //Busca en el contexto del proxy el estado actual de la transformacion. ACTIVO o INACTIVO
-int getEstadoTransformacion(){
+int get_transformation_state(){
 
     return 0;
 }
 
 //Carga el estado de transformacion y devuelve 0 si funciono y -1 sino.
-int setEstadoTransformacion(int estado){
+int set_transformation_state(int estado){
 
     return 0;
 }
 
-//Busca el comando actual en el contexto del proxy
-char* getFiltroTransformacion(){
+//Busca el command actual en el contexto del proxy
+char* get_transformation_filter(){
 
     return "";
 }
 
 //Carga el filtro que le pasan retorna 0 si funciono y -1 sino
-int setFiltroTransformacion(char* filtro){
+int set_transformation_filter(char* filtro){
 
     return 0;
 }
@@ -425,7 +425,7 @@ admin_response_p requestBuilder(){
     //sctp_recvmsg
     //Si devuelve -1 doy error
     //Sino armo el admin_response_p
-    if(comando == NULL || !(estado == 0 || estado == 1) || tam < 0){
+    if(command == NULL || !(estado == 0 || estado == 1) || tam < 0){
         return NULL;
     }
     admin_response_p res = malloc(RESPONSE_SIZE);
@@ -433,25 +433,25 @@ admin_response_p requestBuilder(){
         //Mensaje de error
         return NULL;
     }
-    res->comando = malloc(TAM_COMANDO);
-    if(res->comando == NULL) {
+    res->command = malloc(TAM_command);
+    if(res->command == NULL) {
         //Mensaje de error
         return NULL;
     }
-    strcpy(res->comando, comando);
+    strcpy(res->command, command);
     res->estado = estado;
-    res->tamContenido = tam;
-    res->contenido = malloc(tam);
-    if(res->contenido == NULL) {
+    res->tamcontent = tam;
+    res->content = malloc(tam);
+    if(res->content == NULL) {
         //Mensaje de error
         return NULL;
     }
-    strcpy(res->contenido, contenido);
+    strcpy(res->content, content);
     return res;
 }
 
-admin_response_p responseBuilder(char* comando, int estado, int tam, char* contenido){
-    if(comando == NULL || !(estado == 0 || estado == 1) || tam < 0){
+admin_response_p responseBuilder(char* command, int estado, int tam, char* content){
+    if(command == NULL || !(estado == 0 || estado == 1) || tam < 0){
         return NULL;
     }
     admin_response_p res = malloc(RESPONSE_SIZE);
@@ -459,20 +459,20 @@ admin_response_p responseBuilder(char* comando, int estado, int tam, char* conte
         //Mensaje de error
         return NULL;
     }
-    res->comando = malloc(TAM_COMANDO);
-    if(res->comando == NULL) {
+    res->command = malloc(TAM_command);
+    if(res->command == NULL) {
         //Mensaje de error
         return NULL;
     }
-    strcpy(res->comando, comando);
+    strcpy(res->command, command);
     res->estado = estado;
-    res->tamContenido = tam;
-    res->contenido = malloc(tam);
-    if(res->contenido == NULL) {
+    res->tamcontent = tam;
+    res->content = malloc(tam);
+    if(res->content == NULL) {
         //Mensaje de error
         return NULL;
     }
-    strcpy(res->contenido, contenido);
+    strcpy(res->content, content);
     return res;
 }
 

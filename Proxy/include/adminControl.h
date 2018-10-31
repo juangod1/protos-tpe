@@ -10,38 +10,38 @@
 #include "state.h"
 
 typedef enum {
-    AUTENTICACION, INTERCAMBIO, CIERRE
-} estadoDeSesion;
+    AUTENTICATION, EXCHANGE, CLOSE
+} session_state;
 
 typedef enum {
     USER, PASS, LISTS, STATS, ACTIVE, FILTER, QUIT
-} comandos;
+} commands;
 
 
 //Definiciones de tamaños
 #define RESPONSE_SIZE sizeof(admin_response)
 #define TAM_COMANDO sizeof(int)
-#define EXITO 0
-#define FALLO 1
+#define SUCCESS 0
+#define FAILED 1
 #define ESPECIAL 2
 
-#define SCOPE_ERROR textResponseBS(FALLO, "Commnad not available in state.", buffer, fd);
-#define FORMAT_ERROR textResponseBS(FALLO, "Wrong command format.", buffer, fd);
+#define SCOPE_ERROR text_response_BS(FAILED, "Commnad not available in state.", buffer, fd);
+#define FORMAT_ERROR text_response_BS(FAILED, "Wrong command format.", buffer, fd);
 
 //Funciones
-int textResponseBS(int estadoDeRespuesta, char* contenido, buffer_p buffer, file_descriptor fd);
-void procesarRequest(state s, file_descriptor fd);
-int parseComando(const char* resp);
-int autenticar(char *user, char *pass);
-char ** getMonitoreoArray();
-int monitoreo(int numero);
-int getEstadoTransformacion();
-int setEstadoTransformacion(int estado);
-char* getFiltroTransformacion();
-int setFiltroTransformacion(char* filtro);
+int text_response_BS(int response_state, char* content, buffer_p buffer, file_descriptor fd);
+void process_request(state s, file_descriptor fd);
+int parse_admin_command(const char* resp);
+int authenticate(char *user, char *pass);
+char ** get_monitor_array();
+int monitor(int numero);
+int get_transformation_state();
+int set_transformation_state(int estado);
+char* get_transformation_filter();
+int set_transformation_filter(char* filtro);
 file_descriptor setup_admin_socket();
-int parseMesaje(const char *str, char sep, char**comando, char** parametro);
-int parsePosInt(char* string);
+int parse_message(const char *str, char sep, char**comando, char** parametro);
+int parse_positive_int(char* string);
 #endif //PROTOS_TPE_ADMINCONTROL_H
 
 
@@ -51,8 +51,8 @@ int parsePosInt(char* string);
  * typedef struct {
     char* comando;
     int estado;
-    int tamContenido;
-    char* contenido;
+    int tamcontent;
+    char* content;
 } admin_response;
 
 typedef admin_response * admin_response_p;
@@ -67,6 +67,6 @@ typedef admin_request * admin_request_p;
 
 
 admin_request_p requestBuilder();
-admin_response_p responseBuilder(char* comando, int estado, int tam, char* contenido);
+admin_response_p responseBuilder(char* comando, int estado, int tam, char* content);
 
 */
