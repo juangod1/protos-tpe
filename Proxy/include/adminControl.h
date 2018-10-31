@@ -4,17 +4,20 @@
 
 #ifndef PROTOS_TPE_ADMINCONTROL_H
 #define PROTOS_TPE_ADMINCONTROL_H
+
 #include <stdlib.h>
 #include "main.h"
 #include "../../Shared/include/buffer.h"
 #include "state.h"
 
-typedef enum {
-    AUTENTICATION, EXCHANGE, CLOSE
+typedef enum
+{
+	AUTENTICATION, EXCHANGE, CLOSE
 } session_state;
 
-typedef enum {
-    USER, PASS, LISTS, STATS, ACTIVE, FILTER, QUIT
+typedef enum
+{
+	USER, PASS, LISTS, STATS, ACTIVE, FILTER, QUIT
 } commands;
 
 
@@ -29,19 +32,32 @@ typedef enum {
 #define FORMAT_ERROR text_response_BS(FAILED, "Wrong command format.", buffer, fd);
 
 //Funciones
-int text_response_BS(int response_state, char* content, buffer_p buffer, file_descriptor fd);
+int text_response_BS(int response_state, char *content, buffer_p buffer, file_descriptor fd);
+
 void process_request(state s, file_descriptor fd);
-int parse_admin_command(const char* resp);
+
+int parse_admin_command(const char *resp);
+
 int authenticate(char *user, char *pass);
-char ** get_monitor_array();
+
+char **get_monitor_array();
+
 int monitor(int numero);
+
 int get_transformation_state();
+
 int set_transformation_state(int estado);
-char* get_transformation_filter();
-int set_transformation_filter(char* filtro);
+
+char *get_transformation_filter();
+
+int set_transformation_filter(char *filtro);
+
 file_descriptor setup_admin_socket();
-int parse_message(const char *str, char sep, char**comando, char** parametro);
-int parse_positive_int(char* string);
+
+int parse_message(const char *str, char sep, char **comando, char **parametro);
+
+int parse_positive_int(char *string);
+
 #endif //PROTOS_TPE_ADMINCONTROL_H
 
 

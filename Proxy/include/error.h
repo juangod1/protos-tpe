@@ -8,9 +8,12 @@
 #include "state.h"
 #include "stateMachine.h"
 
-void error_print(char * s);
+void error_print(char *s);
+
 void error_terminal();
-void init_error(state_machine * s);
+
+void init_error(state_machine *s);
+
 void error_disconnect_client(state s);
 
 #endif //PROTOS_TPE_ERROR_H

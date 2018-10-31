@@ -9,10 +9,15 @@ typedef int file_descriptor;
 #define MAXIMUM_PENDING_CONNECTIONS 50
 
 file_descriptor setup_MUA_socket();
+
 file_descriptor setup_origin_socket();
+
 void run_server();
+
 int max(int a, int b);
-int findMax(int * a, int size);
+
+int findMax(int *a, int size);
 
 int proxy_main();
+
 #endif //PROTOS_TPE_MAIN_H

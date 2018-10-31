@@ -10,7 +10,7 @@
 #define INCLUDED_MEDIATYPE 1
 #define INVALID_MEDIATYPE 2
 
-int mediaRangeEvaluator(char ** media_range_complete_list, char * media_type);
+int mediaRangeEvaluator(char **media_range_complete_list, char *media_type);
 
 
 #endif

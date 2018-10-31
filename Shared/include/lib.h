@@ -22,23 +22,35 @@
 #define BAD_EXIT_STATUS 1
 #define GOOD_EXIT_STATUS 0
 
-int toNLowerString(char * lowerCaseCopy, char * original, int n);
+int toNLowerString(char *lowerCaseCopy, char *original, int n);
+
 char *my_strdup(const char *s);
-char *my_strsep(char ** string_ptr, char delimeter );
 
-int isType(char * type);
-char ** divideStrByDelimeter(char * string, char delimeter);
-char ** divideMediaType(char * mediaType);
-char ** divideUserInputByLine(char * userInput);
-char ** divideMediaRangeList(char * mediaTypeList);
-int mediaTypeBelongsToMediaRange(char ** mediaType, char ** mediaRange);
-void recursiveDoublePointerFree(char ** splitMediaType);
-int isValidMediaType(char ** mediaType);
+char *my_strsep(char **string_ptr, char delimeter);
+
+int isType(char *type);
+
+char **divideStrByDelimeter(char *string, char delimeter);
+
+char **divideMediaType(char *mediaType);
+
+char **divideUserInputByLine(char *userInput);
+
+char **divideMediaRangeList(char *mediaTypeList);
+
+int mediaTypeBelongsToMediaRange(char **mediaType, char **mediaRange);
+
+void recursiveDoublePointerFree(char **splitMediaType);
+
+int isValidMediaType(char **mediaType);
 
 
-size_t fetchInputFromStdin(char ** bufferPosition, size_t size);
-size_t fetchInputFromFile(char ** bufferPosition, FILE * f, size_t  size);
-size_t fetchLineFromStdin(char ** bufferPosition, size_t  size);
-size_t fetchLineFromFile(char ** bufferPosition, FILE * f, size_t  size);
+size_t fetchInputFromStdin(char **bufferPosition, size_t size);
+
+size_t fetchInputFromFile(char **bufferPosition, FILE *f, size_t size);
+
+size_t fetchLineFromStdin(char **bufferPosition, size_t size);
+
+size_t fetchLineFromFile(char **bufferPosition, FILE *f, size_t size);
 
 #endif

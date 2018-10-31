@@ -7,9 +7,12 @@
 #include <string.h>
 
 
-char parityByte(char * string, int size);
-char * charToHex(char ch);
+char parityByte(char *string, int size);
+
+char *charToHex(char ch);
+
 char hxNumberToChar(char number);
+
 int isDigit(char c);
 
 #endif
