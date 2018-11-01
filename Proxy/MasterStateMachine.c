@@ -232,7 +232,7 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 	st->read_fds[1]  = fd;
 	st->write_fds[1] = fd;
 	int ret[2];
-	st->parser_pid = start_parser(get_app_context()->command_specification, ret);
+	st->parser_pid = start_parser(get_app_context()->command_specification, ret, s);
 	st->read_fds[2]  = ret[0];
 	st->write_fds[2] = ret[1];
 	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
@@ -416,7 +416,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 	{
 		char *command = (s->data_3 && get_app_context()->transform_status) ? get_app_context()->command_specification : "cat";
 		int  pipes[2];
-		s->parser_pid = start_parser(command, pipes);
+		s->parser_pid = start_parser(command, pipes, s);
 		s->read_fds[2]  = pipes[0];
 		s->write_fds[2] = pipes[1];
 		s->data_1 = false;

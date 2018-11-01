@@ -1,6 +1,5 @@
 #include <stdbool.h>
 #include "include/runCommandLine.h"
-#include "include/parityByte.h"
 #include "../Shared/include/lib.h"
 
 //https://stackoverflow.com/questions/28507950/calling-ls-with-execv

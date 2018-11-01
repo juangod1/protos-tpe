@@ -2,6 +2,7 @@
 #define PROXYCOMMUNICATION_H
 
 #include <unistd.h>
+#include "state.h"
 
 #define NUM_PIPES          2
 
@@ -18,7 +19,7 @@
 #define PROXY_WRITE_FD ( pipes[PROXY_WRITE_PIPE][WRITE_FD] )
 
 
-int start_parser(char *cmd, int pipe_ret[2]);
+int start_parser(char *cmd, int pipe_ret[2], state s);
 
 int check_parser_exit_status(int parser_pid);
 

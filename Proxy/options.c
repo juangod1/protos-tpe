@@ -12,7 +12,7 @@
 
 static app_context_p app_context = NULL;
 
-static char *version_number = "PRE_ALPHA 1.0.0.0";
+static char *version_number = "SNAPSHOT 1.0.0";
 
 void initialize_app_context()
 {
@@ -30,6 +30,7 @@ void initialize_app_context()
 	app_context->addr                  = NULL;
 	app_context->has_to_query_dns      = 0;
 	app_context->pipelining            = false;
+	app_context->pop3filter_version    = version_number;
 	char    *monitoreo[5]              = {"1 - Conections", "2 - Connected Admins", "3 - Messages", "4 - Messages2",
 	                                      "5 - Messages3"};
 	app_context->transform_status      = false;
@@ -44,7 +45,6 @@ void initialize_app_context()
 
 void destroy_app_context()
 {
-	recursiveDoublePointerFree(app_context->censored_media_types);
 	free(app_context);
 }
 
@@ -117,8 +117,7 @@ void censored_mediatype(char *arg)
 	//TODO: has to receive a list of media types and apply a condition for the server to censor them <<USE PROTOS TP 2>>
 	printf("This is censored mediatype!\n");
 	fflush(stdout);
-	char **mediaRangeCompleteList = divideMediaRangeList(arg);
-	app_context->censored_media_types = mediaRangeCompleteList;
+	app_context->censored_media_types = arg;
 
 }
 

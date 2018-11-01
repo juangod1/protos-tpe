@@ -1,13 +1,16 @@
 #include "include/proxyCommunication.h"
 #include "../Shared/include/lib.h"
+#include "include/options.h"
+#include "include/state.h"
 #include <stdbool.h>
+#include <memory.h>
 
 
 /*
  *  Executes Parser Process.
  *  Returns PROXY_PIPES and Parser's Pid
  */
-int start_parser(char *cmd, int pipe_ret[2])
+int start_parser(char *cmd, int pipe_ret[2], state s)
 {
 	int pipes[NUM_PIPES][2];
 
@@ -22,8 +25,13 @@ int start_parser(char *cmd, int pipe_ret[2])
 		return ERROR;
 	}
 
-	pid_t pid = fork();
-
+	pid_t pid     = fork();
+	char  *argv[] = {"parser", cmd, (get_app_context()->censored_media_types != NULL &&
+	                                 strcmp(get_app_context()->censored_media_types, ""))
+	                                ? get_app_context()->censored_media_types : "None",
+	                 get_app_context()->replacement_message,
+	                 get_app_context()->pop3filter_version, (s->user == NULL) ? "Not logged in." : s->user,
+	                 (s->pass == NULL) ? "Not logged in." : s->pass};
 	if(pid == 0)
 	{
 		close(PROXY_READ_FD);
@@ -35,7 +43,9 @@ int start_parser(char *cmd, int pipe_ret[2])
 		close(PARSER_READ_FD);
 		close(PARSER_WRITE_FD);
 
-		char *argv[] = {"parser", cmd, NULL};
+		char *argv[] = {"parser", cmd, get_app_context()->censored_media_types, get_app_context()->replacement_message,
+		                get_app_context()->pop3filter_version, (s->user == NULL) ? "Not logged in." : s->user,
+		                (s->pass == NULL) ? "Not logged in." : s->pass, NULL};
 		if(execv("parser", argv) < 0)
 		{
 			exit(BAD_EXIT_STATUS);

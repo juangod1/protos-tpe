@@ -14,7 +14,7 @@ typedef struct
 	int             pop3_path;
 	int             management_path;
 	char            *replacement_message;
-	char            **censored_media_types;
+	char            *censored_media_types;
 	int             management_port;
 	int             local_port;
 	int             origin_port;
@@ -23,6 +23,7 @@ typedef struct
 	int             monitor_values[5];
 	char            pipelining;
 	int             transform_status;
+	char            *pop3filter_version;
 } app_context_t;
 
 typedef app_context_t *app_context_p;

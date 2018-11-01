@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdbool.h>
 #include "include/main.h"
 #include "include/runCommandLine.h"
 #include "../Shared/include/lib.h"
@@ -10,6 +11,13 @@ int main(int argc, char **argv)
 	{
 		exit(BAD_EXIT_STATUS);
 	}
+
+	setenv("FILTER_MEDIAS", argv[2], true);
+	setenv("FILTER_MSG", argv[3], true);
+	setenv("POP3FILTER_VERSION", argv[4], true);
+	setenv("POP3_USERNAME", argv[5], true);
+	setenv("POP3_SERVER", argv[6], true);
+
 	response = run_parser(argv[1]);
 	if(response == ERROR)
 	{
@@ -20,15 +28,12 @@ int main(int argc, char **argv)
 
 int parser_parse(int argc, char **argv)
 {
-	if(argc != 2)
+	// Arguments: command FILTER_MEDIAS FILTER_MSG POP3FILTER_VERSION POP3_USERNAME POP3_SERVER
+	if(argc != 7)
 	{
-		printf("Please execute the program with one parameter in the following format: ./prog \"param\"\n");
+		perror("INCORRECT PARAMETERS FOR PARSER\n");
 		return ERROR;
 	}
-	if(strcmp(argv[1], "") == 0)
-	{
-		printf("Please execute the program with one parameter in the following format: ./prog \"param\"\n");
-		return ERROR;
-	}
+
 	return STANDARD;
 }
