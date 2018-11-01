@@ -350,7 +350,7 @@ void process_request(state s, file_descriptor fd)
                     else
 					{
                     	set_transformation_state(paramNum);
-                        char resp[35] = "SUCCESS. Transformation is: ";
+                        char resp[40] = "SUCCESS. Transformation is: ";
                         text_response_BS(SUCCESS, strcat(resp,
                                                          (paramNum ? "Active" : "Inactive")), buffer, fd);
                     }
@@ -368,8 +368,8 @@ void process_request(state s, file_descriptor fd)
                 {
                     //Significa que no paso parameter entonces quiere saber cual es el filter actual
                     char *filtro = get_transformation_filter();
-                    char resp[30] = "Current transformation: ";
-                    text_response_BS(SUCCESS, strcat("Current transformation: ", filtro), buffer, fd);
+                    char resp[40] = "Current transformation: ";
+                    text_response_BS(SUCCESS, strcat(resp, filtro), buffer, fd);
                 }
                 else
                 {

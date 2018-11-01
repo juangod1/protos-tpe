@@ -28,7 +28,7 @@ typedef enum
 #define FAILED 1
 #define ESPECIAL 2
 
-#define SCOPE_ERROR text_response_BS(FAILED, "Commnad not available in state.", buffer, fd);
+#define SCOPE_ERROR text_response_BS(FAILED, "Command not available in state.", buffer, fd);
 #define FORMAT_ERROR text_response_BS(FAILED, "Wrong command format.", buffer, fd);
 
 //Funciones
