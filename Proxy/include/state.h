@@ -49,6 +49,7 @@ struct stateStruct
 	char            *user;
 	char            *pass;
 	struct addrinfo *current;
+	int             disconnect;
 };
 
 

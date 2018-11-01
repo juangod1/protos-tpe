@@ -42,6 +42,7 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
 	new->parser_pid     = -1;
 	new->user           = NULL;
 	new->pass           = NULL;
+	new->disconnect     = 0;
 	return new;
 }
 

@@ -295,7 +295,7 @@ state_code CONNECT_CLIENT_STAGE_TWO_on_leave(state s)
 
 execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read)
 {
-
+	int disconnection = s->disconnect;
 	switch(is_read)
 	{
 		case 1: // True
@@ -384,7 +384,9 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				printf("--------------------------------------------------------\n");
 				printf("Wrote buffer content to MUA: \n");
 				print_buffer(s->buffers[2]);
-				buffer_write(fd, s->buffers[2]);
+				if(buffer_write(fd, s->buffers[2])<BUFFER_SIZE && s->disconnect){
+					disconnect(s);
+				}
 			}
 			else if(s->write_fds[1] == fd)
 			{   // Origin WRITE
@@ -411,7 +413,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			}
 			break;
 	}
-	if(s->data_1 && s->data_2) //CREATE TRANSFORM
+	if(!disconnection && s->data_1 && s->data_2) //CREATE TRANSFORM
 	{
 		char *command = (s->data_3 && get_app_context()->transform_status) ? get_app_context()->command_specification : "cat";
 		int  pipes[2];
@@ -433,7 +435,7 @@ execution_state ATTEND_CLIENT_on_resume(state s, file_descriptor fd, int is_read
 
 state_code ATTEND_CLIENT_on_leave(state s)
 {
-	disconnect(s);
+	error_disconnect_client(s);
 }
 
 execution_state ERROR_on_arrive(state s, file_descriptor fd, int is_read)
@@ -504,7 +506,8 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 					if(curr->st->read_fds[1] > 0)
 					{
 						printf("Buffer 2 is empty ==> ");
-						add_read_fd(curr->st->read_fds[1]); // ORIGIN read
+						if(!curr->st->disconnect)
+							add_read_fd(curr->st->read_fds[1]); // ORIGIN read
 					}
 				}
 				else

@@ -29,7 +29,7 @@ void error_terminal()
 void error_disconnect_client(state s)
 {
 	error_print("Disconnecting client");
-	disconnect(s);
+	s->disconnect=1;
 }
 
 void init_error(state_machine *s)
