@@ -309,7 +309,7 @@ void process_request(state s, file_descriptor fd)
 					else
 					{
 						char textomonitor[5];
-						char content[50] = "El resultdo es ";
+						char content[50] = "El resultado es ";
 						sprintf(textomonitor, "%d", resmonitor);
 						//Aca se puede hacer referencia a la funcion o al numero de funcion que fue llamado.
 						text_response_BS(SUCCESS, strcat(content, textomonitor), buffer,
@@ -347,16 +347,12 @@ void process_request(state s, file_descriptor fd)
                         FORMAT_ERROR
                         //TODO:Cerrar la response y solicitar un nuevo request.
                     }
-                    else if (set_transformation_state(paramNum) == 0)
-                    {
+                    else
+					{
+                    	set_transformation_state(paramNum);
                         char resp[35] = "SUCCESS. Transformation is: ";
                         text_response_BS(SUCCESS, strcat(resp,
                                                          (paramNum ? "Active" : "Inactive")), buffer, fd);
-                    }
-                    else
-                    {
-                        //ERROR Interno
-                        //TODO: Manejar errores internos y solicitar un nuevo request.
                     }
                 }
             }
@@ -377,16 +373,9 @@ void process_request(state s, file_descriptor fd)
                 }
                 else
                 {
-                    if(set_transformation_filter(parameter) == 0)
-                    {
-                        char resp[40] = "SUCCESS. Current transformation: ";
-                        text_response_BS(SUCCESS, strcat(resp, parameter), buffer, fd);
-                    }
-                    else
-                    {
-                        //ERROR Interno
-                        //TODO: Manejar errores internos y solicitar un nuevo request.
-                    }
+                    command_specification(parameter);
+					char resp[40] = "SUCCESS. Current transformation: ";
+					text_response_BS(SUCCESS, strcat(resp, parameter), buffer, fd);
                 }
 			}
 			break;
@@ -474,8 +463,6 @@ int parse_positive_int(char *string)
 	return (int) ret;
 }
 
-//Esta funcion tiene que estar hecha en el proxy exclusivamente y tiene que cargar
-//el array de monitor con strings que digan su numero espacio funcion ej: "1 usuariosOnline"
 //Devuelve el numero de funciones que hay
 char **get_monitor_array()
 {
@@ -486,7 +473,7 @@ char **get_monitor_array()
 //Busca la estadistica correspondiente al monitor(i)
 int monitor(int numero)
 {
-	//Tiene que buscar las metricas en el contexto
+	//TODO Tiene que buscar las metricas en el contexto
 	return 0;
 }
 
@@ -494,28 +481,19 @@ int monitor(int numero)
 int get_transformation_state()
 {
 
-	return 0;
+	return get_app_context()->transform_status;
 }
 
 //Carga el estado de transformacion y devuelve 0 si funciono y -1 sino.
-int set_transformation_state(int estado)
+void set_transformation_state(int estado)
 {
-
-	return 0;
+	get_app_context()->transform_status = estado;
 }
 
 //Busca el command actual en el contexto del proxy
 char *get_transformation_filter()
 {
-
-	return "";
-}
-
-//Carga el filtro que le pasan retorna 0 si funciono y -1 sino
-int set_transformation_filter(char *filtro)
-{
-
-	return 0;
+	return get_app_context()->command_specification;
 }
 
 //DEPRECATED

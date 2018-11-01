@@ -414,7 +414,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 	}
 	if(s->data_1 && s->data_2) //CREATE TRANSFORM
 	{
-		char *command = (s->data_3) ? get_app_context()->command_specification : "cat";
+		char *command = (s->data_3 && get_app_context()->transform_status) ? get_app_context()->command_specification : "cat";
 		int  pipes[2];
 		s->parser_pid = start_parser(command, pipes);
 		s->read_fds[2]  = pipes[0];

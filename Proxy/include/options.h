@@ -22,6 +22,7 @@ typedef struct
 	char            *monitor[5];
 	int             monitor_values[5];
 	char            pipelining;
+	int             transform_status;
 } app_context_t;
 
 typedef app_context_t *app_context_p;

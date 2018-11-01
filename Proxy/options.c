@@ -32,6 +32,7 @@ void initialize_app_context()
 	app_context->pipelining            = false;
 	char    *monitoreo[5]              = {"1 - Conections", "2 - Connected Admins", "3 - Messages", "4 - Messages2",
 	                                      "5 - Messages3"};
+	app_context->transform_status      = false;
 	for(int i                          = 0; i < 5; i++)
 	{
 		int len = strlen(monitoreo[i]);

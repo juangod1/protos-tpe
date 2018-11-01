@@ -46,11 +46,9 @@ int monitor(int numero);
 
 int get_transformation_state();
 
-int set_transformation_state(int estado);
+void set_transformation_state(int estado);
 
 char *get_transformation_filter();
-
-int set_transformation_filter(char *filtro);
 
 file_descriptor setup_admin_socket();
 
