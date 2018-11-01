@@ -12,7 +12,7 @@ admin_context_p get_admin_context()
 	return admin_context;
 }
 
-void initialize_app_context()
+void initialize_admin_context()
 {
 	admin_context = malloc(sizeof(app_context_t));
 	admin_context->port          = 9090;

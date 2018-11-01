@@ -21,7 +21,7 @@ static admin_context_p admin_context;
 
 int main(int argc, char **argv)
 {
-	initialize_app_context();
+	initialize_admin_context();
 	int valid = parse_arguments(argc, argv);
 	if(!valid)
 	{

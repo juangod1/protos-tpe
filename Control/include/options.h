@@ -17,6 +17,8 @@ admin_context_p get_admin_context();
 
 void initialize_options();
 
+void initialize_admin_context();
+
 void listen_address(char *address);
 
 uint16_t connection_port(char *port);
