@@ -11,6 +11,7 @@
 #include "include/main.h"
 #include "include/options.h"
 #include "include/error.h"
+#include "include/MasterStateMachine.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -168,21 +169,40 @@ int parse_message(const char *str, char sep, char **command, char **parameter)
 				return 1;
 			}
 			*command = calloc(1, stop - start + 1);//Por ahi me falta 1 para finalizar el string
-			memcpy(*command, str + start, stop - start);
-			count++;
-			start = stop + 1;
+			if(stop-start != 0)
+			{
+                memcpy(*command, str + start, stop - start);
+                count++;
+                start = stop + 1;
+            } else {
+                return 1;
+			}
 		}
 	}
 	if(count == 0)
 	{
 		*command = calloc(1, stop - start + 1);//Por ahi me falta 1 para finalizar el string
-		memcpy(*command, str + start, stop - start);
-		count++;
-		start = stop + 1;
+		if(stop-start != 0)
+		{
+            memcpy(*command, str + start, stop - start);
+            count++;
+            start = stop + 1;
+        }
+        else
+        {
+            return 1;
+        }
 		return 0;
 	}
-	*parameter = calloc(1, stop - start + 1);
-	memcpy(*parameter, str + start, stop - start);//Por ahi me falta uno para finalizar el string
+	if(stop-start != 0)
+	{
+        *parameter = calloc(1, stop - start + 1);
+        memcpy(*parameter, str + start, stop - start);//Por ahi me falta uno para finalizar el string
+    }
+    else
+    {
+        return 1;
+    }
 	return 0;
 }
 
@@ -201,197 +221,160 @@ void process_request(state s, file_descriptor fd)
 		text_response_BS(FAILED, "Message format error.", buffer, fd);
 		//TODO:Puedo cerrar la conexion o dejar que siga un poco mas.
 	}
-	switch(parse_admin_command(command))
-	{
-		case USER:
-			if(s->protocol_state != AUTENTICATION)
-			{
-				//Error de SCOPE
-				SCOPE_ERROR
-				//TODO:Cerrar la response y solicitar un nuevo request.
-				break;
-			}
-			//Se procede
-			if(parameter != NULL)
-			{
-				s->user = calloc(1, strlen(parameter) + 1);
-				memcpy(s->user, parameter, strlen(parameter));
-				text_response_BS(SUCCESS, "Continue with PASS.", buffer, fd);
-			}
-			else
-			{
-				text_response_BS(FAILED, "Missing argument", buffer, fd);
-			}
-			break;
-		case PASS:
-			if(s->protocol_state != AUTENTICATION)
-			{
-				//Error de SCOPE
-				SCOPE_ERROR
-				//TODO:Cerrar la response y solicitar un nuevo request.
-				break;
-			}
-			//Tiene que haber ingresado un usuario previamente
-			if(s->user != NULL)
-			{
-				s->pass = calloc(1, strlen(parameter) + 1);
-				memcpy(s->pass, parameter, strlen(parameter));
-				int auth = authenticate(s->user, s->pass);
-				if(auth == 0)
-				{
-					text_response_BS(SUCCESS, "Entering EXCHAGE.", buffer, fd);
-					s->protocol_state = EXCHANGE;
-				}
-				else if(auth == 1)
-				{
-					text_response_BS(FAILED, "FAILED. Try again or QUIT.", buffer, fd);
-				}
-				else
-				{
-					text_response_BS(FAILED, "Conection error, try again later.", buffer, fd);
-				}
-			}
-			else
-			{
-				text_response_BS(FAILED, "Missing USER.", buffer, fd);
-			}
-			break;
-		case LISTS:
-			if(s->protocol_state != EXCHANGE)
-			{
-				//Error de SCOPE
-				SCOPE_ERROR
-				//TODO:Cerrar la response y solicitar un nuevo request.
-				break;
-			}
-			if(parameter != NULL)
-			{
-				//Si hay parameters, presentar un ERROR DE FORMATO
-				FORMAT_ERROR
-				//TODO:Cerrar la response y solicitar un nuevo request.
-			}
-			else
-			{
-				char content[100] = {0};
-				strcat(content, "List:");
-				char    **monitorArray = get_monitor_array();
-				for(int i              = 0; i < 5; i++)
-				{
-					strcat(content, "\n");
-					strcat(content, monitorArray[i]);
-				}
-				text_response_BS(SUCCESS, content, buffer, fd);
-			}
-			break;
-		case STATS:
-			if(s->protocol_state != EXCHANGE)
-			{
-				//Error de SCOPE
-				SCOPE_ERROR
-				//TODO:Cerrar la response y solicitar un nuevo request.
-			}
-			else if(parameter != NULL)
-			{
-				int paramNum = parse_positive_int(parameter);
-				if(paramNum == -1)
-				{
-					//Si no es un numero presentar un ERROR DE FORMATO
-					FORMAT_ERROR
-					//TODO:Cerrar la response y solicitar un nuevo request.
-				}
-				else
-				{
-					int resmonitor = monitor(paramNum);
-					if(resmonitor == -1)
-					{
-						text_response_BS(FAILED, "Function not found, use LISTS.", buffer, fd);
-					}
-					else
-					{
-						char textomonitor[5];
-						char content[50] = "El resultado es ";
-						sprintf(textomonitor, "%d", resmonitor);
-						//Aca se puede hacer referencia a la funcion o al numero de funcion que fue llamado.
-						text_response_BS(SUCCESS, strcat(content, textomonitor), buffer,
-						                 fd);//TODO: Hay que acomodar el strcat
-					}
-				}
-			}
-			else
-			{
-				FORMAT_ERROR
-			}
-			break;
-		case ACTIVE:
-			if(s->protocol_state != EXCHANGE)
-			{
-				//Error de SCOPE
-				SCOPE_ERROR
-				//TODO:Cerrar la response y solicitar un nuevo request.
-			}
-			else
-            {
-			    if(parameter == NULL)
-			    {
-				    //Significa que no paso parameter entonces quiere saber cual es el estado actual
-				    int estadoT = get_transformation_state();
-				    char resp[30] = "Transformation is: ";
-				    text_response_BS(SUCCESS, strcat(resp, (estadoT ? "Active" : "Inactive")), buffer, fd);
-			    }
-			    else
-                {
+	else {
+        switch (parse_admin_command(command)) {
+            case USER:
+                if (s->protocol_state != AUTENTICATION) {
+                    //Error de SCOPE
+                    SCOPE_ERROR
+                    //TODO:Cerrar la response y solicitar un nuevo request.
+                    break;
+                }
+                //Se procede
+                if (parameter != NULL) {
+                    s->user = calloc(1, strlen(parameter) + 1);
+                    memcpy(s->user, parameter, strlen(parameter));
+                    text_response_BS(SUCCESS, "Continue with PASS.", buffer, fd);
+                } else {
+                    text_response_BS(FAILED, "Missing argument", buffer, fd);
+                }
+                break;
+            case PASS:
+                if (s->protocol_state != AUTENTICATION) {
+                    //Error de SCOPE
+                    SCOPE_ERROR
+                    //TODO:Cerrar la response y solicitar un nuevo request.
+                    break;
+                }
+                //Tiene que haber ingresado un usuario previamente
+                if (s->user != NULL) {
+                    s->pass = calloc(1, strlen(parameter) + 1);
+                    memcpy(s->pass, parameter, strlen(parameter));
+                    int auth = authenticate(s->user, s->pass);
+                    if (auth == 0) {
+                        text_response_BS(SUCCESS, "Entering EXCHAGE.", buffer, fd);
+                        s->protocol_state = EXCHANGE;
+                    } else if (auth == 1) {
+                        text_response_BS(FAILED, "FAILED. Try again or QUIT.", buffer, fd);
+                    } else {
+                        text_response_BS(FAILED, "Conection error, try asgain later.", buffer, fd);
+                    }
+                } else {
+                    text_response_BS(FAILED, "Missing USER.", buffer, fd);
+                }
+                break;
+            case LISTS:
+                if (s->protocol_state != EXCHANGE) {
+                    //Error de SCOPE
+                    SCOPE_ERROR
+                    //TODO:Cerrar la response y solicitar un nuevo request.
+                    break;
+                }
+                if (parameter != NULL) {
+                    //Si hay parameters, presentar un ERROR DE FORMATO
+                    FORMAT_ERROR
+                    //TODO:Cerrar la response y solicitar un nuevo request.
+                } else {
+                    char content[100] = {0};
+                    strcat(content, "List:");
+                    char **monitorArray = get_monitor_array();
+                    for (int i = 0; i < 5; i++) {
+                        strcat(content, "\n");
+                        strcat(content, monitorArray[i]);
+                    }
+                    text_response_BS(SUCCESS, content, buffer, fd);
+                }
+                break;
+            case STATS:
+                if (s->protocol_state != EXCHANGE) {
+                    //Error de SCOPE
+                    SCOPE_ERROR
+                    //TODO:Cerrar la response y solicitar un nuevo request.
+                } else if (parameter != NULL) {
                     int paramNum = parse_positive_int(parameter);
-                    if(paramNum != 1 && paramNum != 0)
-                    {
-                        //ERROR DE FORMATO - parameters invalidos
+                    if (paramNum == -1) {
+                        //Si no es un numero presentar un ERROR DE FORMATO
                         FORMAT_ERROR
                         //TODO:Cerrar la response y solicitar un nuevo request.
+                    } else {
+                        int resmonitor = monitor(paramNum);
+                        if (resmonitor == -1) {
+                            text_response_BS(FAILED, "Function not found, use LISTS.", buffer, fd);
+                        } else {
+                            char textomonitor[5];
+                            char content[50] = "El resultado es ";
+                            sprintf(textomonitor, "%d", resmonitor);
+                            //Aca se puede hacer referencia a la funcion o al numero de funcion que fue llamado.
+                            text_response_BS(SUCCESS, strcat(content, textomonitor), buffer,
+                                             fd);//TODO: Hay que acomodar el strcat
+                        }
                     }
-                    else
-					{
-                    	set_transformation_state(paramNum);
-                        char resp[40] = "SUCCESS. Transformation is: ";
-                        text_response_BS(SUCCESS, strcat(resp,
-                                                         (paramNum ? "Active" : "Inactive")), buffer, fd);
+                } else {
+                    FORMAT_ERROR
+                }
+                break;
+            case ACTIVE:
+                if (s->protocol_state != EXCHANGE) {
+                    //Error de SCOPE
+                    SCOPE_ERROR
+                    //TODO:Cerrar la response y solicitar un nuevo request.
+                } else {
+                    if (parameter == NULL) {
+                        //Significa que no paso parameter entonces quiere saber cual es el estado actual
+                        int estadoT = get_transformation_state();
+                        char resp[30] = "Transformation is: ";
+                        text_response_BS(SUCCESS, strcat(resp, (estadoT ? "Active" : "Inactive")), buffer, fd);
+                    } else {
+                        int paramNum = parse_positive_int(parameter);
+                        if (paramNum != 1 && paramNum != 0) {
+                            //ERROR DE FORMATO - parameters invalidos
+                            FORMAT_ERROR
+                            //TODO:Cerrar la response y solicitar un nuevo request.
+                        } else {
+                            set_transformation_state(paramNum);
+                            char resp[40] = "SUCCESS. Transformation is: ";
+                            text_response_BS(SUCCESS, strcat(resp,
+                                                             (paramNum ? "Active" : "Inactive")), buffer, fd);
+                        }
                     }
                 }
-            }
-			break;
-		case FILTER:
-			if(s->protocol_state != EXCHANGE)
-			{
-				//Error de SCOPE
-				SCOPE_ERROR
-				//TODO:Cerrar la response y solicitar un nuevo request.
-
-            } else {
-                if(parameter == NULL)
-                {
-                    //Significa que no paso parameter entonces quiere saber cual es el filter actual
-                    char *filtro = get_transformation_filter();
-                    char resp[40] = "Current transformation: ";
-                    text_response_BS(SUCCESS, strcat(resp, filtro), buffer, fd);
+                break;
+            case FILTER:
+                if (s->protocol_state != EXCHANGE) {
+                    //Error de SCOPE
+                    SCOPE_ERROR
+                    //TODO:Cerrar la response y solicitar un nuevo request.
+                } else {
+                    if (parameter == NULL) {
+                        //Significa que no paso parameter entonces quiere saber cual es el filter actual
+                        char *filtro = get_transformation_filter();
+                        char resp[40] = "Current transformation: ";
+                        text_response_BS(SUCCESS, strcat(resp, filtro), buffer, fd);
+                    } else {
+                        command_specification(parameter);
+                        char resp[40] = "SUCCESS. Current transformation: ";
+                        text_response_BS(SUCCESS, strcat(resp, parameter), buffer, fd);
+                    }
                 }
-                else
-                {
-                    command_specification(parameter);
-					char resp[40] = "SUCCESS. Current transformation: ";
-					text_response_BS(SUCCESS, strcat(resp, parameter), buffer, fd);
-                }
-			}
-			break;
-		case QUIT:
-			s->protocol_state = CLOSE;
-			//Es multiestado entonces no verifico
-			text_response_BS(SUCCESS, "Goodbye!", buffer, fd);
-			//cerrar sesion cerrando el socket y dropeando la informacion de sesion
-			break;
-			//Y por ultimo tenemos el caso default por si falla por scope o por error
-		default:
-			//El command ingresado no esta dentro de los disponibles.
-			text_response_BS(FAILED, "Command unknown. Refer to the RFC.", buffer, fd);
-			break;
-	}
+                break;
+            case QUIT:
+                s->protocol_state = CLOSE;
+                //Es multiestado entonces no verificoS
+                text_response_BS(SUCCESS, "Goodbye!", buffer, fd);
+                //cerrar sesion cerrando el socket y dropeando la informacion de sesion
+                free(s->user);
+                free(s->pass);
+                disconnect(s);
+                break;
+                //Y por ultimo tenemos el caso default por si falla por scope o por error
+            default:
+                //El command ingresado no esta dentro de los disponibles.
+                text_response_BS(FAILED, "Command unknown. Refer to the RFC.", buffer, fd);
+                break;
+        }
+    }
+    free(command);
+	free(parameter);
 }
 
 int parse_admin_command(const char *resp)
