@@ -393,6 +393,7 @@ void interaction(int fd)
 				*pos = '\n';
 			}
 			ret = sctp_sendmsg(fd, (void *) buffer, length, NULL, 0, 0, 0, 0, 0, 0);
+			printResponse(fd);
 			closeConnection(fd);
 
 		}
