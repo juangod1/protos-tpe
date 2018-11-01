@@ -248,7 +248,7 @@ void process_request(state s, file_descriptor fd)
 				}
 				else
 				{
-					text_response_BS(FAILED, "Conection error, try asgain later.", buffer, fd);
+					text_response_BS(FAILED, "Conection error, try again later.", buffer, fd);
 				}
 			}
 			else
@@ -363,7 +363,8 @@ void process_request(state s, file_descriptor fd)
 				//Error de SCOPE
 				SCOPE_ERROR
 				//TODO:Cerrar la response y solicitar un nuevo request.
-			} else {
+
+            } else {
                 if(parameter == NULL)
                 {
                     //Significa que no paso parameter entonces quiere saber cual es el filter actual

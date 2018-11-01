@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 	{
 		printf("Error creating connection");
 		free_struct();
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	admin_context = get_admin_context();
 	socket_config();
@@ -76,7 +76,7 @@ int createConnection()
 		printf("An error has ocurred while creating SCTP socket\n");
 		perror("socket");
 		closeConnection(fd);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	//Configuro la cantidad de streams disponible para el socket
 //    memset(&initmsg,0, sizeof(struct sctp_initmsg));
@@ -107,7 +107,7 @@ int createConnection()
 		printf(("An error has ocurred while connecting the SCTP socket\n"));
 		perror("connect");
 		closeConnection(fd);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	return fd;
 }
@@ -189,7 +189,7 @@ char requestLoginToProxy(int fd)
 		printf("An error has ocurred sending USER info\n");
 		perror("sctp_sendmsg");
 		closeConnection(fd);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
@@ -203,7 +203,7 @@ char requestLoginToProxy(int fd)
 		printf("An error has ocurred sending PASS info\n");
 		perror("sctp_sendmsg");
 		closeConnection(fd);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	ret = sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
@@ -254,7 +254,7 @@ void interaction(int fd)
 		if(fgets(buffer, MAX_BUFFER, stdin) == NULL)
 		{
 			closeConnection(fd);
-			exit(-1);
+			exit(EXIT_FAILURE);
 		}
 		size_t length = strlen(buffer);
 		char   *pos;
@@ -406,7 +406,7 @@ void interaction(int fd)
 		{
 			printf("An error has ocurred sending the message\n");
 			closeConnection(fd);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 }
@@ -434,4 +434,5 @@ void closeConnection(int fd)
 	printf("Goodbye, hope to see you soon!\n");
 	free_struct();
 	close(fd);
+	exit(EXIT_SUCCESS);
 }
