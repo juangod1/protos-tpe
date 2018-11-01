@@ -329,32 +329,37 @@ void process_request(state s, file_descriptor fd)
 				SCOPE_ERROR
 				//TODO:Cerrar la response y solicitar un nuevo request.
 			}
-			if(parameter == NULL)
-			{
-				//Significa que no paso parameter entonces quiere saber cual es el estado actual
-				int estadoT = get_transformation_state();
-				text_response_BS(SUCCESS, strcat("Transformation is: ", (estadoT ? "Active" : "Inactive")), buffer, fd);
-			}
 			else
-			{
-				int paramNum = parse_positive_int(parameter);
-				if(paramNum != 1 && paramNum != 0 || paramNum == -1)
-				{
-					//ERROR DE FORMATO - parameters invalidos
-					FORMAT_ERROR
-					//TODO:Cerrar la response y solicitar un nuevo request.
-				}
-				if(set_transformation_state(paramNum) == 0)
-				{
-					text_response_BS(SUCCESS, strcat("SUCCESS. Transformation: ",
-					                                 (paramNum ? "Active" : "Inactive")), buffer, fd);
-				}
-				else
-				{
-					//ERROR Interno
-					//TODO: Manejar errores internos y solicitar un nuevo request.
-				}
-			}
+            {
+			    if(parameter == NULL)
+			    {
+				    //Significa que no paso parameter entonces quiere saber cual es el estado actual
+				    int estadoT = get_transformation_state();
+				    char resp[30] = "Transformation is: ";
+				    text_response_BS(SUCCESS, strcat(resp, (estadoT ? "Active" : "Inactive")), buffer, fd);
+			    }
+			    else
+                {
+                    int paramNum = parse_positive_int(parameter);
+                    if(paramNum != 1 && paramNum != 0)
+                    {
+                        //ERROR DE FORMATO - parameters invalidos
+                        FORMAT_ERROR
+                        //TODO:Cerrar la response y solicitar un nuevo request.
+                    }
+                    else if (set_transformation_state(paramNum) == 0)
+                    {
+                        char resp[35] = "SUCCESS. Transformation is: ";
+                        text_response_BS(SUCCESS, strcat(resp,
+                                                         (paramNum ? "Active" : "Inactive")), buffer, fd);
+                    }
+                    else
+                    {
+                        //ERROR Interno
+                        //TODO: Manejar errores internos y solicitar un nuevo request.
+                    }
+                }
+            }
 			break;
 		case FILTER:
 			if(s->protocol_state != EXCHANGE)
@@ -362,24 +367,27 @@ void process_request(state s, file_descriptor fd)
 				//Error de SCOPE
 				SCOPE_ERROR
 				//TODO:Cerrar la response y solicitar un nuevo request.
-			}
-			if(parameter == NULL)
-			{
-				//Significa que no paso parameter entonces quiere saber cual es el filter actual
-				char *filtro = get_transformation_filter();
-				text_response_BS(SUCCESS, strcat("Current transformation: ", filtro), buffer, fd);
-			}
-			else
-			{
-				if(set_transformation_filter(parameter) == 0)
-				{
-					text_response_BS(SUCCESS, strcat("SUCCESS. Current transformation: ", parameter), buffer, fd);
-				}
-				else
-				{
-					//ERROR Interno
-					//TODO: Manejar errores internos y solicitar un nuevo request.
-				}
+			} else {
+                if(parameter == NULL)
+                {
+                    //Significa que no paso parameter entonces quiere saber cual es el filter actual
+                    char *filtro = get_transformation_filter();
+                    char resp[30] = "Current transformation: ";
+                    text_response_BS(SUCCESS, strcat("Current transformation: ", filtro), buffer, fd);
+                }
+                else
+                {
+                    if(set_transformation_filter(parameter) == 0)
+                    {
+                        char resp[40] = "SUCCESS. Current transformation: ";
+                        text_response_BS(SUCCESS, strcat(resp, parameter), buffer, fd);
+                    }
+                    else
+                    {
+                        //ERROR Interno
+                        //TODO: Manejar errores internos y solicitar un nuevo request.
+                    }
+                }
 			}
 			break;
 		case QUIT:
