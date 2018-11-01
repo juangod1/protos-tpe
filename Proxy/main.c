@@ -113,7 +113,7 @@ file_descriptor setup_MUA_socket()
 {
 	struct sockaddr_in address;
 	memset(&address, 0, sizeof(address));
-	address.sin_port        = htons(MUA_PORT);
+	address.sin_port        = htons(app_context->local_port);
 	address.sin_family      = AF_INET;
 	address.sin_addr.s_addr = htonl(INADDR_ANY);
 

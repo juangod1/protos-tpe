@@ -61,5 +61,7 @@ void version();
 
 void server_string(char *server_string);
 
+int string_to_port(char* arg);
+
 
 #endif //PROTOS_TPE_OPTIONS_H

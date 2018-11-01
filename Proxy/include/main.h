@@ -3,7 +3,7 @@
 
 typedef int file_descriptor;
 
-#define MUA_PORT 1110
+
 #define ORIGIN_PORT  110
 #define SELECT_FILE_DESCRIPTOR_AMOUNT 2
 #define MAXIMUM_PENDING_CONNECTIONS 50

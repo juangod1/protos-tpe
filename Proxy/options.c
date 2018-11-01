@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <arpa/inet.h>
 #include <bits/socket.h>
+#include <errno.h>
+#include <inttypes.h>
 #include "include/options.h"
 #include "../Shared/include/executionValidator.h"
 #include "../Shared/include/lib.h"
@@ -126,25 +128,28 @@ void censored_mediatype(char *arg)
 void management_port(char *arg)
 {
 	//TODO: has to receive a port and specify it as the SCTP port the management server will listen to
-	printf("This is management port!\n");
+	printf("This is management port: %s!\n",arg);
 	fflush(stdout);
-	app_context->management_port = 10;
+    int val = string_to_port(arg);
+    app_context->management_port = val;
 }
 
 void local_port(char *arg)
 {
 	//TODO: has to receive a port and specify
-	printf("This is local port!\n");
+	printf("This is local port: %s!\n",arg);
 	fflush(stdout);
-	app_context->local_port = 1110;
+    int val = string_to_port(arg);
+	app_context->local_port = (int)val;
 }
 
 void origin_port(char *arg)
 {
 	//TODO: has to receive a port and specify it as the origin server POP3 port
-	printf("This is origin port!\n");
+	printf("This is origin port: %s!\n",arg);
 	fflush(stdout);
-	app_context->origin_port = 110;
+	int val = string_to_port(arg);
+	app_context->origin_port = val;
 }
 
 void command_specification(char *arg)
@@ -194,4 +199,16 @@ void server_string(char *server_string)
         get_app_context()->has_to_query_dns = true;
     }
 	app_context->address_server_string = server_string;
+}
+
+int string_to_port(char* arg)
+{
+    char *end = 0;
+    errno     = 0;
+    intmax_t val = strtoimax(arg, &end, 10);
+    if(errno == ERANGE || val < 0 || val > UINT16_MAX || end == arg || *end != '\0')
+    {
+        exit(1);
+    }
+    return (int)val;
 }
