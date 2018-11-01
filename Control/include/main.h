@@ -12,6 +12,8 @@ typedef enum
 
 void socket_config();
 
+void printResponse(int fd);
+
 int createConnection();
 
 void requestForLogin(int fd, char *status);

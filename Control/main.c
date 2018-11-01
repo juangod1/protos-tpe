@@ -163,17 +163,16 @@ void loginSuccess(char *status)
 
 char requestLoginToProxy(int fd)
 {
+	char buffer[MAX_BUFFER] = {0};
 	char *usernameInput = calloc(1, INITIAL_INPUT_SIZE);
 	char *passwordInput = calloc(1, INITIAL_INPUT_SIZE);
 	//Le solicito un usuario
 	printf("Please enter your username: ");
 	fetchLineFromStdin(&usernameInput, INITIAL_INPUT_SIZE);
-	printf("+OK\n");
 	//Le solicito una contraseña
 	printf("Please enter your password: ");
 	fetchLineFromStdin(&passwordInput, INITIAL_INPUT_SIZE);
 	prepareForSending(&usernameInput, &passwordInput);
-
 	char *pos;
 	if((pos = strchr(usernameInput, '\0')) != NULL)
 	{
@@ -193,6 +192,10 @@ char requestLoginToProxy(int fd)
 		exit(1);
 	}
 
+	sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
+	sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
+	printf("+0K\n");
+
 	//Luego le envia la contraseña con PASS string
 	ret = sctp_sendmsg(fd, passwordInput, strlen(passwordInput), NULL, 0, 0, 0, 0, 0, 0);
 	if(ret == -1)
@@ -202,8 +205,6 @@ char requestLoginToProxy(int fd)
 		closeConnection(fd);
 		exit(1);
 	}
-	//Parsea la respuesta del proxy
-	char buffer[MAX_BUFFER] = {0};
 
 	ret = sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
 	ret = sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
@@ -213,6 +214,7 @@ char requestLoginToProxy(int fd)
 
 	if(strncmp(buffer, "+OK", 3) == 0)
 	{
+
 		return 1;
 	}
 	else
@@ -243,7 +245,6 @@ void interaction(int fd)
 {
 
 	char      buffer[MAX_BUFFER];
-	char      responseBuffer[MAX_BUFFER] = {0};
 	int       ret;
 	wordexp_t p;
 	char      **w;
@@ -270,8 +271,7 @@ void interaction(int fd)
 				*pos = '\n';
 			}
 			ret = sctp_sendmsg(fd, (void *) buffer, length, NULL, 0, 0, 0, 0, 0, 0);
-			sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
-			printf("%s", responseBuffer);
+            printResponse(fd);
 		}
 		else if(strncmp(buffer, "STATS", 5) == 0)
 		{
@@ -296,8 +296,7 @@ void interaction(int fd)
 						*pos = '\n';
 					}
 					ret = sctp_sendmsg(fd, (void *) buffer, length, NULL, 0, 0, 0, 0, 0, 0);
-					sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
-					printf("%s", responseBuffer);
+					printResponse(fd);
 				}
 			}
 			wordfree(&p);
@@ -321,8 +320,7 @@ void interaction(int fd)
 						*pos = '\n';
 					}
 					ret = sctp_sendmsg(fd, (void *) buffer, length, NULL, 0, 0, 0, 0, 0, 0);
-					sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
-					printf("%s", responseBuffer);
+					printResponse(fd);
 				}
 				else if(count == 2)
 				{
@@ -334,8 +332,7 @@ void interaction(int fd)
 							*pos = '\n';
 						}
 						ret = sctp_sendmsg(fd, (void *) buffer, length, NULL, 0, 0, 0, 0, 0, 0);
-						sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
-						printf("%s", responseBuffer);
+						printResponse(fd);
 					}
 					else
 					{
@@ -369,8 +366,7 @@ void interaction(int fd)
 						*pos = '\n';
 					}
 					ret = sctp_sendmsg(fd, (void *) buffer, length, NULL, 0, 0, 0, 0, 0, 0);
-					sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
-					printf("%s", responseBuffer);
+					printResponse(fd);
 				}
 			}
 			wordfree(&p);
@@ -413,7 +409,25 @@ void interaction(int fd)
 		}
 	}
 }
+void printResponse(int fd)
+{
+    char responseBuffer[MAX_BUFFER] = {0};
+	long amount;
+    sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
+    amount = strtol(responseBuffer,NULL,10);
 
+    for(int i = 0; i < amount; i ++)
+	{
+    	sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
+    	printf("%s",responseBuffer);
+    	for(int j = 0 ; j < MAX_BUFFER; j++)
+		{
+    		responseBuffer[j] = 0;
+		}
+
+	}
+
+}
 void closeConnection(int fd)
 {
 	printf("Goodbye, hope to see you soon!\n");
