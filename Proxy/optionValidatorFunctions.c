@@ -85,7 +85,7 @@ void censored_mediatype_validation(int argc, char **argv, response_p resp)
 
 void management_port_validation(int argc, char **argv, response_p resp)
 {
-	if(argc != 1 && *argv[0] != 0)
+	if(argc < 1 || argv[0] == NULL)
 	{
 		resp->success    = FALSE;
 		resp->error_text = "Management Port accepts only one parameter";
@@ -96,7 +96,7 @@ void management_port_validation(int argc, char **argv, response_p resp)
 
 void local_port_validation(int argc, char **argv, response_p resp)
 {
-	if(argc != 1 && *argv[0] != 0)
+	if(argc < 1 || argv[0] == NULL)
 	{
 		resp->success    = FALSE;
 		resp->error_text = "Local Port accepts only one parameter";
@@ -107,7 +107,7 @@ void local_port_validation(int argc, char **argv, response_p resp)
 
 void origin_port_validation(int argc, char **argv, response_p resp)
 {
-	if(argc != 1 && *argv[0] != 0)
+	if(argc < 1 || argv[0] == NULL)
 	{
 		resp->success    = FALSE;
 		resp->error_text = "Origin Port accepts only one parameter";
