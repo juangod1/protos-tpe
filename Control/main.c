@@ -395,6 +395,7 @@ void interaction(int fd)
 			ret = sctp_sendmsg(fd, (void *) buffer, length, NULL, 0, 0, 0, 0, 0, 0);
 			printResponse(fd);
 			closeConnection(fd);
+            exit(EXIT_SUCCESS);
 
 		}
 		else
@@ -435,5 +436,4 @@ void closeConnection(int fd)
 	printf("Goodbye, hope to see you soon!\n");
 	free_struct();
 	close(fd);
-	exit(EXIT_SUCCESS);
 }

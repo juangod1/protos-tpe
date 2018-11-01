@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <arpa/inet.h>
+#include <bits/socket.h>
 #include "include/options.h"
 #include "../Shared/include/executionValidator.h"
 #include "../Shared/include/lib.h"
@@ -173,27 +175,23 @@ void server_string(char *server_string)
 {
 	printf("This is server string!\n");
 	fflush(stdout);
-	int          n1, n2, n3, n4;
-	unsigned int m1, m2, m3, m4, m5, m6, m7, m8;
-	int          ret                   = sscanf(server_string, "%d.%d.%d.%d", &n1, &n2, &n3, &n4);
-	if(ret == 4)
-	{
-		get_app_context()->has_to_query_dns = false;
+
+    char buf[16];
+
+    if(inet_pton(AF_INET,server_string,buf))
+    {
+        get_app_context()->has_to_query_dns = false;
 		printf("IPv4 Address received.\n");
-	}
-	else
-	{
-		ret = sscanf(server_string, "%x:%x:%x:%x:%x:%x:%x:%x", &m1, &m2, &m3, &m4, &m5, &m6, &m7, &m8);
-		if(ret == 8)
-		{
-			get_app_context()->has_to_query_dns = false;
-			printf("IPv6 Address received.\n");
-		}
-		else
-		{
-			printf("Origin name requires DNS query.\n");
-			get_app_context()->has_to_query_dns = true;
-		}
-	}
+    }
+    else if (inet_pton(AF_INET6,server_string,buf))
+    {
+        get_app_context()->has_to_query_dns = false;
+        printf("IPv6 Address received.\n");
+    }
+    else
+    {
+        printf("Origin name requires DNS query.\n");
+        get_app_context()->has_to_query_dns = true;
+    }
 	app_context->address_server_string = server_string;
 }
