@@ -141,12 +141,17 @@ int text_response_BS(int response_state, char *content, buffer_p buffer, file_de
 	strcat(res, "\n");
 	int     amount = (double) strlen(res) / (double) BUFFER_SIZE +
 	                 ((((int) strlen(res) % (int) BUFFER_SIZE) == 0) ? 0 : 1);
+    char amount_string[5];
+    sprintf(amount_string, "%d\n", amount);
+    buffer_read_string(amount_string,buffer);
+    buffer_write(fd,buffer);
 	for(int i      = 0; i < amount; i++)
 	{
 		buffer_read_string(res + (i * BUFFER_SIZE), buffer);
 		buffer_write(fd, buffer);
 	}
 	return 0;
+
 }
 
 
@@ -275,7 +280,7 @@ void process_request(state s, file_descriptor fd)
 					strcat(content, "\n");
 					strcat(content, monitorArray[i]);
 				}
-				text_response_BS(1, content, buffer, fd);
+				text_response_BS(SUCCESS, content, buffer, fd);
 			}
 			break;
 		case STATS:
