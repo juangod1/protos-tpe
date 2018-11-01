@@ -284,7 +284,8 @@ void interaction(int fd)
 			{
 				count = (int) p.we_wordc;
 				w     = p.we_wordv;
-				if(count != 2 || !isdigit(w[1]))
+
+				if(count != 2 || !isdigit(w[1][0]) || w[1][1] != '\0')
 				{
 					printf("Usage: STATS number, number must be a digit\n");
 				}
@@ -374,7 +375,7 @@ void interaction(int fd)
 		else if(strcmp(buffer, "HELP") == 0)
 		{
 			printf("LISTS---------------- Lists the possible monitoring options along with its corresponding number\n");
-			printf("STATS number--------- Returns the monitoring information corresponding to number\n");
+			printf("STATS number--------- Returns the monitoring information corresponding to number (number between 0 and 9)\n");
 			printf("ACTIVE [BOOL]-------- With no BOOL, returns the current transformation filter's status\n"
 			       "                      With BOOL, activates (1) or deactivates (0) the current filter\n");
 			printf("FILTER [CMD]--------- With no CMD, returns current transformation filter\n"
