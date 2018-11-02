@@ -50,6 +50,7 @@ void initialize_app_context()
 
 void destroy_app_context()
 {
+	free(app_context->command_specification);
 	free(app_context);
 }
 
@@ -158,7 +159,7 @@ void command_specification(char *arg)
 	//TODO: has to receive a command from stdin and apply it to the content that passes through proxy. <<USE PROTOS TP 1>>
 	printf("This is command_specification!\n");
 	fflush(stdout);
-	app_context->command_specification = arg;
+	app_context->command_specification = my_strdup(arg);
 
 }
 
