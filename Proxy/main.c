@@ -126,8 +126,6 @@ file_descriptor setup_origin_socket()
 
 file_descriptor setup_MUA_socket()
 {
-	if(get_app_context()->isIPV6)
-	{
 		struct sockaddr_in6 address;
 		memset(&address, 0, sizeof(address));
 		address.sin6_port   = htons(app_context->local_port);
@@ -160,43 +158,6 @@ file_descriptor setup_MUA_socket()
 		}
 
 		return sock;
-	}
-	else
-	{
-		struct sockaddr_in address;
-		memset(&address, 0, sizeof(address));
-		address.sin_port        = htons(app_context->local_port);
-		address.sin_family      = AF_INET;
-		address.sin_addr.s_addr = htonl(INADDR_ANY);
-
-		int             flag = 1;
-		file_descriptor sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
-
-		if(sock < 0)
-		{
-			perror("Unable to create socket.");
-			error_terminal();
-			return -1;
-		}
-
-		if(bind(sock, (struct sockaddr *) &address, sizeof(address)) < 0)
-		{
-			perror("Unable to bind socket.\n");
-			error_terminal();
-			return -1;
-		}
-
-		if(listen(sock, MAXIMUM_PENDING_CONNECTIONS) < 0)
-		{
-			perror("Unable to listen.\n");
-			error_terminal();
-			return -1;
-		}
-
-		return sock;
-	}
 }
 
 int findMax(int *a, int size)
