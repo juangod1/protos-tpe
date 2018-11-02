@@ -9,6 +9,7 @@
 #include "main.h"
 #include "../../Shared/include/buffer.h"
 #include <pthread.h>
+#include "messageQueue.h"
 
 #define BUFFER_SIZE 50
 
@@ -46,6 +47,9 @@ struct stateStruct
 	int             data_2;
 	int             data_3;
 	int             pipelining_data;
+
+	queue_entry		queue;
+	int 			client_read_state;
 	char            *user;
 	char            *pass;
 	struct addrinfo *current;

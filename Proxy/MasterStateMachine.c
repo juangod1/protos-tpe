@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <netdb.h>
+#include <ctype.h>
 
 
 state_machine *sm;
@@ -311,6 +312,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				{
 					read_response = buffer_read_until_char(fd, s->buffers[0], '\n');
 				}
+				read_response = buffer_read(fd, s->buffers[0]);
 				if(read_response == 0)
 				{
 					printf("--------------------------------------------------------\n");
@@ -318,6 +320,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					printf("--------------------------------------------------------\n");
 					return NOT_WAITING;
 				}
+				parse_client_request(s);
 				printf("--------------------------------------------------------\n");
 				printf("Read buffer content from MUA: \n");
 				print_buffer(s->buffers[0]);
@@ -669,4 +672,158 @@ void disconnect_all_rec(state_machine *sm, node curr)
 void disconnect_all(state_machine *sm)
 {
 	disconnect_all_rec(sm, sm->states->head);
+}
+
+void parse_client_request(state s)
+{
+	char * buffer = s->buffers[0]->data_start;
+	size_t size = s->buffers[0]->count;
+	while(size>0)
+	{
+		switch(s->client_read_state)
+		{
+			case 0: //Uidl
+				if(tolower((*buffer))=='i') s->client_read_state=1;
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 1: //uIdl
+				if(tolower((*buffer))=='d') s->client_read_state=2;
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 2://uiDl
+				if(tolower((*buffer))=='l') s->client_read_state=3;
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 3://uidL
+				if((*buffer)=='\n' || (*buffer)==' ')
+				{
+					if((*buffer)==' '){
+						s->client_read_state=16;
+					}
+					else{
+						s->client_read_state=17;
+					}
+					message_queue_qdd(false,true,&(s->queue));
+				}
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 4://Retr
+				if(tolower((*buffer))=='e') s->client_read_state=5;
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 5://rEtr
+				if(tolower((*buffer))=='e') s->client_read_state=6;
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 6://reTr
+				if(tolower((*buffer))=='l') s->client_read_state=7;
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 7://retR
+				if((*buffer)==' ') {
+					message_queue_qdd(true, true, &(s->queue));
+					s->client_read_state = 16;
+				}
+				else {
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 8://Top
+				if(tolower((*buffer))=='o') s->client_read_state=9;
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 9://tOp
+				if(tolower((*buffer))=='p') s->client_read_state=10;
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 10://toP
+				if((*buffer)==' ')
+				{
+					s->client_read_state=16;
+					message_queue_qdd(true, true, &(s->queue));
+				}
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 11://List
+				if(tolower((*buffer))=='i') s->client_read_state=11;
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 12://lIst
+				if(tolower((*buffer))=='s') s->client_read_state=11;
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 13://liSt
+				if(tolower((*buffer))=='t') s->client_read_state=11;
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 14://lisT
+				if((*buffer)=='\n' || (*buffer)==' ')
+				{
+					if((*buffer)==' '){
+						s->client_read_state=16;
+					}
+					else{
+						s->client_read_state=17;
+					}
+					message_queue_qdd(false,true,&(s->queue));
+				}
+				else{
+					message_queue_qdd(false,false,&(s->queue));
+					s->client_read_state=16;
+				}
+				break;
+			case 16:// read until \n
+				if((*buffer)=='\n') s->client_read_state=17;
+				break;
+			case 17:// '\n'
+				if(tolower((*buffer))=='u') s->client_read_state=0;
+				else if(tolower((*buffer))=='r') s->client_read_state=4;
+				else if(tolower((*buffer))=='t') s->client_read_state=8;
+				else if(tolower((*buffer))=='l') s->client_read_state=11;
+				else s->client_read_state=16;
+				break;
+		}
+		size--;
+		buffer++;
+	}
 }
