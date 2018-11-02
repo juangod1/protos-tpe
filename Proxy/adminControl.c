@@ -118,9 +118,9 @@ file_descriptor setup_admin_socket()
 	return listenSock;
 }
 
-int text_response_BS(int response_state, char *content, buffer_p buffer, file_descriptor fd)
+int text_response_BS(int response_state, char *content, state s, file_descriptor fd)
 {
-	char res[100] = {0};
+	char *res = calloc(1,150);
 	char *ok      = "+OK - ";
 	char *err     = "-ERR - ";
 	char *esp     = "* - ";
@@ -139,17 +139,18 @@ int text_response_BS(int response_state, char *content, buffer_p buffer, file_de
 	}
 	//Enviar el la response
 	strcat(res, content);
-	strcat(res, "\n");
-	int     amount = (double) strlen(res) / (double) BUFFER_SIZE +
-	                 ((((int) strlen(res) % (int) BUFFER_SIZE) == 0) ? 0 : 1);
-    char amount_string[5];
-    sprintf(amount_string, "%d\n", amount);
-    buffer_read_string(amount_string,buffer);
-    buffer_write(fd,buffer);
-	for(int i      = 0; i < amount; i++)
+	strcat(res,"\r\n\r\n");
+	//int     amount = (double) strlen(res) / (double) BUFFER_SIZE +
+	//                 ((((int) strlen(res) % (int) BUFFER_SIZE) == 0) ? 0 : 1);
+	int read = buffer_read_string(res,s->buffers[0]);
+	if(*(res+read) != 0)
 	{
-		buffer_read_string(res + (i * BUFFER_SIZE), buffer);
-		buffer_write(fd, buffer);
+		s->remaining_response = read;
+		s->remaining_string = res;
+	}
+	else
+	{
+		free(res);
 	}
 	return 0;
 
@@ -206,6 +207,11 @@ int parse_message(const char *str, char sep, char **command, char **parameter)
 	return 0;
 }
 
+void admin_greeting(state s, file_descriptor fd)
+{
+    text_response_BS(SUCCESS, "Successfull conection! Now log in.", s, fd);
+}
+
 void process_request(state s, file_descriptor fd)
 {
 	buffer_p buffer               = s->buffers[0];
@@ -218,7 +224,7 @@ void process_request(state s, file_descriptor fd)
 	if(parse_message(response, ' ', &command, &parameter) == 1)
 	{
 		//Error de mensaje
-		text_response_BS(FAILED, "Message format error.", buffer, fd);
+		text_response_BS(FAILED, "Message format error.", s, fd);
 		//TODO:Puedo cerrar la conexion o dejar que siga un poco mas.
 	}
 	else {
@@ -234,9 +240,9 @@ void process_request(state s, file_descriptor fd)
                 if (parameter != NULL) {
                     s->user = calloc(1, strlen(parameter) + 1);
                     memcpy(s->user, parameter, strlen(parameter));
-                    text_response_BS(SUCCESS, "Continue with PASS.", buffer, fd);
+                    text_response_BS(SUCCESS, "Continue with PASS.", s, fd);
                 } else {
-                    text_response_BS(FAILED, "Missing argument", buffer, fd);
+                    text_response_BS(FAILED, "Missing argument", s, fd);
                 }
                 break;
             case PASS:
@@ -252,15 +258,15 @@ void process_request(state s, file_descriptor fd)
                     memcpy(s->pass, parameter, strlen(parameter));
                     int auth = authenticate(s->user, s->pass);
                     if (auth == 0) {
-                        text_response_BS(SUCCESS, "Entering EXCHAGE.", buffer, fd);
+                        text_response_BS(SUCCESS, "Entering EXCHAGE.", s, fd);
                         s->protocol_state = EXCHANGE;
                     } else if (auth == 1) {
-                        text_response_BS(FAILED, "FAILED. Try again or QUIT.", buffer, fd);
+                        text_response_BS(FAILED, "FAILED. Try again or QUIT.", s, fd);
                     } else {
-                        text_response_BS(FAILED, "Conection error, try asgain later.", buffer, fd);
+                        text_response_BS(FAILED, "Conection error, try asgain later.", s, fd);
                     }
                 } else {
-                    text_response_BS(FAILED, "Missing USER.", buffer, fd);
+                    text_response_BS(FAILED, "Missing USER.", s, fd);
                 }
                 break;
             case LISTS:
@@ -282,7 +288,7 @@ void process_request(state s, file_descriptor fd)
                         strcat(content, "\n");
                         strcat(content, monitorArray[i]);
                     }
-                    text_response_BS(SUCCESS, content, buffer, fd);
+                    text_response_BS(SUCCESS, content, s, fd);
                 }
                 break;
             case STATS:
@@ -299,13 +305,13 @@ void process_request(state s, file_descriptor fd)
                     } else {
                         int resmonitor = monitor(paramNum);
                         if (resmonitor == -1) {
-                            text_response_BS(FAILED, "Function not found, use LISTS.", buffer, fd);
+                            text_response_BS(FAILED, "Function not found, use LISTS.", s, fd);
                         } else {
                             char textomonitor[5];
                             char content[50] = "El resultado es ";
                             sprintf(textomonitor, "%d", resmonitor);
                             //Aca se puede hacer referencia a la funcion o al numero de funcion que fue llamado.
-                            text_response_BS(SUCCESS, strcat(content, textomonitor), buffer,
+                            text_response_BS(SUCCESS, strcat(content, textomonitor), s,
                                              fd);//TODO: Hay que acomodar el strcat
                         }
                     }
@@ -323,7 +329,7 @@ void process_request(state s, file_descriptor fd)
                         //Significa que no paso parameter entonces quiere saber cual es el estado actual
                         int estadoT = get_transformation_state();
                         char resp[30] = "Transformation is: ";
-                        text_response_BS(SUCCESS, strcat(resp, (estadoT ? "Active" : "Inactive")), buffer, fd);
+                        text_response_BS(SUCCESS, strcat(resp, (estadoT ? "Active" : "Inactive")), s, fd);
                     } else {
                         int paramNum = parse_positive_int(parameter);
                         if (paramNum != 1 && paramNum != 0) {
@@ -334,7 +340,7 @@ void process_request(state s, file_descriptor fd)
                             set_transformation_state(paramNum);
                             char resp[40] = "SUCCESS. Transformation is: ";
                             text_response_BS(SUCCESS, strcat(resp,
-                                                             (paramNum ? "Active" : "Inactive")), buffer, fd);
+                                                             (paramNum ? "Active" : "Inactive")), s, fd);
                         }
                     }
                 }
@@ -349,27 +355,27 @@ void process_request(state s, file_descriptor fd)
                         //Significa que no paso parameter entonces quiere saber cual es el filter actual
                         char *filtro = get_transformation_filter();
                         char resp[40] = "Current transformation: ";
-                        text_response_BS(SUCCESS, strcat(resp, filtro), buffer, fd);
+                        text_response_BS(SUCCESS, strcat(resp, filtro), s, fd);
                     } else {
                         command_specification(parameter);
                         char resp[40] = "SUCCESS. Current transformation: ";
-                        text_response_BS(SUCCESS, strcat(resp, parameter), buffer, fd);
+                        text_response_BS(SUCCESS, strcat(resp, parameter), s, fd);
                     }
                 }
                 break;
             case QUIT:
                 s->protocol_state = CLOSE;
                 //Es multiestado entonces no verificoS
-                text_response_BS(SUCCESS, "Goodbye!", buffer, fd);
+                text_response_BS(SUCCESS, "Goodbye!", s, fd);
                 //cerrar sesion cerrando el socket y dropeando la informacion de sesion
                 free(s->user);
                 free(s->pass);
-                disconnect(s);
+                s->disconnect = 1;
                 break;
                 //Y por ultimo tenemos el caso default por si falla por scope o por error
             default:
                 //El command ingresado no esta dentro de los disponibles.
-                text_response_BS(FAILED, "Command unknown. Refer to the RFC.", buffer, fd);
+                text_response_BS(FAILED, "Command unknown. Refer to the RFC.", s, fd);
                 break;
         }
     }

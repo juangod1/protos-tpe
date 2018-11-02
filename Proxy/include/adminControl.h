@@ -28,13 +28,15 @@ typedef enum
 #define FAILED 1
 #define ESPECIAL 2
 
-#define SCOPE_ERROR text_response_BS(FAILED, "Command not available in state.", buffer, fd);
-#define FORMAT_ERROR text_response_BS(FAILED, "Wrong command format.", buffer, fd);
+#define SCOPE_ERROR text_response_BS(FAILED, "Command not available in state.", s, fd);
+#define FORMAT_ERROR text_response_BS(FAILED, "Wrong command format.", s, fd);
 
 //Funciones
-int text_response_BS(int response_state, char *content, buffer_p buffer, file_descriptor fd);
+int text_response_BS(int response_state, char *content, state s, file_descriptor fd);
 
 void process_request(state s, file_descriptor fd);
+
+void admin_greeting(state s, file_descriptor fd);
 
 int parse_admin_command(const char *resp);
 

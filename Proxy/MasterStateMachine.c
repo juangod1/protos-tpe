@@ -72,7 +72,25 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 			break;
 		case 0:
 			printf("Processing command!\n");
-			process_request(s, fd);
+			if(s->remaining_response == 0)
+			{
+				process_request(s, fd);
+			} else if(s->remaining_response == -1) {
+				s->remaining_response = 0;
+			}
+			buffer_write(fd, s->buffers[0]);
+			if(s->remaining_response != 0){
+				int read = buffer_read_string(s->remaining_string + s->remaining_response,s->buffers[0]);
+				if(*(s->remaining_string + read + s->remaining_response) != 0)
+				{
+					s->remaining_response += read;
+				}
+				else
+				{
+					s->remaining_response = -1;
+					free(s->remaining_string);
+				}
+			}
 			printf("--------------------------------------------------------\n");
 			printf("Wrote buffer content to ADMIN: \n");
 
@@ -347,6 +365,8 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				printf("--------------------------------------------------------\n");
 				printf("Read buffer content from Origin: \n");
 				print_buffer(s->buffers[1]);
+				//Saco los termination octets
+				//Miro el buffer count
 				if(buffer_starts_with_string("+OK", s->buffers[1]) ||
 				   buffer_starts_with_string("-ERR", s->buffers[1]))
 				{

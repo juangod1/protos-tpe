@@ -310,18 +310,69 @@ int buffer_read_string(char *string, buffer_p buffer)
 	int  characters_to_read = buffer->size - (buffer->data_ptr - buffer->data_start);
 	char *read_ptr          = buffer->data_ptr;
 
-	int count = characters_to_read;
+	int count = 0;
 	int i     = 0;
 
-	while(count > 0 && *string != 0)
+	while(characters_to_read > 0 && *string != 0)
 	{
 		*(buffer->data_ptr + i++) = *string;
 		string++;
 		buffer->count++;
-		count--;
+		characters_to_read--;
+		count++;
 	}
 
-	return characters_to_read - count;
+	return count;
+}
+
+int buffer_read_string_endline(char* string, buffer_p buffer, int type){
+	int  characters_to_read = buffer->size - (buffer->data_ptr - buffer->data_start);
+	switch(type){
+		case 0:
+			//Linea normal
+			characters_to_read -= 4;
+			break;
+		case 1:
+			//Linea 1 de multi
+			characters_to_read -= 2;
+			break;
+		case 2:
+			//Linea final multilinea
+			characters_to_read -= 5;
+			break;
+		default:
+			break;
+	}
+	char *read_ptr          = buffer->data_ptr;
+
+	int count = 0;
+	int i     = 0;
+
+	while(characters_to_read > 0 && *string != 0)
+	{
+		*(buffer->data_ptr + i++) = *string;
+		string++;
+		buffer->count++;
+		characters_to_read--;
+		count++;
+	}
+	switch(type){
+		case 0:
+			memcpy((buffer->data_ptr + i++),"\r\n\r\n",4);
+			buffer->count += 4;
+			break;
+		case 1:
+			memcpy((buffer->data_ptr + i++),"\r\n",2);
+			buffer->count += 2;
+			break;
+		case 2:
+			memcpy((buffer->data_ptr + i++),"\r\n.\r\n",5);
+			buffer->count += 5;
+			break;
+		default:
+			break;
+	}
+	return count;
 }
 
 int buffer_starts_with_string(char *string, buffer_p buffer)

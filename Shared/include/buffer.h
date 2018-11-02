@@ -25,6 +25,8 @@ int buffer_write_string(char *string, buffer_p buffer);
 
 int buffer_read_string(char *string, buffer_p buffer);
 
+int buffer_read_string_endline(char* string, buffer_p buffer, int type);
+
 int buffer_indicates_end_of_message(buffer_p buffer);
 
 int buffer_is_empty(buffer_p buffer);

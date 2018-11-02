@@ -43,6 +43,8 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
 	new->user           = NULL;
 	new->pass           = NULL;
 	new->disconnect     = 0;
+	new->remaining_response = 0;
+	new->remaining_string = NULL;
 	return new;
 }
 
