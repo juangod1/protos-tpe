@@ -1,3 +1,5 @@
+#include <sys/stat.h>
+#include <arpa/inet.h>
 #include "include/optionValidatorFunctions.h"
 #include "../Shared/include/lib.h"
 
@@ -18,13 +20,51 @@ validate_server_string(char *string, response_p response) //TODO: parse string, 
 void pop3_direction_validation(int argc, char **argv,
                                response_p resp)//TODO: parse string, make sure it has the correct format.
 {
-	resp->success       = TRUE;
-	resp->next_argument = 1;
+    if(argc<1 || argv[0] == NULL)
+    {
+        resp->success    = FALSE;
+        resp->error_text = "Pop3 proxy address accepts only one parameter";
+        return;
+    }
+    else
+    {
+        char buf[16];
+
+        if(inet_pton(AF_INET, argv[0], buf) || inet_pton(AF_INET6, argv[0], buf))
+        {
+            resp->success       = TRUE;
+            resp->next_argument = 1;
+        }
+        else
+        {
+            resp->success    = FALSE;
+            resp->error_text = "Invalid pop3 proxy address";
+            return;
+        }
+    }
 }
 
 void error_specification_validation(int argc, char **argv,
                                     response_p resp) //TODO: parse string, make sure it has the correct format.
 {//tiene que ser un path valido
+    if(argc<1 || argv[0] == NULL)
+    {
+        resp->success    = FALSE;
+        resp->error_text = "Error specification accepts only one parameter";
+        return;
+    }
+    else
+    {
+        struct stat statbuf;
+        int i = stat(argv[0], &statbuf);
+        if(i == -1)
+        {
+            resp->success    = FALSE;
+            resp->error_text = "Invalid error path";
+            return;
+        }
+    }
+
 	resp->success       = TRUE;
 	resp->next_argument = 1;
 }
@@ -32,12 +72,38 @@ void error_specification_validation(int argc, char **argv,
 void management_direction_validation(int argc, char **argv,
                                      response_p resp) //TODO: parse string, make sure it has the correct format.
 {//tiene que ser una direccion ipv4 o ipv6 valida
-	resp->success       = TRUE;
-	resp->next_argument = 1;
+    if(argc<1 || argv[0] == NULL)
+    {
+        resp->success    = FALSE;
+        resp->error_text = "Management address accepts only one parameter";
+        return;
+    }
+    else
+    {
+        char buf[16];
+
+        if(inet_pton(AF_INET, argv[0], buf) || inet_pton(AF_INET6, argv[0], buf))
+        {
+            resp->success       = TRUE;
+            resp->next_argument = 1;
+        }
+        else
+        {
+            resp->success    = FALSE;
+            resp->error_text = "Invalid management address";
+            return;
+        }
+    }
 }
 
 void replacement_message_validation(int argc, char **argv, response_p resp)
 {
+    if(argc<1 || argv[0] == NULL)
+    {
+        resp->success    = FALSE;
+        resp->error_text = "Replacement message accepts only one parameter";
+        return;
+    }
 	resp->success       = TRUE;
 	resp->next_argument = 1;
 }
@@ -45,13 +111,19 @@ void replacement_message_validation(int argc, char **argv, response_p resp)
 void command_specification_validation(int argc, char **argv,
                                       response_p resp) //TODO: parse string, make sure it has the correct format.
 {
+    if(argc<1 || argv[0] == NULL)
+    {
+        resp->success    = FALSE;
+        resp->error_text = "Command specification accepts only one parameter";
+        return;
+    }
 	resp->success       = TRUE;
 	resp->next_argument = 1;
 }
 
 void censored_mediatype_validation(int argc, char **argv, response_p resp)
 {
-	if(argc != 1)
+	if(argc < 1)
 	{
 		resp->success    = FALSE;
 		resp->error_text = "Media range accepts only one parameter";

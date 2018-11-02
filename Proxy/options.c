@@ -22,12 +22,12 @@ void initialize_app_context()
 {
 	app_context = malloc(sizeof(app_context_t));
 	app_context->censored_media_types  = NULL;
-	app_context->pop3_path             = 0;
+	app_context->pop3_path             = NULL;
 	app_context->command_specification = NULL;
 	app_context->error_path            = NULL;
 	app_context->local_port            = 0;
 	app_context->isIPV6                = 0;
-	app_context->management_path       = 0;
+	app_context->management_path       = NULL;
 	app_context->management_port       = 0;
 	app_context->origin_port           = 0;
 	app_context->replacement_message   = NULL;
@@ -64,9 +64,9 @@ void initialize_options()
 	option_register("Error Path", 'e', error_specification, "/dev/null",
 	                "Specifies the file where stderr is rerouted to. By default /dev/null",
 	                error_specification_validation, 1);
-	option_register("Pop3 Path", 'l', pop3_direction, "all", "Specifies the route where the Proxy will act.",
+	option_register("Pop3 Path", 'l', pop3_direction, "0.0.0.0", "Specifies the route where the Proxy will act.",
 	                pop3_direction_validation, 1);
-	option_register("Management Path", 'L', management_direction, "loopback",
+	option_register("Management Path", 'L', management_direction, "127.0.0.1",
 	                "Specifies the route where the Management service will act.", management_direction_validation, 1);
 	option_register("Replacement Message", 'm', replacement_message, "Replaced Part",
 	                "Specifies the message to replace filtered text.", replacement_message_validation, 1);
@@ -87,10 +87,10 @@ void initialize_options()
 
 void pop3_direction(char *arg)
 {
-	//TODO:
-	printf("This is pop3 direction: %s!\n",arg);
+    //Receives an direction and uses it to specify the address of the proxy service.
+    printf("This is pop3 direction: %s!\n",arg);
 	fflush(stdout);
-	app_context->pop3_path = 1;
+	app_context->pop3_path = my_strdup(arg);
 }
 
 void error_specification(char *arg)
@@ -98,15 +98,15 @@ void error_specification(char *arg)
 	//Specifies the file where stderr is rerouted to. By default /dev/null
 	printf("This is error specification: %s!\n",arg);
 	fflush(stdout);
-	app_context->error_path = arg;
+	app_context->error_path = my_strdup(arg);
 }
 
 void management_direction(char *arg)
 {
-	//TODO: has to receive a direction and use it to specify the route of the management service.
+	//Receives an direction and uses it to specify the address of the management service.
 	printf("This is management direction: %s!\n",arg);
 	fflush(stdout);
-	app_context->management_path = 1;
+	app_context->management_path = my_strdup(arg);
 }
 
 void replacement_message(char *arg)
@@ -114,7 +114,7 @@ void replacement_message(char *arg)
 	//Specifies the message to replace filtered text
 	printf("This is replacement message: %s!\n",arg);
 	fflush(stdout);
-	app_context->replacement_message = arg;
+	app_context->replacement_message = my_strdup(arg);
 
 }
 
@@ -123,7 +123,7 @@ void censored_mediatype(char *arg)
 	//Receives list of media types and applies a condition for the server to censor them 
 	printf("This is censored mediatype: %s!\n",arg);
 	fflush(stdout);
-	app_context->censored_media_types = arg;
+	app_context->censored_media_types = my_strdup(arg);
 
 }
 
@@ -132,7 +132,7 @@ void management_port(char *arg)
 	//Specifies the SCTP port the management server listens to. By default 9090
 	printf("This is management port: %s!\n",arg);
 	fflush(stdout);
-	int val = string_to_port(arg);
+	uint16_t val = string_to_port(arg);
 	app_context->management_port = val;
 }
 
@@ -141,8 +141,8 @@ void local_port(char *arg)
 	//Specifies the TCP port for incoming POP3 connections. By default 1110
 	printf("This is local port: %s!\n",arg);
 	fflush(stdout);
-	int val = string_to_port(arg);
-	app_context->local_port = (int) val;
+	uint16_t val = string_to_port(arg);
+	app_context->local_port = val;
 }
 
 void origin_port(char *arg)
@@ -150,13 +150,13 @@ void origin_port(char *arg)
 	//Receives a port and specifies it as the origin server POP3 port
 	printf("This is origin port: %s!\n",arg);
 	fflush(stdout);
-	int val = string_to_port(arg);
+	uint16_t val = string_to_port(arg);
 	app_context->origin_port = val;
 }
 
 void command_specification(char *arg)
 {
-	//TODO: has to receive a command from stdin and apply it to the content that passes through proxy. <<USE PROTOS TP 1>>
+	//Receives a command from stdin and applies it to the content that passes through proxy.
 	printf("This is command_specification: %s!\n",arg);
 	fflush(stdout);
 	app_context->command_specification = my_strdup(arg);
@@ -205,7 +205,7 @@ void server_string(char *server_string)
 	app_context->address_server_string = server_string;
 }
 
-int string_to_port(char *arg)
+uint16_t string_to_port(char *arg)
 {
 	char *end = 0;
 	errno     = 0;
@@ -214,5 +214,5 @@ int string_to_port(char *arg)
 	{
 		exit(1);
 	}
-	return (int) val;
+	return val;
 }

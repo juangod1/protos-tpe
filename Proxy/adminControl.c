@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/sctp.h>
+#include <arpa/inet.h>
 
 //El manejo de estar escuchando el socket correspondiente esta hecho por fuera de este archivo
 //Este archivo va a manejar la comunicacion desde el lado del servidor cuando encuentra al menos un usuario administrador conectado
@@ -53,7 +54,7 @@ file_descriptor setup_admin_socket()
 
 	bzero((void *) &servaddr, sizeof(servaddr));
 	servaddr.sin_family      = AF_INET;
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	servaddr.sin_addr.s_addr = inet_addr(get_app_context()->management_path);
 	servaddr.sin_port        = htons(get_app_context()->management_port);
 
 	ret = bind(listenSock, (struct sockaddr *) &servaddr, sizeof(servaddr));

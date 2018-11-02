@@ -5,19 +5,20 @@
 #ifndef PROTOS_TPE_OPTIONS_H
 #define PROTOS_TPE_OPTIONS_H
 
+#include <stdint.h>
 typedef struct
 {
 	int             has_to_query_dns;
 	char            *address_server_string;
 	struct addrinfo *addr;
 	char            *error_path;
-	int             pop3_path;
-	int             management_path;
+	char            *pop3_path;
+	char            *management_path;
 	char            *replacement_message;
 	char            *censored_media_types;
-	int             management_port;
-	int             local_port;
-	int             origin_port;
+	uint16_t        management_port;
+	uint16_t        local_port;
+	uint16_t        origin_port;
 	char            *command_specification;
 	char            *monitor[5];
 	int             monitor_values[5];
@@ -62,7 +63,7 @@ void version();
 
 void server_string(char *server_string);
 
-int string_to_port(char *arg);
+uint16_t string_to_port(char *arg);
 
 
 #endif //PROTOS_TPE_OPTIONS_H
