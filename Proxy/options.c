@@ -26,6 +26,7 @@ void initialize_app_context()
 	app_context->command_specification = NULL;
 	app_context->error_path            = NULL;
 	app_context->local_port            = 0;
+	app_context->isIPV6                = 0;
 	app_context->management_path       = 0;
 	app_context->management_port       = 0;
 	app_context->origin_port           = 0;
@@ -35,10 +36,10 @@ void initialize_app_context()
 	app_context->has_to_query_dns      = 0;
 	app_context->pipelining            = false;
 	app_context->pop3filter_version    = version_number;
-	char    *monitoreo[5]              = {"1 - Conections", "2 - Connected Admins", "3 - Messages", "4 - Messages2",
+	char *monitoreo[5]                 = {"1 - Conections", "2 - Connected Admins", "3 - Messages", "4 - Messages2",
 	                                      "5 - Messages3"};
-	app_context->transform_status      = false;
-	for(int i                          = 0; i < 5; i++)
+	app_context->transform_status = false;
+	for(int i = 0; i < 5; i++)
 	{
 		int len = strlen(monitoreo[i]);
 		(app_context->monitor)[i] = calloc(1, len + 1);
@@ -128,25 +129,25 @@ void censored_mediatype(char *arg)
 void management_port(char *arg)
 {
 	//TODO: has to receive a port and specify it as the SCTP port the management server will listen to
-	printf("This is management port: %s!\n",arg);
+	printf("This is management port: %s!\n", arg);
 	fflush(stdout);
-    int val = string_to_port(arg);
-    app_context->management_port = val;
+	int val = string_to_port(arg);
+	app_context->management_port = val;
 }
 
 void local_port(char *arg)
 {
 	//TODO: has to receive a port and specify
-	printf("This is local port: %s!\n",arg);
+	printf("This is local port: %s!\n", arg);
 	fflush(stdout);
-    int val = string_to_port(arg);
-	app_context->local_port = (int)val;
+	int val = string_to_port(arg);
+	app_context->local_port = (int) val;
 }
 
 void origin_port(char *arg)
 {
 	//TODO: has to receive a port and specify it as the origin server POP3 port
-	printf("This is origin port: %s!\n",arg);
+	printf("This is origin port: %s!\n", arg);
 	fflush(stdout);
 	int val = string_to_port(arg);
 	app_context->origin_port = val;
@@ -181,34 +182,36 @@ void server_string(char *server_string)
 	printf("This is server string!\n");
 	fflush(stdout);
 
-    char buf[16];
+	char buf[16];
 
-    if(inet_pton(AF_INET,server_string,buf))
-    {
-        get_app_context()->has_to_query_dns = false;
+	if(inet_pton(AF_INET, server_string, buf))
+	{
+		get_app_context()->has_to_query_dns = false;
+		get_app_context()->isIPV6           = false;
 		printf("IPv4 Address received.\n");
-    }
-    else if (inet_pton(AF_INET6,server_string,buf))
-    {
-        get_app_context()->has_to_query_dns = false;
-        printf("IPv6 Address received.\n");
-    }
-    else
-    {
-        printf("Origin name requires DNS query.\n");
-        get_app_context()->has_to_query_dns = true;
-    }
+	}
+	else if(inet_pton(AF_INET6, server_string, buf))
+	{
+		get_app_context()->has_to_query_dns = false;
+		get_app_context()->isIPV6           = true;
+		printf("IPv6 Address received.\n");
+	}
+	else
+	{
+		printf("Origin name requires DNS query.\n");
+		get_app_context()->has_to_query_dns = true;
+	}
 	app_context->address_server_string = server_string;
 }
 
-int string_to_port(char* arg)
+int string_to_port(char *arg)
 {
-    char *end = 0;
-    errno     = 0;
-    intmax_t val = strtoimax(arg, &end, 10);
-    if(errno == ERANGE || val < 0 || val > UINT16_MAX || end == arg || *end != '\0')
-    {
-        exit(1);
-    }
-    return (int)val;
+	char *end = 0;
+	errno     = 0;
+	intmax_t val = strtoimax(arg, &end, 10);
+	if(errno == ERANGE || val < 0 || val > UINT16_MAX || end == arg || *end != '\0')
+	{
+		exit(1);
+	}
+	return (int) val;
 }

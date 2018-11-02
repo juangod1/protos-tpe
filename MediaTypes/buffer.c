@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <memory.h>
 #include "buffer.h"
 
 int buffer_initialize(buffer_p * buffer,size_t size)

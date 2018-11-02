@@ -24,6 +24,7 @@ typedef struct
 	char            pipelining;
 	int             transform_status;
 	char            *pop3filter_version;
+	int             isIPV6;
 } app_context_t;
 
 typedef app_context_t *app_context_p;
@@ -61,7 +62,7 @@ void version();
 
 void server_string(char *server_string);
 
-int string_to_port(char* arg);
+int string_to_port(char *arg);
 
 
 #endif //PROTOS_TPE_OPTIONS_H

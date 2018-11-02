@@ -75,12 +75,15 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 			if(s->remaining_response == 0)
 			{
 				process_request(s, fd);
-			} else if(s->remaining_response == -1) {
+			}
+			else if(s->remaining_response == -1)
+			{
 				s->remaining_response = 0;
 			}
 			buffer_write(fd, s->buffers[0]);
-			if(s->remaining_response != 0){
-				int read = buffer_read_string(s->remaining_string + s->remaining_response,s->buffers[0]);
+			if(s->remaining_response != 0)
+			{
+				int read = buffer_read_string(s->remaining_string + s->remaining_response, s->buffers[0]);
 				if(*(s->remaining_string + read + s->remaining_response) != 0)
 				{
 					s->remaining_response += read;
@@ -228,17 +231,33 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 	}
 	else
 	{
-		struct sockaddr_in6 address;
-		memset(&address, 0, sizeof(address));
-		address.sin6_family = AF_INET6;
-		address.sin6_port   = htons((uint16_t) get_app_context()->origin_port);
-		inet_pton(AF_INET6, get_app_context()->address_server_string, &address.sin6_addr);
-
-		//Connect to remote server
-		if(connect(s->read_fds[1], (struct sockaddr *)&address, sizeof(address)) < 0)
+		if(get_app_context()->isIPV6)
 		{
-			perror("Connect to origin error");
-			return NOT_WAITING;
+			struct sockaddr_in6 address;
+			memset(&address, 0, sizeof(address));
+			address.sin6_family = AF_INET6;
+			address.sin6_port   = htons((uint16_t) get_app_context()->origin_port);
+			inet_pton(AF_INET6, get_app_context()->address_server_string, &address.sin6_addr);
+
+			if(connect(s->read_fds[1], (struct sockaddr *) &address, sizeof(address)) < 0)
+			{
+				perror("Connect to origin error");
+				return NOT_WAITING;
+			}
+		}
+		else
+		{
+			struct sockaddr_in address;
+			memset(&address, 0, sizeof(address));
+			address.sin_port        = htons((uint16_t) get_app_context()->origin_port);
+			address.sin_family      = AF_INET;
+			address.sin_addr.s_addr = inet_addr(get_app_context()->address_server_string);
+
+			if(connect(s->read_fds[1], (struct sockaddr *) &address, sizeof(address)) < 0)
+			{
+				perror("Connect to origin error");
+				return NOT_WAITING;
+			}
 		}
 	}
 
@@ -355,7 +374,8 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					printf("--------------------------------------------------------\n");
 					perror("Origin error \n");
 					printf("--------------------------------------------------------\n");
-					switch(errno){
+					switch(errno)
+					{
 						default:
 							buffer_read_string("-ERR Origin Error\n", s->buffers[1]);
 							break;
