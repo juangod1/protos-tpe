@@ -20,4 +20,7 @@ add_executable(control ${SHARED_SOURCE_FILES} ${CONTROL_SOURCE_FILES})
 AUX_SOURCE_DIRECTORY(Parser PARSER_SOURCE_FILES)
 add_executable(parser ${SHARED_SOURCE_FILES} ${PARSER_SOURCE_FILES})
 
+AUX_SOURCE_DIRECTORY(MediaTypes MEDIA_SOURCE_FILES)
+add_executable(stripmime ${MEDIA_SOURCE_FILES})
+
 target_link_libraries(control sctp)
