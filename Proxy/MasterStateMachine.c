@@ -210,17 +210,16 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 	}
 	else
 	{
-		struct sockaddr_in address;
+		struct sockaddr_in6 address;
 		memset(&address, 0, sizeof(address));
-		address.sin_port        = htons((uint16_t) get_app_context()->origin_port);
-		address.sin_family      = AF_INET;
-		address.sin_addr.s_addr = inet_addr(get_app_context()->address_server_string);
+		address.sin6_family = AF_INET6;
+		address.sin6_port   = htons((uint16_t) get_app_context()->origin_port);
+		inet_pton(AF_INET6, get_app_context()->address_server_string, &address.sin6_addr);
 
 		//Connect to remote server
-		if(connect(s->read_fds[1], (struct sockaddr *) &address, sizeof(address)) < 0)
+		if(connect(s->read_fds[1], (struct sockaddr *)&address, sizeof(address)) < 0)
 		{
 			perror("Connect to origin error");
-			error_disconnect_client(s);
 			return NOT_WAITING;
 		}
 	}
@@ -315,7 +314,8 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					printf("--------------------------------------------------------\n");
 					printf("Client disconnected \n");
 					printf("--------------------------------------------------------\n");
-					return NOT_WAITING;
+					disconnect(s);
+					return WAITING;
 				}
 				printf("--------------------------------------------------------\n");
 				printf("Read buffer content from MUA: \n");
@@ -323,11 +323,25 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			}
 			else if(s->read_fds[1] == fd)
 			{   // Origin READ
-				if(buffer_read(fd, s->buffers[1]) == 0)
+				int rd = buffer_read(fd, s->buffers[1]);
+				if(rd == 0)
 				{
 					printf("--------------------------------------------------------\n");
 					printf("Origin disconnected \n");
 					printf("--------------------------------------------------------\n");
+					buffer_read_string("+OK Disconnecting\n", s->buffers[1]);
+					return NOT_WAITING;
+				}
+				if(rd < 0)
+				{
+					printf("--------------------------------------------------------\n");
+					perror("Origin error \n");
+					printf("--------------------------------------------------------\n");
+					switch(errno){
+						default:
+							buffer_read_string("-ERR Origin Error\n", s->buffers[1]);
+							break;
+					}
 					return NOT_WAITING;
 				}
 				printf("--------------------------------------------------------\n");
@@ -384,7 +398,8 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				printf("--------------------------------------------------------\n");
 				printf("Wrote buffer content to MUA: \n");
 				print_buffer(s->buffers[2]);
-				if(buffer_write(fd, s->buffers[2])<BUFFER_SIZE && s->disconnect){
+				if(buffer_write(fd, s->buffers[2]) < BUFFER_SIZE && s->disconnect)
+				{
 					disconnect(s);
 				}
 			}
@@ -415,7 +430,8 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 	}
 	if(!disconnection && s->data_1 && s->data_2) //CREATE TRANSFORM
 	{
-		char *command = (s->data_3 && get_app_context()->transform_status) ? get_app_context()->command_specification : "cat";
+		char *command = (s->data_3 && get_app_context()->transform_status) ? get_app_context()->command_specification
+		                                                                   : "cat";
 		int  pipes[2];
 		s->parser_pid = start_parser(command, pipes, s);
 		s->read_fds[2]  = pipes[0];
@@ -507,7 +523,9 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 					{
 						printf("Buffer 2 is empty ==> ");
 						if(!curr->st->disconnect)
-							add_read_fd(curr->st->read_fds[1]); // ORIGIN read
+						{
+							add_read_fd(curr->st->read_fds[1]);
+						} // ORIGIN read
 					}
 				}
 				else
@@ -640,7 +658,6 @@ void debug_print_state(int state)
 
 void disconnect(state st)
 {
-	write(st->write_fds[0], "+OK Logging out\r\n", 18);
 	shutdown(st->read_fds[0], SHUT_RDWR);
 	shutdown(st->write_fds[0], SHUT_RDWR);
 	shutdown(st->read_fds[1], SHUT_RDWR);

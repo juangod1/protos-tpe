@@ -97,7 +97,7 @@ void run_server()
 
 file_descriptor setup_origin_socket()
 {
-	file_descriptor sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	file_descriptor sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
 
 	if(sock < 0)
 	{
@@ -111,13 +111,15 @@ file_descriptor setup_origin_socket()
 
 file_descriptor setup_MUA_socket()
 {
-	struct sockaddr_in address;
+	struct sockaddr_in6 address;
 	memset(&address, 0, sizeof(address));
-	address.sin_port        = htons(app_context->local_port);
-	address.sin_family      = AF_INET;
-	address.sin_addr.s_addr = htonl(INADDR_ANY);
+	address.sin6_port        = htons(app_context->local_port);
+	address.sin6_family      = AF_INET6;
+	address.sin6_addr = in6addr_any;
 
-	file_descriptor sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	int flag=1;
+	file_descriptor sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
 
 	if(sock < 0)
 	{

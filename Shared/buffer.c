@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include "include/buffer.h"
+#include "../Proxy/include/error.h"
 
 int buffer_initialize(buffer_p *buffer, size_t size)
 {
