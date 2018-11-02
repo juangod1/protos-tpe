@@ -19,6 +19,8 @@ int buffer_finalize(buffer_p buffer);
 
 int buffer_starts_with_string(char *string, buffer_p buffer);
 
+int buffer_ends_with_string(buffer_p buffer, char * string);
+
 int buffer_indicates_parsable_message(buffer_p buffer);
 
 int buffer_write_string(char *string, buffer_p buffer);

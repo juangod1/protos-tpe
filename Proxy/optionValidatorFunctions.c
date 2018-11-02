@@ -24,14 +24,14 @@ void pop3_direction_validation(int argc, char **argv,
 
 void error_specification_validation(int argc, char **argv,
                                     response_p resp) //TODO: parse string, make sure it has the correct format.
-{
+{//tiene que ser un path valido
 	resp->success       = TRUE;
 	resp->next_argument = 1;
 }
 
 void management_direction_validation(int argc, char **argv,
                                      response_p resp) //TODO: parse string, make sure it has the correct format.
-{
+{//tiene que ser una direccion ipv4 o ipv6 valida
 	resp->success       = TRUE;
 	resp->next_argument = 1;
 }

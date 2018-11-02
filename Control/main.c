@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <wordexp.h>
 #include <ctype.h>
+#include <stdbool.h>
 #include "include/main.h"
 #include "../Shared/include/executionValidator.h"
 #include "../Shared/include/lib.h"
@@ -193,7 +194,6 @@ char requestLoginToProxy(int fd)
 	}
 
 	sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
-	sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
 	printf("+0K\n");
 
 	//Luego le envia la contraseña con PASS string
@@ -206,7 +206,6 @@ char requestLoginToProxy(int fd)
 		exit(EXIT_FAILURE);
 	}
 
-	ret = sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
 	ret = sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
 
 	free(usernameInput);
@@ -415,21 +414,61 @@ void interaction(int fd)
 void printResponse(int fd)
 {
     char responseBuffer[MAX_BUFFER] = {0};
-	long amount;
-    sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
-    amount = strtol(responseBuffer,NULL,10);
 
-    for(int i = 0; i < amount; i ++)
-	{
-    	sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
-    	printf("%s",responseBuffer);
-    	for(int j = 0 ; j < MAX_BUFFER; j++)
-		{
-    		responseBuffer[j] = 0;
-		}
+    int flag = 0;
 
-	}
+    while(!flag)
+    {
+        sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
+        if(charbuffer_ends_with_doubleCRLF(responseBuffer))
+        {
+            flag = 1;
+        }
+        printf("%s",responseBuffer);
+        clean_buffer(responseBuffer);
+    }
 
+}
+int charbuffer_ends_with_doubleCRLF(char* buffer)
+{
+    char* s = buffer;
+    while(*s != '\0')
+    {
+        if(*s=='\r')
+        {
+            s++;
+            if(*s == '\n')
+            {
+                s++;
+                if(*s == '\r')
+                {
+                    s++;
+                    if(*s == '\n')
+                    {
+                        s++;
+                        if(*s == '\0')
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            s++;
+        }
+    }
+    return false;
+}
+void clean_buffer(char* buffer)
+{
+    char* s = buffer;
+    while(*s != '\0')
+    {
+        *s = '\0';
+        *s++;
+    }
 }
 void closeConnection(int fd)
 {

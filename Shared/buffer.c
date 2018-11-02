@@ -100,8 +100,11 @@ int buffer_write(int file_descriptor, buffer_p buffer)
 
 int buffer_ends_with_string(buffer_p buffer, char * string)
 {
+    if(string==NULL)
+        return false;
 	size_t size = strlen(string);
-	if(size==0 || size>buffer->count) return true;
+	if(size==0) return true;
+	if(size>buffer->count) return false;
 
 	char * ptr = buffer->data_ptr + (buffer->count-size);
 
