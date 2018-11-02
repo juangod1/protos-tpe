@@ -65,43 +65,15 @@ int buffer_read(int file_descriptor, buffer_p buffer)
 
 int buffer_indicates_parsable_message(buffer_p buffer)
 {
-	if(buffer->count < 13)
-	{
-		return false;
-	}
 	char *ptr = buffer->data_ptr;
-	if(*ptr++ != '+')
+	int amount = buffer->count;
+
+	if(*ptr == '\n' || *ptr++ == ':'  || amount--<=0)
 	{ return false; }
-	if(*ptr++ != 'O')
-	{ return false; }
-	if(*ptr++ != 'K')
-	{ return false; }
-	if(*ptr++ != ' ')
-	{ return false; }
-	if(!isdigit(*ptr++))
-	{ return false; }
-	while(isdigit(*ptr))
+	while(*ptr++ != ':')
 	{
-		*ptr++;
+		if( amount--<=0 || *ptr=='\n') return false;
 	}
-	if(*ptr++ != ' ')
-	{ return false; }
-	if(*ptr++ != 'o')
-	{ return false; }
-	if(*ptr++ != 'c')
-	{ return false; }
-	if(*ptr++ != 't')
-	{ return false; }
-	if(*ptr++ != 'e')
-	{ return false; }
-	if(*ptr++ != 't')
-	{ return false; }
-	if(*ptr++ != 's')
-	{ return false; }
-	if(*ptr++ != '\r')
-	{ return false; }
-	if(*ptr != '\n')
-	{ return false; }
 	return true;
 }
 
@@ -126,23 +98,93 @@ int buffer_write(int file_descriptor, buffer_p buffer)
 	return amount;
 }
 
+int buffer_ends_with_string(buffer_p buffer, char * string)
+{
+	size_t size = strlen(string);
+	if(size==0 || size>buffer->count) return true;
+
+	char * ptr = buffer->data_ptr + (buffer->count-size);
+
+	while(*string!=0)
+	{
+		if(*string!=*ptr)
+		{
+			return false;
+		}
+		ptr++;
+		string++;
+	}
+	return true;
+
+}
+
 int buffer_indicates_end_of_message(buffer_p buffer)
 {
-	if(buffer->count < 2)
-	{ return false; }
-
-	size_t count = buffer->count;
-	char   *ptr  = buffer->data_ptr;
-	while(count > 2)
-	{
-		count--;
-		ptr++;
+	return buffer_ends_with_string(buffer,"\r\n");
+}
+int buffer_read_until_string(int file_descriptor, buffer_p buffer, char * str) //\r\n\0 || \r\n\r\n\0
+{
+	int read_index=0, write_index=0, circular_buffer_size=0;
+	size_t size = strlen(str);
+	if(size==0){
+		return 0;
 	}
-	if(*ptr++ != '\r')
-	{ return false; }
-	if(*ptr != '\n')
-	{ return false; }
-	return true;
+	char circular_buffer[size];
+	memset(circular_buffer,0,size);
+
+	int  characters_to_read = buffer->size - (buffer->data_ptr - buffer->data_start);
+	char *read_ptr          = buffer->data_ptr;
+	int  amount             = 0;
+
+	while(characters_to_read>amount)
+	{
+		int count = read(file_descriptor, read_ptr, 1);
+		if(count == 1)
+		{
+			amount++;
+		}
+		else if(count == 0 || errno == ECONNRESET)
+		{
+			break;
+		}
+		else
+		{
+			perror("Read error");
+			break;
+		}
+		char ch=*read_ptr++;
+
+		circular_buffer[write_index++]=ch;
+		write_index=write_index%size;
+
+		if(circular_buffer_size==size)
+		{
+			read_index=(read_index+1)%size;
+			int i=0;
+			while(i>=0)
+			{
+				if(*(str+i)==0){
+					buffer->count+=amount;
+					return amount;
+				}
+				int read_from = (read_index+i)%size;
+				if(*(str+i)!=circular_buffer[read_from]){
+					i=-1;
+				}else{
+					i++;
+				}
+			}
+
+		}
+		else
+		{
+			circular_buffer_size++;
+		}
+	}
+	buffer->count+=amount;
+	return amount;
+
+
 }
 
 int buffer_read_until_char(int file_descriptor, buffer_p buffer, char ch)
@@ -290,11 +332,11 @@ int buffer_starts_with_string(char *string, buffer_p buffer)
 	{
 		if(c != *pointer)
 		{
-			return 0;
+			return false;
 		}
 		string++;
 		pointer++;
 		c = *string;
 	}
-	return 1;
+	return true;
 }

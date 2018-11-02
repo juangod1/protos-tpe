@@ -13,6 +13,8 @@ struct buffer_t
 
 int buffer_initialize(buffer_p *buffer, size_t size);
 
+int buffer_read_until_string(int file_descriptor, buffer_p buffer, char * str);
+
 int buffer_finalize(buffer_p buffer);
 
 int buffer_starts_with_string(char *string, buffer_p buffer);
