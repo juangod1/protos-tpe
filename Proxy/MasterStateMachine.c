@@ -122,7 +122,7 @@ void *query_dns(void *st)
 {
 	state           s     = (state) st;
 	struct addrinfo hints = {
-			.ai_family    = AF_UNSPEC,
+			.ai_family    = AF_INET6,
 			.ai_socktype  = SOCK_STREAM,
 			.ai_flags     = AI_PASSIVE,
 			.ai_protocol  = 0,
