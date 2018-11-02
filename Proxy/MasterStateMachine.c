@@ -121,7 +121,10 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
 		return NOT_WAITING;
 	}
 
-	state st = new_state(ATTEND_ADMIN_STATE, ATTEND_ADMIN_on_arrive, ATTEND_ADMIN_on_resume, ATTEND_ADMIN_on_leave);
+    //NEW ADMIN CONNECTED
+    get_app_context()->monitor_values[1] += 1;
+
+    state st = new_state(ATTEND_ADMIN_STATE, ATTEND_ADMIN_on_arrive, ATTEND_ADMIN_on_resume, ATTEND_ADMIN_on_leave);
 	st->read_fds[0]  = accept_ret;
 	st->write_fds[0] = accept_ret;
 	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
@@ -276,7 +279,11 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 
 	add_state(sm, st);
 
-	return NOT_WAITING;
+    //NEW MUA CONNECTED
+    get_app_context()->monitor_values[0] += 1;
+    get_app_context()->monitor_values[2] += 1;
+
+    return NOT_WAITING;
 }
 
 execution_state CONNECT_CLIENT_STAGE_THREE_on_resume(state s, file_descriptor fd, int is_read)
@@ -438,10 +445,12 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				printf("--------------------------------------------------------\n");
 				printf("Wrote buffer content to MUA: \n");
 				print_buffer(s->buffers[2]);
-				if(buffer_write(fd, s->buffers[2]) < BUFFER_SIZE && s->disconnect)
+				int count;
+				if(count = buffer_write(fd, s->buffers[2]) < BUFFER_SIZE && s->disconnect)
 				{
 					disconnect(s);
 				}
+				get_app_context()->monitor_values[3] += count;
 			}
 			else if(s->write_fds[1] == fd)
 			{   // Origin WRITE

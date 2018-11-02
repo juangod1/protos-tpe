@@ -20,7 +20,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/sctp.h>
-#include <arpa/inet.h>
 
 //El manejo de estar escuchando el socket correspondiente esta hecho por fuera de este archivo
 //Este archivo va a manejar la comunicacion desde el lado del servidor cuando encuentra al menos un usuario administrador conectado
@@ -54,7 +53,7 @@ file_descriptor setup_admin_socket()
 
 	bzero((void *) &servaddr, sizeof(servaddr));
 	servaddr.sin_family      = AF_INET;
-	servaddr.sin_addr.s_addr = inet_addr(get_app_context()->management_path);
+	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port        = htons(get_app_context()->management_port);
 
 	ret = bind(listenSock, (struct sockaddr *) &servaddr, sizeof(servaddr));
@@ -121,7 +120,7 @@ file_descriptor setup_admin_socket()
 
 int text_response_BS(int response_state, char *content, state s, file_descriptor fd)
 {
-	char *res = calloc(1,150);
+	char *res = calloc(1,300);
 	char *ok      = "+OK - ";
 	char *err     = "-ERR - ";
 	char *esp     = "* - ";
@@ -282,7 +281,7 @@ void process_request(state s, file_descriptor fd)
                     FORMAT_ERROR
                     //TODO:Cerrar la response y solicitar un nuevo request.
                 } else {
-                    char content[100] = {0};
+                    char content[300] = {0};
                     strcat(content, "List:");
                     char **monitorArray = get_monitor_array();
                     for (int i = 0; i < 5; i++) {
@@ -465,7 +464,7 @@ char **get_monitor_array()
 int monitor(int numero)
 {
 	//TODO Tiene que buscar las metricas en el contexto
-	return 0;
+	return get_app_context()->monitor_values[numero-1];
 }
 
 //Busca en el contexto del proxy el estado actual de la transformacion. ACTIVO o INACTIVO
