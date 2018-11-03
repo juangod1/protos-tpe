@@ -119,7 +119,8 @@ state_code ATTEND_ADMIN_on_leave(state s)
 
 execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 {
-	int accept_ret = accept(s->read_fds[0], (struct sockaddr *) NULL, NULL);
+	socklen_t sl = sizeof(s->connection_addrinfo);
+	int accept_ret = accept(s->read_fds[0], (s->connection_addrinfo), &sl);
 	if(accept_ret == -1)
 	{
 		perror("accept()");
@@ -196,7 +197,8 @@ void *query_dns(void *st)
 
 execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_read)
 {
-	int accept_ret = accept(s->read_fds[0], NULL, NULL);
+	socklen_t addrlen = sizeof(s->connection_addrinfo);
+	int accept_ret = accept(s->read_fds[0], (s->connection_addrinfo), &addrlen);
 
 	if(accept_ret < 0)
 	{

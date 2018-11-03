@@ -27,34 +27,37 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
 	{
 		new->write_fds[i] = -1;
 	}
-	new->id                = id;
-	new->error             = 0;
-	new->processing_mail   = 0;
-	new->on_arrive         = on_arrive;
-	new->on_resume         = on_resume;
-	new->on_leave          = on_leave;
-	new->exec_state        = NOT_WAITING;
+	new->id              = id;
+	new->error           = 0;
+	new->processing_mail = 0;
+	new->on_arrive       = on_arrive;
+	new->on_resume       = on_resume;
+	new->on_leave        = on_leave;
+	new->exec_state      = NOT_WAITING;
 	new->buffers[0] = NULL;
 	new->buffers[1] = NULL;
 	new->buffers[2] = NULL;
-	new->protocol_state = 0;
-	new->data_1         = false;
-	new->data_2         = false;
-	new->data_3         = false;
-	new->data_4         = false;
-	new->data_5         = false;
-	new->parser_pid     = -1;
-	new->user           = NULL;
-	new->pass           = NULL;
-	new->disconnect     = 0;
-	new->session_id     = getMicrotime();
-	new->remaining_response = 0;
-	new->remaining_string   = NULL;
+	new->protocol_state      = 0;
+	new->data_1              = false;
+	new->data_2              = false;
+	new->data_3              = false;
+	new->data_4              = false;
+	new->data_5              = false;
+	new->parser_pid          = -1;
+	new->user                = NULL;
+	new->pass                = NULL;
+	new->disconnect          = 0;
+	new->session_id          = getMicrotime();
+	new->remaining_response  = 0;
+	new->remaining_string    = NULL;
+	new->connection_addrinfo = malloc(sizeof(new->connection_addrinfo));
 	return new;
 }
 
-void free_state(state st)
+void
+free_state(state st)
 {
+	free(st->connection_addrinfo);
 	free(st);
 }
 
