@@ -358,7 +358,7 @@ execution_state CONNECT_CLIENT_STAGE_FOUR_on_resume(state s, file_descriptor fd,
 			get_app_context()->pipelining = false;
 			return WAITING;
 		case 3: // Process CAPA reply
-			buffer_read_until_string(fd, s->buffers[0], "\n");
+			buffer_read_until_string(fd, s->buffers[0], "\r\n");
 			char buf[BUFFER_SIZE]         = {0};
 			buffer_write_string(buf, s->buffers[0]);
 			buffer_clean(s->buffers[0]);

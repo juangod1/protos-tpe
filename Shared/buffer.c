@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <poll.h>
 #include "include/buffer.h"
 #include "../Proxy/include/error.h"
 
@@ -248,6 +249,14 @@ int buffer_read_until_string(int file_descriptor, buffer_p buffer, char * str) /
 
 	while(characters_to_read>amount)
 	{
+		struct pollfd polls[1];
+		polls[0].fd = file_descriptor;
+		polls[0].events = POLLIN;
+
+		int resp = poll(polls,1,0);
+
+		if(resp<=0) break;
+
 		int count = read(file_descriptor, read_ptr, 1);
 		if(count == 1)
 		{
@@ -295,8 +304,6 @@ int buffer_read_until_string(int file_descriptor, buffer_p buffer, char * str) /
 	buffer->count+=amount;
 	buffer->data_ptr+=amount;
 	return amount;
-
-
 }
 
 int buffer_read_until_char(int file_descriptor, buffer_p buffer, char ch)
@@ -307,6 +314,14 @@ int buffer_read_until_char(int file_descriptor, buffer_p buffer, char ch)
 
 	while(characters_to_read > 0)
 	{
+		struct pollfd polls[1];
+		polls[0].fd = file_descriptor;
+		polls[0].events = POLLIN;
+
+		int resp = poll(polls,1,0);
+
+		if(resp<=0) break;
+
 		int count = read(file_descriptor, read_ptr, 1);
 		if(count == 1)
 		{
@@ -330,29 +345,6 @@ int buffer_read_until_char(int file_descriptor, buffer_p buffer, char ch)
 		read_ptr++;
 	}
 	buffer->count += amount;
-	return amount;
-}
-
-int buffer_write_until_substring(int file_descriptor, buffer_p buffer, char *substring)
-{
-	int index = find_substring(buffer->data_ptr, buffer->count, substring);
-
-	int  characters_to_write = (index == -1) ? (int) buffer->count : index;
-	char *write_ptr          = buffer->data_ptr;
-
-	int amount = write(file_descriptor, write_ptr, characters_to_write);
-	if(amount != characters_to_write)
-	{
-		perror("buffer_write: wrote less than expected");
-	}
-	buffer->count -= amount;
-	buffer->data_ptr += amount;
-
-	if(buffer->data_ptr - buffer->data_start == buffer->size)
-	{
-		buffer->data_ptr = buffer->data_start;
-	}
-
 	return amount;
 }
 
@@ -434,56 +426,6 @@ int buffer_read_string(char *string, buffer_p buffer)
 		count++;
 	}
 
-	return count;
-}
-
-int buffer_read_string_endline(char* string, buffer_p buffer, int type){
-	int  characters_to_read = buffer->size - (buffer->data_ptr - buffer->data_start);
-	switch(type){
-		case 0:
-			//Linea normal
-			characters_to_read -= 4;
-			break;
-		case 1:
-			//Linea 1 de multi
-			characters_to_read -= 2;
-			break;
-		case 2:
-			//Linea final multilinea
-			characters_to_read -= 5;
-			break;
-		default:
-			break;
-	}
-	char *read_ptr          = buffer->data_ptr;
-
-	int count = 0;
-	int i     = 0;
-
-	while(characters_to_read > 0 && *string != 0)
-	{
-		*(buffer->data_ptr + i++) = *string;
-		string++;
-		buffer->count++;
-		characters_to_read--;
-		count++;
-	}
-	switch(type){
-		case 0:
-			memcpy((buffer->data_ptr + i++),"\r\n\r\n",4);
-			buffer->count += 4;
-			break;
-		case 1:
-			memcpy((buffer->data_ptr + i++),"\r\n",2);
-			buffer->count += 2;
-			break;
-		case 2:
-			memcpy((buffer->data_ptr + i++),"\r\n.\r\n",5);
-			buffer->count += 5;
-			break;
-		default:
-			break;
-	}
 	return count;
 }
 
