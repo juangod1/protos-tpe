@@ -361,9 +361,12 @@ execution_state CONNECT_CLIENT_STAGE_FOUR_on_resume(state s, file_descriptor fd,
 			buffer_write_string(buf, s->buffers[0]);
 			buffer_clean(s->buffers[0]);
 
-			int i = 0;
-			while(i < BUFFER_SIZE)
-			{ buf[i++] = tolower((int) buf[i]); }
+			int i=0;
+			while(i<BUFFER_SIZE && buf[i]!=0)
+			{
+				buf[i]=tolower((int)buf[i]);
+				i++;
+			}
 
 			if(!strcmp(buf, "pipelining\r\n"))
 			{
@@ -509,7 +512,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					IS_TRANS         = true; //ESTE ES TRANS
 					IS_MULTILINE     = true; //ES MULTILINEA
 				}
-				else if(IS_NEXT_NEW_LINE && buffer_indicates_start_of_multiline_message(s->buffers[1]))
+				else if(IS_NEXT_NEW_LINE && buffer_indicates_start_of_list(s->buffers[1]))
 				{
 					IS_NEW_LINE      = true; //ESTE es nuevo
 					IS_NEXT_NEW_LINE = false;// EL PROXIMO NO ES NUEVO
@@ -517,8 +520,20 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					IS_MULTILINE     = true; //ES MULTILINEA
 
 				}
-				else
-				{ //continuo impresion de multilinea
+				else if(IS_NEXT_NEW_LINE && buffer_indicates_start_of_capa(s->buffers[1]))
+				{
+					IS_NEW_LINE = 	true; //ESTE es nuevo
+					IS_NEXT_NEW_LINE = false;// EL PROXIMO NO ES NUEVO
+					IS_TRANS = true; //ESTE ES TRANS
+					IS_MULTILINE = true; //ES MULTILINEA
+					if(!get_app_context()->pipelining)
+					{
+						buffer_read_string("PIPELINING\r\n",s->buffers[1]);
+					}
+
+
+				}
+				else{ //continuo impresion de multilinea
 					IS_NEW_LINE = false; //ESTE NO ES NUEVO
 				}
 				if(!get_app_context()->pipelining)

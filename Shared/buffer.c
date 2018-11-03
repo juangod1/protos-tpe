@@ -65,7 +65,7 @@ int buffer_read(int file_descriptor, buffer_p buffer)
 
 int buffer_indicates_parsable_message(buffer_p buffer)
 {
-	char *ptr = buffer->data_ptr;
+	char *ptr = buffer->data_start;
 	int amount = buffer->count;
 
 	if(*ptr == '\n' || *ptr++ == ':'  || amount--<=0)
@@ -80,20 +80,15 @@ int buffer_indicates_parsable_message(buffer_p buffer)
 int buffer_write(int file_descriptor, buffer_p buffer)
 {
 	int  characters_to_write = buffer->count;
-	char *write_ptr          = buffer->data_ptr;
+	char *write_ptr          = buffer->data_start;
 
 	int amount = write(file_descriptor, write_ptr, characters_to_write);
 	if(amount != characters_to_write)
 	{
 		perror("buffer_write: wrote less than expected");
-		buffer->count -= amount;
-		buffer->data_ptr += amount;
 	}
-	else
-	{
-		buffer->count    = 0;
-		buffer->data_ptr = buffer->data_start;
-	}
+	buffer->count    = 0;
+	buffer->data_ptr = buffer->data_start;
 
 	return amount;
 }
@@ -106,7 +101,7 @@ int buffer_ends_with_string(buffer_p buffer, char * string)
 	if(size==0) return true;
 	if(size>buffer->count) return false;
 
-	char * ptr = buffer->data_ptr + (buffer->count-size);
+	char * ptr = buffer->data_start + (buffer->count-size);
 
 	while(*string!=0)
 	{
@@ -122,7 +117,7 @@ int buffer_ends_with_string(buffer_p buffer, char * string)
 
 int buffer_indicates_start_of_capa(buffer_p buffer)
 {
-	char *pointer = buffer->data_ptr;
+	char *pointer = buffer->data_start;
 	size_t count = buffer->count;
 	int state = 0;
 
@@ -176,7 +171,7 @@ int buffer_indicates_start_of_capa(buffer_p buffer)
 
 int buffer_indicates_start_of_list(buffer_p buffer)
 {
-	char *pointer = buffer->data_ptr;
+	char *pointer = buffer->data_start;
 	size_t count = buffer->count;
 	int state = 0;
 
@@ -280,6 +275,7 @@ int buffer_read_until_string(int file_descriptor, buffer_p buffer, char * str) /
 			{
 				if(*(str+i)==0){
 					buffer->count+=amount;
+					buffer->data_ptr+=amount;
 					return amount;
 				}
 				int read_from = (read_index+i)%size;
@@ -297,6 +293,7 @@ int buffer_read_until_string(int file_descriptor, buffer_p buffer, char * str) /
 		}
 	}
 	buffer->count+=amount;
+	buffer->data_ptr+=amount;
 	return amount;
 
 
@@ -404,13 +401,13 @@ void print_buffer(buffer_p b)
 int buffer_write_string(char *string, buffer_p buffer)
 {
 	int  characters_to_write = buffer->count ;
-	char *write_ptr          = buffer->data_ptr;
+	char *write_ptr          = buffer->data_start;
 	int  i                   = 0;
 
 	while(characters_to_write > 0)
 	{
-		*(string + i++) = *(buffer->data_ptr);
-		buffer->data_ptr++;
+		*(string + i++) = *(write_ptr);
+		write_ptr++;
 		characters_to_write--;
 	}
 	*(string + i)            = '\0';
@@ -492,7 +489,7 @@ int buffer_read_string_endline(char* string, buffer_p buffer, int type){
 
 int buffer_starts_with_string(char *string, buffer_p buffer)
 {
-	char *pointer = buffer->data_ptr;
+	char *pointer = buffer->data_start;
 	char c        = *string;
 	while(c != 0)
 	{
