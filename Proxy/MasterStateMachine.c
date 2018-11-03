@@ -475,7 +475,6 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					printf("--------------------------------------------------------\n");
 					printf("Origin disconnected \n");
 					printf("--------------------------------------------------------\n");
-					buffer_read_string("+OK Disconnecting\n", s->buffers[1]);
 					return NOT_WAITING;
 				}
 				if(rd < 0)
