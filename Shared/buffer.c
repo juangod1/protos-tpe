@@ -306,6 +306,40 @@ int buffer_read_until_string(int file_descriptor, buffer_p buffer, char * str) /
 	return amount;
 }
 
+int buffer_read_until_char_block(int file_descriptor, buffer_p buffer, char ch)
+{
+	int  characters_to_read = buffer->size - (buffer->data_ptr - buffer->data_start);
+	char *read_ptr          = buffer->data_ptr;
+	int  amount             = 0;
+
+	while(characters_to_read > 0)
+	{
+		int count = read(file_descriptor, read_ptr, 1);
+		if(count == 1)
+		{
+			amount++;
+			if(*read_ptr == ch)
+			{
+				break;
+			}
+
+		}
+		else if(count == 0 || errno == ECONNRESET)
+		{
+			break;
+		}
+		else
+		{
+			perror("Read error");
+			break;
+		}
+		characters_to_read--;
+		read_ptr++;
+	}
+	buffer->count += amount;
+	return amount;
+}
+
 int buffer_read_until_char(int file_descriptor, buffer_p buffer, char ch)
 {
 	int  characters_to_read = buffer->size - (buffer->data_ptr - buffer->data_start);
@@ -408,6 +442,7 @@ int buffer_write_string(char *string, buffer_p buffer)
 
 	return characters_to_write;
 }
+
 
 int buffer_read_string(char *string, buffer_p buffer)
 {

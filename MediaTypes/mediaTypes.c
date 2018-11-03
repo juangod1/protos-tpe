@@ -30,7 +30,8 @@ int mediaRangeEvaluator(char* replacementMessage, char* mediaList)
     i++;
     recursiveDoublePointerFree(splitMediaRange);
   }
-  media_type_state_machine(mediaRangeCompleteList, replacementMessage, 5);
+  size_t size= strlen(replacementMessage);
+  media_type_state_machine(mediaRangeCompleteList, replacementMessage, size);
   recursiveDoublePointerFree(mediaRangeCompleteList);
 }
 
@@ -68,7 +69,7 @@ int evaluate_mime(char * mime, char ** media_type_complete_list)
     return (ret)?ret:OK;
 }
 
-int media_type_state_machine(char ** media_type_complete_list, char * replacement_message, int replacement_message_size)
+int media_type_state_machine(char ** media_type_complete_list, char * replacement_message, size_t replacement_message_size)
 {
   buffer_p buffer;
   buffer_initialize(&buffer, buffer_size);
@@ -87,7 +88,7 @@ int media_type_state_machine(char ** media_type_complete_list, char * replacemen
     switch(state)
     {
       case READ_LINE:
-        ;int amount = buffer_read_until_char(STDIN_FILENO, buffer, '\n');
+        ;int amount = buffer_read_until_char_block(STDIN_FILENO, buffer, '\n');
 
         if(amount==0)
         {
@@ -155,7 +156,7 @@ int media_type_state_machine(char ** media_type_complete_list, char * replacemen
         state=READ_LINE_AFTER_REPLACEMENT;
       break;
       case READ_LINE_AFTER_REPLACEMENT:
-        ;amount = buffer_read_until_char(STDIN_FILENO, buffer,'\n');
+        ;amount = buffer_read_until_char_block(STDIN_FILENO, buffer,'\n');
         if(amount==0)
         {
             state=FINISHED;

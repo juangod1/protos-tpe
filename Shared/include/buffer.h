@@ -35,6 +35,8 @@ int buffer_is_empty(buffer_p buffer);
 
 int buffer_read(int file_descriptor, buffer_p buffer);
 
+int buffer_read_until_char_block(int file_descriptor, buffer_p buffer, char ch);
+
 int buffer_write(int file_descriptor, buffer_p buffer);
 
 int buffer_write_until_substring(int file_descriptor, buffer_p buffer, char *substring);

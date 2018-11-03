@@ -27,7 +27,7 @@
 #define PROHIBITED 3
 
 int mediaRangeEvaluator(char* replacementMessage, char* mediaList);
-int media_type_state_machine(char ** media_type_complete_list, char * replacement_message, int replacement_message_size);
+int media_type_state_machine(char ** media_type_complete_list, char * replacement_message, size_t replacement_message_size);
 
 
 #endif
