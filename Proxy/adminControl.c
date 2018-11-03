@@ -35,7 +35,6 @@
 //CAMBIOS A REALIZAR
 //int parameters a ESTRUCTURA de parameters
 #define MAX_BUFFER 1024
-#define MY_PORT_NUM 9090
 
 file_descriptor setup_admin_socket()
 {
