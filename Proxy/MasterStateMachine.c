@@ -408,27 +408,27 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				if(buffer_starts_with_string("+OK", s->buffers[1]) ||
 				   buffer_starts_with_string("-ERR", s->buffers[1]))
 				{
-					s->data_4 = true;// ESTE ES NUEVO
-					s->data_2 = true; //EL PROXIMO ES NUEVO
-					s->data_5 = false; //NO ES MULTILINEA
+					IS_NEW_LINE = true;// ESTE ES NUEVO
+					IS_NEXT_NEW_LINE = true; //EL PROXIMO ES NUEVO
+					IS_MULTILINE = false; //NO ES MULTILINEA
 				}
-				else if(buffer_indicates_parsable_message(s->buffers[1]) && s->data_2)
+				else if(IS_NEXT_NEW_LINE && buffer_indicates_parsable_message(s->buffers[1]))
 				{
-					s->data_4=	true; //ESTE ES LO QUE ERA EL PROXIMO
-					s->data_2 = false;// EL PROXIMO NO ES NUEVO
-					s->data_3 = true; //ESTE ES TRANS
-					s->data_5 = true; //ES MULTILINEA
+					IS_NEW_LINE =	true; //ESTE ES LO QUE ERA EL PROXIMO
+					IS_NEXT_NEW_LINE = false;// EL PROXIMO NO ES NUEVO
+					IS_TRANS = true; //ESTE ES TRANS
+					IS_MULTILINE = true; //ES MULTILINEA
 				}
-				else if(buffer_indicates_start_of_multiline_message(s->buffers[1]) && s->data_2)
+				else if(IS_NEXT_NEW_LINE && buffer_indicates_start_of_multiline_message(s->buffers[1]))
 				{
-					s->data_4= 	true; //ESTE es nuevo
-					s->data_2 = false;// EL PROXIMO NO ES NUEVO
-					s->data_3 = true; //ESTE ES TRANS
-					s->data_5 = true; //ES MULTILINEA
+					IS_NEW_LINE = 	true; //ESTE es nuevo
+					IS_NEXT_NEW_LINE = false;// EL PROXIMO NO ES NUEVO
+					IS_TRANS = true; //ESTE ES TRANS
+					IS_MULTILINE = true; //ES MULTILINEA
 
 				}
 				else{ //continuo impresion de multilinea
-					s->data_4= false; //ESTE NO ES NUEVO
+					IS_NEW_LINE = false; //ESTE NO ES NUEVO
 				}
 				if(!get_app_context()->pipelining)
 				{
@@ -493,7 +493,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				printf("Wrote buffer content to Transform: \n");
 				print_buffer(s->buffers[1]);
 				int will_close;
-				if(s->data_5)
+				if(IS_MULTILINE)
 				{
 					will_close = buffer_indicates_end_of_multiline_message(s->buffers[1]);
 				}
@@ -510,7 +510,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			}
 			break;
 	}
-	if(!disconnection && s->data_4 && !s->data_1) //CREATE TRANSFORM
+	if(!disconnection && IS_NEW_LINE && !IS_PROCESSING) //CREATE TRANSFORM
 	{
 		char *command = (s->data_3 && get_app_context()->transform_status) ? get_app_context()->command_specification
 		                                                                   : "cat";
@@ -518,9 +518,9 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 		s->parser_pid = start_parser(command, pipes, s);
 		s->read_fds[2]  = pipes[0];
 		s->write_fds[2] = pipes[1];
-		s->data_1=true;
-		s->data_3=false;
-		s->data_4=false;
+		IS_PROCESSING=true;
+		IS_TRANS=false;
+		IS_NEW_LINE=false;
 		printf("Created new Transform Process with command %s.\n", command);
 	}
 	return WAITING;

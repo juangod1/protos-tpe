@@ -12,6 +12,12 @@
 
 #define BUFFER_SIZE 600
 
+#define IS_PROCESSING s->data_1
+#define IS_NEXT_NEW_LINE s->data_2
+#define IS_TRANS s->data_3
+#define IS_NEW_LINE s->data_4
+#define IS_MULTILINE s->data_5
+
 typedef int state_code;
 typedef int error_code;
 
