@@ -358,11 +358,11 @@ void process_request(state s, file_descriptor fd)
                     if (parameter == NULL) {
                         //Significa que no paso parameter entonces quiere saber cual es el filter actual
                         char *filtro = get_transformation_filter();
-                        char resp[40] = "Current transformation: ";
+                        char resp[64] = "Current transformation: ";
                         text_response_BS(SUCCESS, strcat(resp, filtro), s, fd);
                     } else {
                         command_specification(parameter);
-                        char resp[40] = "SUCCESS. Current transformation: ";
+                        char resp[64] = "SUCCESS. Current transformation: ";
                         text_response_BS(SUCCESS, strcat(resp, parameter), s, fd);
                     }
                 }

@@ -25,7 +25,7 @@ char * mt_buffer_get_mime(buffer_p buffer)
 
   while(aux_count<=buffer->count)
   {
-    if(*ptr==';' || *ptr=='\n')
+    if(*ptr==';' || *ptr == '\n')
     {
       break;
     }
@@ -62,7 +62,7 @@ char * mt_buffer_get_boundary(buffer_p buffer)
         count--;
     }
     if(*ptr!='"') return NULL; //BOUNDARY DIDNT FIT IN BUFFER :(
-    return my_strdup(ret);
+    return my_strndup(ret,size);
 }
 
 void mt_buffer_discard(buffer_p buffer)

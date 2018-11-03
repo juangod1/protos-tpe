@@ -26,6 +26,8 @@ int toNLowerString(char *lowerCaseCopy, char *original, int n);
 
 char *my_strdup(const char *s);
 
+char *my_strndup(const char *s, int n);
+
 char *my_strsep(char **string_ptr, char delimeter);
 
 int isType(char *type);

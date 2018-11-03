@@ -3,27 +3,18 @@
 #include "stdbool.h"
 #include "../Shared/include/lib.h"
 
-int main(int argc, char ** args)
+
+int main()
 {
-  if(argc!=2)
-  {
-    printf("Program must be executed as follows ./prog '[ListOfMediaRanges]'\n");
-    exit(1);
-  }
-  if(strcmp(args[1],"-t")==0) //testmode
-  {
-    mainTester();
-  }
-  else
-  {
-    mediaRangeEvaluator(argc, args);
-  }
+    char* replacementMessage = getenv("FILTER_MSG");
+    char* mediaList = getenv("FILTER_MEDIAS");
+    mediaRangeEvaluator(replacementMessage, mediaList);
+
 }
 
-
-int mediaRangeEvaluator(int argc, char ** args)
+int mediaRangeEvaluator(char* replacementMessage, char* mediaList)
 {
-  char ** mediaRangeCompleteList = divideMediaRangeList(args[1]);
+  char ** mediaRangeCompleteList = divideMediaRangeList(mediaList);
 
   char * mediaRangeComplete;
   int i=0;
@@ -39,7 +30,7 @@ int mediaRangeEvaluator(int argc, char ** args)
     i++;
     recursiveDoublePointerFree(splitMediaRange);
   }
-  media_type_state_machine(mediaRangeCompleteList, "test", 5);
+  media_type_state_machine(mediaRangeCompleteList, replacementMessage, 5);
   recursiveDoublePointerFree(mediaRangeCompleteList);
 }
 
@@ -97,6 +88,7 @@ int media_type_state_machine(char ** media_type_complete_list, char * replacemen
     {
       case READ_LINE:
         ;int amount = buffer_read_until_char(STDIN_FILENO, buffer, '\n');
+
         if(amount==0)
         {
             state=FINISHED;

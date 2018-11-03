@@ -19,7 +19,17 @@ char *my_strdup(const char *s)
 	return p;
 }
 
-
+char *my_strndup(const char *s, int n)
+{
+    int len =  strlen(s) < n ? strlen(s) : n;
+    char* new = (char*) malloc(len + 1);
+    if (new == NULL)
+    {
+        return NULL;
+    }
+    new[len] = '\0';
+    return (char*) memcpy(new, s, len);
+}
 char *my_strsep(char **string_ptr, char delimeter)
 {
 	if(string_ptr == NULL || *string_ptr == NULL)
@@ -203,7 +213,7 @@ int mediaTypeBelongsToMediaRange(char **mediaType, char **mediaRange)
 		mediaTypeToken  = mediaType[i];
 		mediaRangeToken = mediaRange[i];
 
-		if(mediaRangeToken == NULL)
+		if(mediaRangeToken == NULL )
 		{
 			return 1;
 		}
@@ -213,8 +223,13 @@ int mediaTypeBelongsToMediaRange(char **mediaType, char **mediaRange)
 		}
 		if(strcmp(mediaRangeToken, "*") == 0)
 		{
-			return 1;
+            return 1;
 		}
+        char* pos;
+        if((pos = strchr(mediaTypeToken, '\r')) != NULL)
+        {
+            *pos = '\0';
+        }
 		if(strcmp(mediaRangeToken, mediaTypeToken) != 0)
 		{
 			return 0;
