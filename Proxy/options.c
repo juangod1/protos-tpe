@@ -41,7 +41,7 @@ void initialize_app_context()
 	app_context->transform_status = false;
 	for(int i = 0; i < 5; i++)
 	{
-		int len = strlen(monitoreo[i]);
+		size_t len = strlen(monitoreo[i]);
 		(app_context->monitor)[i] = calloc(1, len + 1);
 		memcpy((app_context->monitor)[i], monitoreo[i], len);
 		(app_context->monitor_values)[i] = 0;
@@ -51,6 +51,10 @@ void initialize_app_context()
 void destroy_app_context()
 {
 	free(app_context->command_specification);
+	for(int i=0; i< 5; i++)
+	{
+		free(app_context->monitor[i]);
+	}
 	free(app_context);
 }
 
