@@ -121,10 +121,10 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
 		return NOT_WAITING;
 	}
 
-    //NEW ADMIN CONNECTED
-    get_app_context()->monitor_values[1] += 1;
+	//NEW ADMIN CONNECTED
+	get_app_context()->monitor_values[1] += 1;
 
-    state st = new_state(ATTEND_ADMIN_STATE, ATTEND_ADMIN_on_arrive, ATTEND_ADMIN_on_resume, ATTEND_ADMIN_on_leave);
+	state st = new_state(ATTEND_ADMIN_STATE, ATTEND_ADMIN_on_arrive, ATTEND_ADMIN_on_resume, ATTEND_ADMIN_on_leave);
 	st->read_fds[0]  = accept_ret;
 	st->write_fds[0] = accept_ret;
 	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
@@ -146,7 +146,7 @@ void *query_dns(void *st)
 {
 	state           s     = (state) st;
 	struct addrinfo hints = {
-			.ai_family    = AF_INET6,
+			.ai_family    = AF_UNSPEC,
 			.ai_socktype  = SOCK_STREAM,
 			.ai_flags     = AI_PASSIVE,
 			.ai_protocol  = 0,
@@ -154,9 +154,11 @@ void *query_dns(void *st)
 			.ai_addr      = NULL,
 			.ai_next      = NULL,
 	};
+
 	char            buff[7];
 	snprintf(buff, sizeof(buff), "%hu", get_app_context()->origin_port);
 	getaddrinfo(get_app_context()->address_server_string, buff, &hints, &(get_app_context()->addr));
+
 	s->current = get_app_context()->addr;
 	int ret = -1;
 	while(s->current != NULL && (ret = connect(s->read_fds[1], s->current->ai_addr, s->current->ai_addrlen)) < 0)
@@ -172,6 +174,15 @@ void *query_dns(void *st)
 	else
 	{
 		write(((int *) s->pipes)[1], &buff2, 1);
+		char buf[10];
+		if(inet_pton(AF_INET6, s->current->ai_addr->sa_data, buf)){
+			printf("DNS found IPV6 address.\n");
+			get_app_context()->isIPV6=true;
+		}
+		else{
+			printf("DNS found IPV4 address.\n");
+			get_app_context()->isIPV6=false;
+		}
 	}
 }
 
@@ -279,11 +290,11 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 
 	add_state(sm, st);
 
-    //NEW MUA CONNECTED
-    get_app_context()->monitor_values[0] += 1;
-    get_app_context()->monitor_values[2] += 1;
+	//NEW MUA CONNECTED
+	get_app_context()->monitor_values[0] += 1;
+	get_app_context()->monitor_values[2] += 1;
 
-    return NOT_WAITING;
+	return NOT_WAITING;
 }
 
 execution_state CONNECT_CLIENT_STAGE_THREE_on_resume(state s, file_descriptor fd, int is_read)
