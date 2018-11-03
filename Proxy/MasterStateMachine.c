@@ -66,7 +66,7 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 				printf("Administrator disconnected \n");
 				printf("--------------------------------------------------------\n");
 				disconnect(s);
-				return NOT_WAITING;
+				return WAITING;
 			}
 			printf("--------------------------------------------------------\n");
 			printf("Read buffer content from ADMIN: \n");
