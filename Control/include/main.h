@@ -24,7 +24,7 @@ void loginSuccess(char *connected);
 
 char requestLoginToProxy(int fd);
 
-void interaction();
+void interaction(int fd);
 
 char requestAdmin();
 

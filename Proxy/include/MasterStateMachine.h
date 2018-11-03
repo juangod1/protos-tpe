@@ -32,18 +32,22 @@
  */
 #define CONNECT_CLIENT_STAGE_FOUR_STATE 7
 
-
 /* FD List
  *  read_fds[0] = ADMIN_read_fd
+ *  write_fds[0] = ADMIN_write_fd
  */
 #define ATTEND_ADMIN_STATE 4
-
 
 /* FD List
  *  read_fds[0] = ADMIN_CONNECT_SOCKET
  */
 #define CONNECT_ADMIN_STATE 5
 
+/* FD List
+ *  read_fds[0] = ADMIN_write_fd
+ *  write_fds[0] = ADMIN_write_fd
+ */
+#define CONNECT_ADMIN_STAGE_TWO_STATE 8
 
 /* FD List
  *  read_fds[0] = MUA_read_fd
@@ -95,6 +99,12 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
 execution_state CONNECT_ADMIN_on_resume(state s, file_descriptor fd, int is_read);
 
 state_code CONNECT_ADMIN_on_leave(state s);
+
+execution_state CONNECT_ADMIN_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read);
+
+execution_state CONNECT_ADMIN_STAGE_TWO_on_resume(state s, file_descriptor fd, int is_read);
+
+state_code CONNECT_ADMIN_STAGE_TWO_on_leave(state s);
 
 execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_read);
 

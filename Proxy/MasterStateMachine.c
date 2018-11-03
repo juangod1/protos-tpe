@@ -60,7 +60,7 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 	{
 		case 1:;
 			int ret = buffer_read(fd, s->buffers[0]);
-			if( ret == 0 || (ret == -1 && errno == ECONNRESET))
+			if(ret == 0 || (ret == -1 && errno == ECONNRESET))
 			{
 				printf("--------------------------------------------------------\n");
 				printf("Administrator disconnected \n");
@@ -95,8 +95,11 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 					s->remaining_response = -1;
 					free(s->remaining_string);
 				}
-			} else {
-				if(s->disconnect){
+			}
+			else
+			{
+				if(s->disconnect)
+				{
 					disconnect(s);
 				}
 			}
@@ -119,8 +122,8 @@ state_code ATTEND_ADMIN_on_leave(state s)
 
 execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 {
-	socklen_t sl = sizeof(s->connection_addrinfo);
-	int accept_ret = accept(s->read_fds[0], (s->connection_addrinfo), &sl);
+	socklen_t sl         = sizeof(s->connection_addrinfo);
+	int       accept_ret = accept(s->read_fds[0], (s->connection_addrinfo), &sl);
 	if(accept_ret == -1)
 	{
 		perror("accept()");
@@ -129,13 +132,14 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
 	}
 
 	//NEW ADMIN CONNECTED
-	log_event(s,'+',"Seconecto");
+	log_event(s, '+', "Seconecto");
 	get_app_context()->monitor_values[1] += 1;
 
-	state st = new_state(ATTEND_ADMIN_STATE, ATTEND_ADMIN_on_arrive, ATTEND_ADMIN_on_resume, ATTEND_ADMIN_on_leave);
+	state st = new_state(CONNECT_ADMIN_STAGE_TWO_STATE, CONNECT_ADMIN_STAGE_TWO_on_arrive,
+	                     CONNECT_ADMIN_STAGE_TWO_on_resume, CONNECT_ADMIN_STAGE_TWO_on_leave);
 	st->read_fds[0]  = accept_ret;
 	st->write_fds[0] = accept_ret;
-	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[0]),BUFFER_SIZE);
 	add_state(sm, st);
 
 	return NOT_WAITING;
@@ -148,6 +152,30 @@ execution_state CONNECT_ADMIN_on_resume(state s, file_descriptor fd, int is_read
 
 state_code CONNECT_ADMIN_on_leave(state s)
 {
+}
+
+execution_state CONNECT_ADMIN_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read)
+{
+	buffer_read_string("+OK Greetings Earthlings. Now log in.\r\n",s->buffers[0]);
+	buffer_write(fd,s->buffers[0]);
+
+	return NOT_WAITING;
+}
+
+execution_state CONNECT_ADMIN_STAGE_TWO_on_resume(state s, file_descriptor fd, int is_read)
+{
+
+}
+
+state_code CONNECT_ADMIN_STAGE_TWO_on_leave(state s)
+{
+	state st = new_state(ATTEND_ADMIN_STATE, ATTEND_ADMIN_on_arrive,
+	                     ATTEND_ADMIN_on_resume, ATTEND_ADMIN_on_leave);
+	st->read_fds[0]  = s->read_fds[0];
+	st->write_fds[0] = s->write_fds[0];
+	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
+	add_state(sm, st);
+	remove_state(sm,s);
 }
 
 void *query_dns(void *st)
@@ -198,8 +226,8 @@ void *query_dns(void *st)
 
 execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_read)
 {
-	socklen_t addrlen = sizeof(s->connection_addrinfo);
-	int accept_ret = accept(s->read_fds[0], (s->connection_addrinfo), &addrlen);
+	socklen_t addrlen    = sizeof(s->connection_addrinfo);
+	int       accept_ret = accept(s->read_fds[0], (s->connection_addrinfo), &addrlen);
 
 	if(accept_ret < 0)
 	{
@@ -364,10 +392,10 @@ execution_state CONNECT_CLIENT_STAGE_FOUR_on_resume(state s, file_descriptor fd,
 			buffer_write_string(buf, s->buffers[0]);
 			buffer_clean(s->buffers[0]);
 
-			int i=0;
-			while(i<BUFFER_SIZE && buf[i]!=0)
+			int i = 0;
+			while(i < BUFFER_SIZE && buf[i] != 0)
 			{
-				buf[i]=tolower((int)buf[i]);
+				buf[i] = tolower((int) buf[i]);
 				i++;
 			}
 
@@ -525,18 +553,19 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				}
 				else if(IS_NEXT_NEW_LINE && buffer_indicates_start_of_capa(s->buffers[1]))
 				{
-					IS_NEW_LINE = 	true; //ESTE es nuevo
+					IS_NEW_LINE      = true; //ESTE es nuevo
 					IS_NEXT_NEW_LINE = false;// EL PROXIMO NO ES NUEVO
-					IS_TRANS = true; //ESTE ES TRANS
-					IS_MULTILINE = true; //ES MULTILINEA
+					IS_TRANS         = true; //ESTE ES TRANS
+					IS_MULTILINE     = true; //ES MULTILINEA
 					if(!get_app_context()->pipelining)
 					{
-						buffer_read_string("PIPELINING\r\n",s->buffers[1]);
+						buffer_read_string("PIPELINING\r\n", s->buffers[1]);
 					}
 
 
 				}
-				else{ //continuo impresion de multilinea
+				else
+				{ //continuo impresion de multilinea
 					IS_NEW_LINE = false; //ESTE NO ES NUEVO
 				}
 				if(!get_app_context()->pipelining)
@@ -779,6 +808,9 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				add_write_fd(curr->st->write_fds[0]);
 			}
 			break;
+		case CONNECT_ADMIN_STAGE_TWO_STATE:
+			add_write_fd(curr->st->write_fds[0]);
+			break;
 		default:;
 			int i;
 			for(i = 0; i < 3; i++)
@@ -841,6 +873,9 @@ void debug_print_state(int state)
 		case CONNECT_ADMIN_STATE:
 			msg = "CONNECT_ADMIN_STATE";
 			break;
+		case CONNECT_ADMIN_STAGE_TWO_STATE:
+			msg = "CONNECT_ADMIN_STAGE_TWO_STATE";
+			break;
 		case ATTEND_CLIENT_STATE:
 			msg = "ATTEND_CLIENT_STATE";
 			break;
@@ -867,7 +902,8 @@ void disconnect(state st)
 
 	close(st->read_fds[2]);
 
-	switch(st->id) {
+	switch(st->id)
+	{
 		case CONNECT_CLIENT_STAGE_THREE_STATE:
 			get_app_context()->monitor_values[0]--;
 			break;
@@ -904,7 +940,8 @@ void disconnect_all(state_machine *sm)
 	disconnect_all_rec(sm, sm->states->head);
 }
 
-void log_event(state s, char event, char *data){
+void log_event(state s, char event, char *data)
+{
 	//date_time_string La fecha y hora del evento del protocolo. El valor tiene la forma aaaa-mm-ddhh:mm:ss.fffZ, en donde aaaa = año, mm = mes, dd = día, hh = hora, mm = minuto, ss = segundo,fff = fracciones de segundo y Z significa Zulú. Zulú es otra forma de indicar la Hora universal coordinada (UTC).
 	//session-id        Un GUID que identifique de manera única la sesión de SMTP asociada con un evento de protocolo.
 	//sequence-number (es log_sequence en app_context)   Contador que se inicia en 0 y que aumenta para cada evento dentro de la misma sesión.
@@ -913,120 +950,121 @@ void log_event(state s, char event, char *data){
 	//evento            Un único carácter que representa el evento del protocolo. Los valores posibles para el evento son los siguientes: +Conectar -Desconectar >Enviar <Recibir \*Información
 	//datos             Información de texto asociada al evento de POP3 o IMAP4.
 
-	app_context_p app_context = get_app_context();
+	app_context_p app_context          = get_app_context();
 	//Build date_time_string, no utilizamos fff porque no tenemos esa precision.
-	char date_time_string[21] = {0};
-	time_t now = time(NULL);
-	struct tm *t = localtime(&now);
-	strftime(date_time_string, sizeof(date_time_string)-1, "%Y-%m-%d%H:%M:%S", t);
+	char          date_time_string[21] = {0};
+	time_t        now                  = time(NULL);
+	struct tm     *t                   = localtime(&now);
+	strftime(date_time_string, sizeof(date_time_string) - 1, "%Y-%m-%d%H:%M:%S", t);
 	strcat(date_time_string, ".Z");
 
 	char *socket_address = NULL;
 	if(s->connection_addrinfo->sa_family == AF_INET)
 	{
-		struct sockaddr_in *addr_in = (struct sockaddr_in *)s->connection_addrinfo;
+		struct sockaddr_in *addr_in = (struct sockaddr_in *) s->connection_addrinfo;
 		socket_address = malloc(INET_ADDRSTRLEN);
 		inet_ntop(AF_INET, &(addr_in->sin_addr), socket_address, INET_ADDRSTRLEN);
 	}
 	else
 	{
-		struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)s->connection_addrinfo;
+		struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *) s->connection_addrinfo;
 		socket_address = malloc(INET6_ADDRSTRLEN);
 		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), socket_address, INET6_ADDRSTRLEN);
 	}
 
-	char aux_port[6] = {0};
+	char aux_port[6]     = {0};
 	//Build local-endpoint string
-	char *local_endpoint = calloc(1,2);
+	char *local_endpoint = calloc(1, 2);
 	*local_endpoint = '<';
-	int old_len = strlen(local_endpoint);
+	int old_len      = strlen(local_endpoint);
 	int increase_len = strlen(socket_address) + 4;//1 por el > otro pot el : otro el 0 y otro por el <
 	local_endpoint = realloc(local_endpoint, old_len + increase_len);
-	memset(local_endpoint+old_len, '\0', increase_len);
-	strcat(local_endpoint,socket_address);
-	strcat(local_endpoint,">:<");
+	memset(local_endpoint + old_len, '\0', increase_len);
+	strcat(local_endpoint, socket_address);
+	strcat(local_endpoint, ">:<");
 	old_len = strlen(local_endpoint);
 	sprintf(aux_port, "%hu", app_context->local_port);
-	increase_len = strlen(aux_port) + 2;// 1 por > y otro por 0
-	local_endpoint = realloc(local_endpoint,old_len + increase_len);
-	memset(local_endpoint+old_len, '\0', increase_len);
+	increase_len   = strlen(aux_port) + 2;// 1 por > y otro por 0
+	local_endpoint = realloc(local_endpoint, old_len + increase_len);
+	memset(local_endpoint + old_len, '\0', increase_len);
 	strcat(local_endpoint, aux_port);
-	strcat(local_endpoint,">");
-	memset(aux_port,'\0',6);
+	strcat(local_endpoint, ">");
+	memset(aux_port, '\0', 6);
 
 	//Build remote-endpoint string
-	char *remote_endpoint = calloc(1,2);
+	char *remote_endpoint = calloc(1, 2);
 	*remote_endpoint = '<';
-	old_len = strlen(remote_endpoint);
-	increase_len = strlen(app_context->pop3_path) + 4;//1 por el > otro pot el : otro el 0 y otro por el <
+	old_len         = strlen(remote_endpoint);
+	increase_len    = strlen(app_context->pop3_path) + 4;//1 por el > otro pot el : otro el 0 y otro por el <
 	remote_endpoint = realloc(remote_endpoint, old_len + increase_len);
-	memset(remote_endpoint+old_len, '\0', increase_len);
-	strcat(remote_endpoint,app_context->pop3_path);
-	strcat(remote_endpoint,">:<");
+	memset(remote_endpoint + old_len, '\0', increase_len);
+	strcat(remote_endpoint, app_context->pop3_path);
+	strcat(remote_endpoint, ">:<");
 	old_len = strlen(remote_endpoint);
-	sprintf(aux_port,"%hu",app_context->origin_port);
-	increase_len = strlen(aux_port) + 2;// 1 por > y otro por 0
+	sprintf(aux_port, "%hu", app_context->origin_port);
+	increase_len    = strlen(aux_port) + 2;// 1 por > y otro por 0
 	remote_endpoint = realloc(remote_endpoint, old_len + increase_len);
-	memset(remote_endpoint+old_len, '\0', increase_len);
-	strcat(remote_endpoint,aux_port);
-	strcat(remote_endpoint,">");
+	memset(remote_endpoint + old_len, '\0', increase_len);
+	strcat(remote_endpoint, aux_port);
+	strcat(remote_endpoint, ">");
 
-	void *array[7] = {date_time_string,NULL,NULL,local_endpoint,remote_endpoint,NULL,data};
+	void    *array[7]        = {date_time_string, NULL, NULL, local_endpoint, remote_endpoint, NULL, data};
 	//Aumento el numero de secuencia
-	int sequence_number=++(get_app_context()->log_sequence);
-	long session_id = s->session_id;
+	int     sequence_number  = ++(get_app_context()->log_sequence);
+	long    session_id       = s->session_id;
 	//Armo el string concatenando con ","
-	char *log = calloc(1,1);
-	char *aux_number = calloc(1, 24);
-	int aux_len = 0;
-	int aux_increase_len = 0;
-	for(int i=0;i<7;i++)
+	char    *log             = calloc(1, 1);
+	char    *aux_number      = calloc(1, 24);
+	int     aux_len          = 0;
+	int     aux_increase_len = 0;
+	for(int i                = 0; i < 7; i++)
 	{
-		switch(i){
+		switch(i)
+		{
 			case 0:
-				aux_len = strlen(log);
+				aux_len          = strlen(log);
 				aux_increase_len = strlen(array[i]) + 1;//1 por la coma y otro por el final de string
-				log = realloc(log,aux_len + aux_increase_len);
+				log              = realloc(log, aux_len + aux_increase_len);
 				memset(log + aux_len, '\0', aux_increase_len);
 				strcat(log, array[i]);
 				break;
 			case 3:
 			case 4:
 			case 6:
-				aux_len = strlen(log);
+				aux_len          = strlen(log);
 				aux_increase_len = strlen(array[i]) + 2;//1 por la coma y otro por el final de string
-				log = realloc(log,aux_len + aux_increase_len);
+				log              = realloc(log, aux_len + aux_increase_len);
 				memset(log + aux_len, '\0', aux_increase_len);
-				strcat(log,",");
+				strcat(log, ",");
 				strcat(log, array[i]);
 				break;
 			case 1:
-				sprintf(aux_number,"%ld",session_id);
-				aux_len = strlen(log);
+				sprintf(aux_number, "%ld", session_id);
+				aux_len          = strlen(log);
 				aux_increase_len = strlen(aux_number) + 2;
-				log = realloc(log,aux_len + aux_increase_len);
+				log              = realloc(log, aux_len + aux_increase_len);
 				memset(log + aux_len, '\0', aux_increase_len);
-				strcat(log,",");
+				strcat(log, ",");
 				strcat(log, aux_number);
-				memset(aux_number,'\0',24);
+				memset(aux_number, '\0', 24);
 				break;
 			case 2:
-				sprintf(aux_number,"%d",sequence_number);
-				aux_len = strlen(log);
+				sprintf(aux_number, "%d", sequence_number);
+				aux_len          = strlen(log);
 				aux_increase_len = strlen(aux_number) + 2;
-				log = realloc(log,aux_len + aux_increase_len);
+				log              = realloc(log, aux_len + aux_increase_len);
 				memset(log + aux_len, '\0', aux_increase_len);
-				strcat(log,",");
+				strcat(log, ",");
 				strcat(log, aux_number);
-				memset(aux_number,'\0',24);
+				memset(aux_number, '\0', 24);
 				break;
 			case 5:
-				aux_len = strlen(log);
+				aux_len          = strlen(log);
 				aux_increase_len = 3;//1 por el char, 1 por la coma y otro por el final del string
-				log = realloc(log,aux_len + aux_increase_len);
+				log              = realloc(log, aux_len + aux_increase_len);
 				memset(log + aux_len, '\0', aux_increase_len);
-				strcat(log,",");
-				*(log+(size_t)strlen(log)) = event;
+				strcat(log, ",");
+				*(log + (size_t) strlen(log)) = event;
 				break;
 		}
 	}

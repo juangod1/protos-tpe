@@ -79,29 +79,7 @@ int createConnection()
 		closeConnection(fd);
 		exit(EXIT_FAILURE);
 	}
-	//Configuro la cantidad de streams disponible para el socket
-//    memset(&initmsg,0, sizeof(struct sctp_initmsg));
-//    initmsg.sinit_num_ostreams  = MAX_STREAMS;
-//    initmsg.sinit_max_instreams = MAX_STREAMS;
-//    initmsg.sinit_max_attempts  = MAX_STREAMS;
-//    ret = setsockopt(fd,IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(struct sctp_initmsg));
-//    if(ret<0)
-//    {
-//        perror("setsockopt SCTP_INITMSG");
-//        closeConnection(fd);
-//        exit(1);
-//    }
 
-	//Configuro los eventos
-//    events.sctp_association_event = 1;
-//    events.sctp_data_io_event = 1;
-//    ret = setsockopt(fd,IPPROTO_SCTP,SCTP_EVENTS, &events, sizeof(events));
-//    if(ret<0)
-//    {
-//        perror("setsockopt SCTP_EVENTS");
-//        closeConnection(fd);
-//        exit(1);
-//    }
 	//Realizo la conexion
 	if((ret = connect(fd, (struct sockaddr *) &addr, sizeof(addr))) == -1)
 	{
@@ -167,6 +145,9 @@ char requestLoginToProxy(int fd)
 	char buffer[MAX_BUFFER] = {0};
 	char *usernameInput = calloc(1, INITIAL_INPUT_SIZE);
 	char *passwordInput = calloc(1, INITIAL_INPUT_SIZE);
+
+	sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
+	printf("%s\n",buffer);
 	//Le solicito un usuario
 	printf("Please enter your username: ");
 	fetchLineFromStdin(&usernameInput, INITIAL_INPUT_SIZE);
