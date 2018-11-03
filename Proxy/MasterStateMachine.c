@@ -201,7 +201,7 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
 	if(accept_ret < 0)
 	{
 		perror("accept");
-		error_disconnect_client(s);
+		disconnect_client(s);
 		return NOT_WAITING;
 	}
 
@@ -216,7 +216,7 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
 		if(ret < 0)
 		{
 			perror("pipe error on dns query");
-			error_disconnect_client(s);
+			disconnect_client(s);
 			return NOT_WAITING;
 		}
 
@@ -325,7 +325,7 @@ execution_state CONNECT_CLIENT_STAGE_FOUR_on_arrive(state s, file_descriptor fd,
 	//    ***   data_1 = 3  ==>   Process CAPA reply       ***
 	//    ****************************************************
 
-	s->data_1 = 0;
+	s->data_1     = 0;
 	s->exec_state = WAITING;
 	return WAITING;
 }
@@ -339,38 +339,43 @@ execution_state CONNECT_CLIENT_STAGE_FOUR_on_resume(state s, file_descriptor fd,
 	// It is assumed that the content after the +OK greeting
 	// fits in a single buffer (50 octets).
 	//
-	switch(s->data_1){
+	switch(s->data_1)
+	{
 		case 0: // Read +OK from Origin
-			buffer_read(fd,s->buffers[0]);
-			s->data_1=1;
+			buffer_read(fd, s->buffers[0]);
+			s->data_1 = 1;
 			return WAITING;
 		case 1: // Write +OK to MUA
-			buffer_write(fd,s->buffers[0]);
-			s->data_1=2;
+			buffer_write(fd, s->buffers[0]);
+			s->data_1 = 2;
 			return WAITING;
 		case 2: // Write CAPA to Origin
-			buffer_read_string("CAPA\n",s->buffers[0]);
-			buffer_write(fd,s->buffers[0]);
-			s->data_1=3;
-			get_app_context()->pipelining=false;
+			buffer_read_string("CAPA\n", s->buffers[0]);
+			buffer_write(fd, s->buffers[0]);
+			s->data_1                     = 3;
+			get_app_context()->pipelining = false;
 			return WAITING;
 		case 3: // Process CAPA reply
-			buffer_read_until_string(fd,s->buffers[0],"\n");
-			char buf[BUFFER_SIZE]={0};
-			buffer_write_string(buf,s->buffers[0]);
+			buffer_read_until_string(fd, s->buffers[0], "\n");
+			char buf[BUFFER_SIZE]         = {0};
+			buffer_write_string(buf, s->buffers[0]);
 			buffer_clean(s->buffers[0]);
 
-			int i=0;
-			while(i<BUFFER_SIZE) buf[i++]=tolower((int)buf[i]);
+			int i = 0;
+			while(i < BUFFER_SIZE)
+			{ buf[i++] = tolower((int) buf[i]); }
 
-			if(!strcmp(buf,"pipelining\r\n")){
-				get_app_context()->pipelining=true;
+			if(!strcmp(buf, "pipelining\r\n"))
+			{
+				get_app_context()->pipelining = true;
 				return WAITING;
 			}
-			else if(!strcmp(buf,".\r\n")){
+			else if(!strcmp(buf, ".\r\n"))
+			{
 				return NOT_WAITING;
 			}
-			else{
+			else
+			{
 				return WAITING;
 			}
 	}
@@ -401,7 +406,7 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
 	if(read(s->pipes[0], &buff, 1) < 0)
 	{
 		perror("read error");
-		error_disconnect_client(s);
+		disconnect_client(s);
 		return WAITING;
 	}
 	if(buff)
@@ -411,7 +416,7 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
 	else
 	{
 		printf("Unable to connect to dns origin host.\n");
-		error_disconnect_client(s);
+		disconnect_client(s);
 		return WAITING;
 	};
 
@@ -438,7 +443,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 	int disconnection = s->disconnect;
 	switch(is_read)
 	{
-		case 1: // True
+		case true:
 			if(s->read_fds[0] == fd)
 			{   // MUA READ
 				int read_response;
@@ -464,7 +469,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			}
 			else if(s->read_fds[1] == fd)
 			{   // Origin READ
-				int rd = buffer_read_until_string(fd, s->buffers[1],"\r\n");
+				int rd = buffer_read_until_string(fd, s->buffers[1], "\r\n");
 				if(rd == 0)
 				{
 					printf("--------------------------------------------------------\n");
@@ -494,26 +499,27 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				if(buffer_starts_with_string("+OK", s->buffers[1]) ||
 				   buffer_starts_with_string("-ERR", s->buffers[1]))
 				{
-					IS_NEW_LINE = true;// ESTE ES NUEVO
+					IS_NEW_LINE      = true;// ESTE ES NUEVO
 					IS_NEXT_NEW_LINE = true; //EL PROXIMO ES NUEVO
-					IS_MULTILINE = false; //NO ES MULTILINEA
+					IS_MULTILINE     = false; //NO ES MULTILINEA
 				}
 				else if(IS_NEXT_NEW_LINE && buffer_indicates_parsable_message(s->buffers[1]))
 				{
-					IS_NEW_LINE =	true; //ESTE ES LO QUE ERA EL PROXIMO
+					IS_NEW_LINE      = true; //ESTE ES LO QUE ERA EL PROXIMO
 					IS_NEXT_NEW_LINE = false;// EL PROXIMO NO ES NUEVO
-					IS_TRANS = true; //ESTE ES TRANS
-					IS_MULTILINE = true; //ES MULTILINEA
+					IS_TRANS         = true; //ESTE ES TRANS
+					IS_MULTILINE     = true; //ES MULTILINEA
 				}
 				else if(IS_NEXT_NEW_LINE && buffer_indicates_start_of_multiline_message(s->buffers[1]))
 				{
-					IS_NEW_LINE = 	true; //ESTE es nuevo
+					IS_NEW_LINE      = true; //ESTE es nuevo
 					IS_NEXT_NEW_LINE = false;// EL PROXIMO NO ES NUEVO
-					IS_TRANS = true; //ESTE ES TRANS
-					IS_MULTILINE = true; //ES MULTILINEA
+					IS_TRANS         = true; //ESTE ES TRANS
+					IS_MULTILINE     = true; //ES MULTILINEA
 
 				}
-				else{ //continuo impresion de multilinea
+				else
+				{ //continuo impresion de multilinea
 					IS_NEW_LINE = false; //ESTE NO ES NUEVO
 				}
 				if(!get_app_context()->pipelining)
@@ -549,7 +555,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				print_buffer(s->buffers[2]);
 			}
 			break;
-		case 0: // False
+		case false:
 			if(s->write_fds[0] == fd)
 			{   // MUA WRITE
 				printf("--------------------------------------------------------\n");
@@ -604,9 +610,9 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 		s->parser_pid = start_parser(command, pipes, s);
 		s->read_fds[2]  = pipes[0];
 		s->write_fds[2] = pipes[1];
-		IS_PROCESSING=true;
-		IS_TRANS=false;
-		IS_NEW_LINE=false;
+		IS_PROCESSING = true;
+		IS_TRANS      = false;
+		IS_NEW_LINE   = false;
 		printf("Created new Transform Process with command %s.\n", command);
 	}
 	return WAITING;
@@ -619,22 +625,7 @@ execution_state ATTEND_CLIENT_on_resume(state s, file_descriptor fd, int is_read
 
 state_code ATTEND_CLIENT_on_leave(state s)
 {
-	error_disconnect_client(s);
-}
-
-execution_state ERROR_on_arrive(state s, file_descriptor fd, int is_read)
-{
-
-}
-
-execution_state ERROR_on_resume(state s, file_descriptor fd, int is_read)
-{
-
-}
-
-state_code ERROR_on_leave(state s)
-{
-
+	disconnect_client(s);
 }
 
 void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)

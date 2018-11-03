@@ -51,8 +51,8 @@ struct stateStruct
 	int             data_1;
 	int             data_2;
 	int             data_3;
-	int 			data_4;
-	int				data_5;
+	int             data_4;
+	int             data_5;
 	int             pipelining_data;
 	char            *user;
 	char            *pass;
@@ -62,8 +62,6 @@ struct stateStruct
 	int				remaining_response;
 	char			*remaining_string;
 };
-
-
 
 
 #endif //PROTOS_TPE_STATE_H

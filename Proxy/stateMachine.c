@@ -27,13 +27,13 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
 	{
 		new->write_fds[i] = -1;
 	}
-	new->id              = id;
-	new->error           = 0;
-	new->processing_mail = 0;
-	new->on_arrive       = on_arrive;
-	new->on_resume       = on_resume;
-	new->on_leave        = on_leave;
-	new->exec_state      = NOT_WAITING;
+	new->id                = id;
+	new->error             = 0;
+	new->processing_mail   = 0;
+	new->on_arrive         = on_arrive;
+	new->on_resume         = on_resume;
+	new->on_leave          = on_leave;
+	new->exec_state        = NOT_WAITING;
 	new->buffers[0] = NULL;
 	new->buffers[1] = NULL;
 	new->buffers[2] = NULL;
@@ -49,7 +49,7 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
 	new->disconnect     = 0;
 	new->session_id     = getMicrotime();
 	new->remaining_response = 0;
-	new->remaining_string = NULL;
+	new->remaining_string   = NULL;
 	return new;
 }
 

@@ -26,7 +26,7 @@ void error_terminal()
 	exit(-1);
 }
 
-void error_disconnect_client(state s)
+void disconnect_client(state s)
 {
 	error_print("Disconnecting client");
 	s->disconnect=1;

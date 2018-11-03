@@ -14,6 +14,6 @@ void error_terminal();
 
 void init_error(state_machine *s);
 
-void error_disconnect_client(state s);
+void disconnect_client(state s);
 
 #endif //PROTOS_TPE_ERROR_H
