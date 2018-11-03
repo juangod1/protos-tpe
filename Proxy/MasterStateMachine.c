@@ -378,7 +378,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			}
 			else if(s->read_fds[1] == fd)
 			{   // Origin READ
-				int rd = buffer_read(fd, s->buffers[1]);
+				int rd = buffer_read_until_string(fd, s->buffers[1],"\r\n");
 				if(rd == 0)
 				{
 					printf("--------------------------------------------------------\n");
@@ -408,11 +408,27 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				if(buffer_starts_with_string("+OK", s->buffers[1]) ||
 				   buffer_starts_with_string("-ERR", s->buffers[1]))
 				{
-					s->data_1 = true;//INDICATES NEW MESSAGE
+					s->data_4 = true;// ESTE ES NUEVO
+					s->data_2 = true; //EL PROXIMO ES NUEVO
+					s->data_5 = false; //NO ES MULTILINEA
 				}
-				if(buffer_indicates_parsable_message(s->buffers[1]))
+				else if(buffer_indicates_parsable_message(s->buffers[1]) && s->data_2)
 				{
-					s->data_3 = true; //INDICATES MESSAGE MUST BE TRANSFORMED
+					s->data_4=	true; //ESTE ES LO QUE ERA EL PROXIMO
+					s->data_2 = false;// EL PROXIMO NO ES NUEVO
+					s->data_3 = true; //ESTE ES TRANS
+					s->data_5 = true; //ES MULTILINEA
+				}
+				else if(buffer_indicates_start_of_multiline_message(s->buffers[1]) && s->data_2)
+				{
+					s->data_4= 	true; //ESTE es nuevo
+					s->data_2 = false;// EL PROXIMO NO ES NUEVO
+					s->data_3 = true; //ESTE ES TRANS
+					s->data_5 = true; //ES MULTILINEA
+
+				}
+				else{ //continuo impresion de multilinea
+					s->data_4= false; //ESTE NO ES NUEVO
 				}
 				if(!get_app_context()->pipelining)
 				{
@@ -423,17 +439,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			{   // Transform READ
 				if(buffer_read(fd, s->buffers[2]) == 0)
 				{
-					printf("--------------------------------------------------------\n");
-					printf("Transform disconnected \n");
-					printf("--------------------------------------------------------\n");
-					return NOT_WAITING;
-				}
-				printf("--------------------------------------------------------\n");
-				printf("Read buffer content from Transform: \n");
-				print_buffer(s->buffers[2]);
-				if(buffer_indicates_end_of_message(s->buffers[2]))
-				{
-					s->data_2 = true;
+					s->data_1 = false;
 					close(s->read_fds[2]);
 					s->read_fds[2]  = -1;
 					s->write_fds[2] = -1;
@@ -447,7 +453,14 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					{
 						printf("FAIL: BAD PARSER EXIT\n");
 					}
+					/*printf("--------------------------------------------------------\n");
+					printf("Transform disconnected \n");
+					printf("--------------------------------------------------------\n");
+					return NOT_WAITING;*/
 				}
+				printf("--------------------------------------------------------\n");
+				printf("Read buffer content from Transform: \n");
+				print_buffer(s->buffers[2]);
 			}
 			break;
 		case 0: // False
@@ -479,7 +492,16 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				printf("--------------------------------------------------------\n");
 				printf("Wrote buffer content to Transform: \n");
 				print_buffer(s->buffers[1]);
-				int will_close = buffer_indicates_end_of_message(s->buffers[1]);
+				int will_close;
+				if(s->data_5)
+				{
+					will_close = buffer_indicates_end_of_multiline_message(s->buffers[1]);
+				}
+				else
+				{
+					will_close = buffer_indicates_end_of_single_line_message(s->buffers[1]);
+
+				}
 				buffer_write(fd, s->buffers[1]);
 				if(will_close)
 				{
@@ -488,7 +510,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			}
 			break;
 	}
-	if(!disconnection && s->data_1 && s->data_2) //CREATE TRANSFORM
+	if(!disconnection && s->data_4 && !s->data_1) //CREATE TRANSFORM
 	{
 		char *command = (s->data_3 && get_app_context()->transform_status) ? get_app_context()->command_specification
 		                                                                   : "cat";
@@ -496,9 +518,9 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 		s->parser_pid = start_parser(command, pipes, s);
 		s->read_fds[2]  = pipes[0];
 		s->write_fds[2] = pipes[1];
-		s->data_1 = false;
-		s->data_2 = false;
-		s->data_3 = false;
+		s->data_1=true;
+		s->data_3=false;
+		s->data_4=false;
 		printf("Created new Transform Process with command %s.\n", command);
 	}
 	return WAITING;
@@ -545,7 +567,7 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				{
 					if(curr->st->read_fds[0] > 0)
 					{
-						printf("Buffer 1 is empty ==> ");
+						printf("(MUA READ) Buffer 1 is empty ==> ");
 						add_read_fd(curr->st->read_fds[0]); // MUA read
 					}
 				}
@@ -553,7 +575,7 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				{
 					if(curr->st->write_fds[1] > 0)
 					{
-						printf("Buffer 1 is not empty ==> ");
+						printf("(ORIGIN WRITE) Buffer 1 is not empty ==> ");
 						if(get_app_context()->pipelining)
 						{
 							printf("OS has Pipelining enabled. Added origin write\n");
@@ -581,7 +603,7 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				{
 					if(curr->st->read_fds[1] > 0)
 					{
-						printf("Buffer 2 is empty ==> ");
+						printf("(ORIGIN READ) Buffer 2 is empty ==> ");
 						if(!curr->st->disconnect)
 						{
 							add_read_fd(curr->st->read_fds[1]);
@@ -592,8 +614,8 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				{
 					if(curr->st->write_fds[2] > 0)
 					{
-						printf("Buffer 2 is not empty ==> ");
-						if(!curr->st->data_1)
+						printf("(TRANSFORM WRITE) Buffer 2 is not empty ==> ");
+						if(curr->st->data_1 && !curr->st->data_4)
 						{
 							printf("Will write to transform process.\n");
 							add_write_fd(curr->st->write_fds[2]); // Transform write
@@ -611,7 +633,7 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				{
 					if(curr->st->read_fds[2] > 0)
 					{
-						printf("Buffer 3 is empty ==> ");
+						printf("(TRANSFORM READ) Buffer 3 is empty ==> ");
 						add_read_fd(curr->st->read_fds[2]); // Transform read
 					}
 				}
@@ -619,7 +641,7 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				{
 					if(curr->st->write_fds[0] > 0)
 					{
-						printf("Buffer 3 is not empty ==> ");
+						printf("(MUA WRITE) Buffer 3 is not empty ==> ");
 						add_write_fd(curr->st->write_fds[0]); // MUA write
 					}
 				}

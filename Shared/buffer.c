@@ -118,10 +118,122 @@ int buffer_ends_with_string(buffer_p buffer, char * string)
 		string++;
 	}
 	return true;
-
 }
 
-int buffer_indicates_end_of_message(buffer_p buffer)
+int buffer_indicates_start_of_capa(buffer_p buffer)
+{
+	char *pointer = buffer->data_ptr;
+	size_t count = buffer->count;
+	int state = 0;
+
+	while(count>0)
+	{
+		int c = *pointer;
+		switch(state)
+		{
+			case 0: //read first letter
+			{
+				if(isupper(c)){
+					state=1;
+				}
+				else{
+					return false;
+				}
+			}
+			break;
+			case 1: //read optional letters
+			{
+				if(!isupper(c))
+				{
+					if(c=='\r')
+					{
+						state = 2;
+					}
+					else
+					{
+						return false;
+					}
+				}
+			}
+			break;
+			case 2: //read end
+			{
+				if(c=='\n')
+				{
+					return true;
+				}
+				else{
+					return false;
+				}
+			}
+			break;
+		}
+		pointer++;
+		count--;
+	}
+	return false;
+}
+
+int buffer_indicates_start_of_list(buffer_p buffer)
+{
+	char *pointer = buffer->data_ptr;
+	size_t count = buffer->count;
+	int state = 0;
+
+	while(count>0)
+	{
+		int c = *pointer;
+		switch(state)
+		{
+			case 0: //read int
+			{
+				if(isdigit(c)){
+					state=1;
+				}
+				else{
+					return false;
+				}
+			}
+			break;
+			case 1: //read optional ints
+			{
+				if(!isdigit(c))
+				{
+					if(c==' ')
+					{
+						state = 2;
+					}
+					else
+					{
+						return false;
+					}
+				}
+			}
+			break;
+			case 2: //read until end
+			{
+				if(c=='\n') return true;
+				if(c==' ') return false;
+			}
+			break;
+		}
+		pointer++;
+		count--;
+	}
+	return false;
+}
+
+int buffer_indicates_start_of_multiline_message(buffer_p buffer)
+{
+	return  buffer_indicates_start_of_list(buffer) || buffer_indicates_start_of_capa(buffer);
+}
+
+int buffer_indicates_end_of_multiline_message(buffer_p buffer)
+{
+	return buffer_ends_with_string(buffer,"\r\n.\r\n") || (buffer->count==3 && buffer_starts_with_string(".\r\n",buffer));
+}
+
+int buffer_indicates_end_of_single_line_message(buffer_p buffer)
 {
 	return buffer_ends_with_string(buffer,"\r\n");
 }
