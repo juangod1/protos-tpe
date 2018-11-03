@@ -60,11 +60,12 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 	{
 		case 1:;
 			int ret = buffer_read(fd, s->buffers[0]);
-			if(ret == 0 || (ret == -1 && errno == ECONNRESET))
+			if( ret == 0 || (ret == -1 && errno == ECONNRESET))
 			{
 				printf("--------------------------------------------------------\n");
 				printf("Administrator disconnected \n");
 				printf("--------------------------------------------------------\n");
+				disconnect(s);
 				return NOT_WAITING;
 			}
 			printf("--------------------------------------------------------\n");
@@ -93,6 +94,10 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 				{
 					s->remaining_response = -1;
 					free(s->remaining_string);
+				}
+			} else {
+				if(s->disconnect){
+					disconnect(s);
 				}
 			}
 			printf("--------------------------------------------------------\n");
@@ -853,6 +858,24 @@ void disconnect(state st)
 	}
 
 	close(st->read_fds[2]);
+
+	switch(st->id) {
+		case CONNECT_CLIENT_STAGE_THREE_STATE:
+			get_app_context()->monitor_values[0]--;
+			break;
+		case CONNECT_CLIENT_STAGE_FOUR_STATE:
+			get_app_context()->monitor_values[0]--;
+			break;
+		case ATTEND_CLIENT_STATE:
+			get_app_context()->monitor_values[0]--;
+			break;
+		case CONNECT_ADMIN_STATE:
+			get_app_context()->monitor_values[1]--;
+			break;
+		case ATTEND_ADMIN_STATE:
+			get_app_context()->monitor_values[1]--;
+			break;
+	}
 	remove_state(sm, st);
 }
 
@@ -871,4 +894,73 @@ void disconnect_all_rec(state_machine *sm, node curr)
 void disconnect_all(state_machine *sm)
 {
 	disconnect_all_rec(sm, sm->states->head);
+}
+
+void log_event(state s, char *local_endpoint, char *remote_endpoint, char event, char *data){
+	//date_time La fecha y hora del evento del protocolo. El valor tiene la forma aaaa-mm-ddhh:mm:ss.fffZ, en donde aaaa = año, mm = mes, dd = día, hh = hora, mm = minuto, ss = segundo,fff = fracciones de segundo y Z significa Zulú. Zulú es otra forma de indicar la Hora universal coordinada (UTC).
+	//session-id        Un GUID que identifique de manera única la sesión de SMTP asociada con un evento de protocolo.
+	//sequence-number (es log_sequence en app_context)   Contador que se inicia en 0 y que aumenta para cada evento dentro de la misma sesión.
+	//local-endpoint    El extremo local de una sesión de POP3 o IMAP4. Se compone de una dirección IP y número de puerto TCP, con el formato siguiente: <dirección IP>:<puerto>.
+	//remote-endpoint   El extremo remoto de una sesión de POP3 o IMAP4. Se compone de una dirección IP y número de puerto TCP, con el formato siguiente: <dirección IP>:<puerto>.
+	//evento            Un único carácter que representa el evento del protocolo. Los valores posibles para el evento son los siguientes: +Conectar -Desconectar >Enviar <Recibir \*Información
+	//datos             Información de texto asociada al evento de POP3 o IMAP4.
+
+	//Build date_time
+	char *date_time = "0";
+
+
+	void *array[7] = {date_time,NULL,NULL,local_endpoint,remote_endpoint,NULL,data};
+	//Aumento el numero de secuencia
+	int sequence_number=++(get_app_context()->log_sequence);
+	long session_id = s->session_id;
+	//Armo el string concatenando con ","
+	char *log = calloc(1,1);
+	char *aux_number = calloc(1, 24);
+	int aux_len = 0;
+	int aux_increase_len = 0;
+	for(int i=0;i<7;i++)
+	{
+		switch(i){
+			case 0:
+			case 3:
+			case 4:
+			case 6:
+				aux_len = strlen(log);
+				aux_increase_len = strlen(array[i]) + 2;
+				realloc(log,aux_len + aux_increase_len);//1 por la coma y otro por el final de string
+				memset(log + aux_len + 1, '\0', aux_increase_len);
+				strcat(log,",");
+				strcat(log, array[i]);
+				*(log+strlen(log)+1) = '\0';
+				break;
+			case 1:
+				sprintf(aux_number,"%ld",session_id);
+				aux_len = strlen(log);
+				aux_increase_len = strlen(aux_number) + 2;
+				realloc(log,aux_len + aux_increase_len);
+				memset(log + aux_len + 1, '\0', aux_increase_len);
+				strcat(log,",");
+				strcat(log, aux_number);
+				memset(aux_number,'\0',24);
+				break;
+			case 2:
+				sprintf(aux_number,"%d",sequence_number);
+				aux_len = strlen(log);
+				aux_increase_len = strlen(aux_number) + 2;
+				realloc(log,aux_len + aux_increase_len);
+				memset(log + aux_len + 1, '\0', aux_increase_len);
+				strcat(log,",");
+				strcat(log, aux_number);
+				memset(aux_number,'\0',24);
+				break;
+			case 5:
+				aux_len = strlen(log);
+				aux_increase_len = 3;//1 por el char, 1 por la coma y otro por el final del string
+				realloc(log,aux_len + aux_increase_len);
+				memset(log + aux_len + 1, '\0', aux_increase_len);
+				strcat(log,",");
+				*(log+strlen(log)+1) = event;
+				break;
+		}
+	}
 }

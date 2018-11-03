@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <string.h>
+#include <sys/time.h>
 #include "include/lib.h"
 
 
@@ -247,4 +248,10 @@ int isValidMediaType(char **mediaType)
 		return 0;
 	}
 	return 1;
+}
+
+long getMicrotime(){
+	struct timeval currentTime;
+	gettimeofday(&currentTime, NULL);
+	return currentTime.tv_sec * (int)1e6 + currentTime.tv_usec;
 }

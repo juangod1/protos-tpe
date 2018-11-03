@@ -116,4 +116,6 @@ state_code ERROR_on_leave(state s);
 
 void debug_print_state(int state);
 
+void log_event(state s, char *local_endpoint, char *remote_endpoint, char event, char *data);
+
 #endif //PROTOS_TPE_TOPLEVELSTATEMACHINE_H

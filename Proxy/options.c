@@ -36,6 +36,7 @@ void initialize_app_context()
 	app_context->has_to_query_dns      = 0;
 	app_context->pipelining            = true;
 	app_context->pop3filter_version    = version_number;
+	app_context->log_sequence          = 0;
 	char *monitoreo[5]                 = {"1 - Connected muas", "2 - Connected Admins", "3 - Cantidad de muas historicos", "4 - Bytes totales transferidos",
 	                                      "5 - Missing"};
 	app_context->transform_status = false;

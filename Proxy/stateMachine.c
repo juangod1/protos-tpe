@@ -5,12 +5,14 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <stdbool.h>
+#include <sys/time.h>
 #include "include/stateMachine.h"
 #include "include/error.h"
 #include "include/stateSelector.h"
 #include "include/state.h"
 #include "include/MasterStateMachine.h"
 #include "include/error.h"
+#include "../Shared/include/lib.h"
 
 state new_state(state_code id, execution_state (*on_arrive)(state s, file_descriptor fd, int is_read),
                 execution_state (*on_resume)(state s, file_descriptor fd, int is_read), state_code (*on_leave)(state s))
@@ -45,6 +47,7 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
 	new->user           = NULL;
 	new->pass           = NULL;
 	new->disconnect     = 0;
+	new->session_id     = getMicrotime();
 	new->remaining_response = 0;
 	new->remaining_string = NULL;
 	return new;

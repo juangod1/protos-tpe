@@ -26,6 +26,7 @@ typedef struct
 	int             transform_status;
 	char            *pop3filter_version;
 	int             isIPV6;
+	int				log_sequence;
 } app_context_t;
 
 typedef app_context_t *app_context_p;

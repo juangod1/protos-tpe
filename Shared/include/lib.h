@@ -44,6 +44,7 @@ void recursiveDoublePointerFree(char **splitMediaType);
 
 int isValidMediaType(char **mediaType);
 
+long getMicrotime();
 
 size_t fetchInputFromStdin(char **bufferPosition, size_t size);
 

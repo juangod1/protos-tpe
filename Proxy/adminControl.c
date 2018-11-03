@@ -217,6 +217,10 @@ void process_request(state s, file_descriptor fd)
 	buffer_p buffer               = s->buffers[0];
 	char     response[MAX_BUFFER] = {0};
 	buffer_write_string(response, buffer);
+	char*p;
+	if((p = strchr(response,'\n')) != NULL){
+		*p = '\0';
+	}
 	printf("%s", response);
 	//Separo el string de response por espacios y analizo cada cosa.
 	char *command   = NULL;
