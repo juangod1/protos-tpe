@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "testLib.h"
+#include "../testLib.h"
 #include "mediaTypes.h"
 
 

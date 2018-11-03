@@ -187,7 +187,8 @@ char **divideMediaRangeList(char *mediaTypeList)
 
 int mediaTypeBelongsToMediaRange(char **mediaType, char **mediaRange)
 {
-	if(mediaType == NULL || mediaRange == NULL)
+
+    if(mediaType == NULL || mediaRange == NULL)
 	{
 		return 0;
 	}
@@ -200,6 +201,7 @@ int mediaTypeBelongsToMediaRange(char **mediaType, char **mediaRange)
 	{
 		mediaTypeToken  = mediaType[i];
 		mediaRangeToken = mediaRange[i];
+
 		if(mediaRangeToken == NULL)
 		{
 			return 1;

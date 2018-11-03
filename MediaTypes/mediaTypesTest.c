@@ -1,4 +1,5 @@
-#include "mediaTypesTest.h"
+#include "include/mediaTypesTest.h"
+#include "../Shared/include/lib.h"
 
 
 char * testMediaType[2];
