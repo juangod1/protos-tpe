@@ -5,6 +5,7 @@
 Makefile
 control
 proxy
+mediatypes
 parser
 CMakeCache.txt
 cmake_install.cmake
