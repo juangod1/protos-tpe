@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <netdb.h>
+#include <ctype.h>
 
 
 state_machine *sm;
@@ -155,7 +156,7 @@ void *query_dns(void *st)
 			.ai_next      = NULL,
 	};
 
-	char            buff[7];
+	char buff[7];
 	snprintf(buff, sizeof(buff), "%hu", get_app_context()->origin_port);
 	getaddrinfo(get_app_context()->address_server_string, buff, &hints, &(get_app_context()->addr));
 
@@ -175,13 +176,15 @@ void *query_dns(void *st)
 	{
 		write(((int *) s->pipes)[1], &buff2, 1);
 		char buf[10];
-		if(inet_pton(AF_INET6, s->current->ai_addr->sa_data, buf)){
+		if(inet_pton(AF_INET6, s->current->ai_addr->sa_data, buf))
+		{
 			printf("DNS found IPV6 address.\n");
-			get_app_context()->isIPV6=true;
+			get_app_context()->isIPV6 = true;
 		}
-		else{
+		else
+		{
 			printf("DNS found IPV4 address.\n");
-			get_app_context()->isIPV6=false;
+			get_app_context()->isIPV6 = false;
 		}
 	}
 }
@@ -275,7 +278,8 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 		}
 	}
 
-	state st = new_state(ATTEND_CLIENT_STATE, ATTEND_CLIENT_on_arrive, ATTEND_CLIENT_on_resume, ATTEND_CLIENT_on_leave);
+	state st = new_state(CONNECT_CLIENT_STAGE_FOUR_STATE, CONNECT_CLIENT_STAGE_FOUR_on_arrive,
+	                     CONNECT_CLIENT_STAGE_FOUR_on_resume, CONNECT_CLIENT_STAGE_FOUR_on_leave);
 	st->read_fds[0]  = s->read_fds[0];
 	st->write_fds[0] = s->read_fds[0];
 	st->read_fds[1]  = fd;
@@ -284,9 +288,8 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 	st->parser_pid = start_parser(get_app_context()->command_specification, ret, s);
 	st->read_fds[2]  = ret[0];
 	st->write_fds[2] = ret[1];
+	st->data_1 = false;
 	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
-	buffer_initialize(&(st->buffers[1]), BUFFER_SIZE);
-	buffer_initialize(&(st->buffers[2]), BUFFER_SIZE);
 
 	add_state(sm, st);
 
@@ -304,6 +307,84 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_resume(state s, file_descriptor fd
 
 state_code CONNECT_CLIENT_STAGE_THREE_on_leave(state s)
 {
+	remove_state(sm, s);
+}
+
+execution_state CONNECT_CLIENT_STAGE_FOUR_on_arrive(state s, file_descriptor fd, int is_read)
+{
+	//      Uses data_1 to store internal state of STAGE_FOUR
+	//    ****************************************************
+	//    ***   data_1 = 0  ==>   Read +OK from Origin     ***
+	//    ***   data_1 = 1  ==>   Write +OK to MUA         ***
+	//    ***   data_1 = 2  ==>   Write CAPA to Origin     ***
+	//    ***   data_1 = 3  ==>   Process CAPA reply       ***
+	//    ****************************************************
+
+	s->data_1 = 0;
+	s->exec_state = WAITING;
+	return WAITING;
+}
+
+execution_state CONNECT_CLIENT_STAGE_FOUR_on_resume(state s, file_descriptor fd, int is_read)
+{
+	//
+	// It is assumed that each line received from CAPA
+	// fits in a single buffer (50 octets).
+	//
+	// It is assumed that the content after the +OK greeting
+	// fits in a single buffer (50 octets).
+	//
+	switch(s->data_1){
+		case 0: // Read +OK from Origin
+			buffer_read(fd,s->buffers[0]);
+			s->data_1=1;
+			return WAITING;
+		case 1: // Write +OK to MUA
+			buffer_write(fd,s->buffers[0]);
+			s->data_1=2;
+			return WAITING;
+		case 2: // Write CAPA to Origin
+			buffer_read_string("CAPA\n",s->buffers[0]);
+			buffer_write(fd,s->buffers[0]);
+			s->data_1=3;
+			get_app_context()->pipelining=false;
+			return WAITING;
+		case 3: // Process CAPA reply
+			buffer_read_until_string(fd,s->buffers[0],"\n");
+			char buf[BUFFER_SIZE]={0};
+			buffer_write_string(buf,s->buffers[0]);
+			buffer_clean(s->buffers[0]);
+
+			int i=0;
+			while(i<BUFFER_SIZE) buf[i++]=tolower((int)buf[i]);
+
+			if(!strcmp(buf,"pipelining\r\n")){
+				get_app_context()->pipelining=true;
+				return WAITING;
+			}
+			else if(!strcmp(buf,".\r\n")){
+				return NOT_WAITING;
+			}
+			else{
+				return WAITING;
+			}
+	}
+}
+
+state_code CONNECT_CLIENT_STAGE_FOUR_on_leave(state s)
+{
+	state st = new_state(ATTEND_CLIENT_STATE, ATTEND_CLIENT_on_arrive, ATTEND_CLIENT_on_resume, ATTEND_CLIENT_on_leave);
+	st->read_fds[0]  = s->read_fds[0];
+	st->write_fds[0] = s->write_fds[0];
+	st->read_fds[1]  = s->read_fds[1];
+	st->write_fds[1] = s->write_fds[1];
+	st->read_fds[2]  = s->read_fds[2];
+	st->write_fds[2] = s->write_fds[2];
+	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[1]), BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[2]), BUFFER_SIZE);
+
+	add_state(sm, st);
 	remove_state(sm, s);
 }
 
@@ -656,6 +737,23 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 		case CONNECT_CLIENT_STAGE_THREE_STATE:
 			add_read_fd(curr->st->read_fds[1]);
 			break;
+		case CONNECT_CLIENT_STAGE_FOUR_STATE:
+			switch(curr->st->data_1)
+			{
+				case 0: // read +OK from Origin
+					add_read_fd(curr->st->read_fds[1]);
+					break;
+				case 1: // send +OK to MUA
+					add_write_fd(curr->st->write_fds[0]);
+					break;
+				case 2: // send CAPA to Origin
+					add_write_fd(curr->st->write_fds[1]);
+					break;
+				case 3: // process CAPA reply
+					add_read_fd(curr->st->read_fds[1]);
+					break;
+			}
+			break;
 		case ATTEND_ADMIN_STATE:
 			if(buffer_is_empty(curr->st->buffers[0]))
 			{
@@ -720,6 +818,9 @@ void debug_print_state(int state)
 			break;
 		case CONNECT_CLIENT_STAGE_THREE_STATE:
 			msg = "CONNECT_CLIENT_STAGE_THREE_STATE";
+			break;
+		case CONNECT_CLIENT_STAGE_FOUR_STATE:
+			msg = "CONNECT_CLIENT_STAGE_FOUR_STATE";
 			break;
 		case ATTEND_ADMIN_STATE:
 			msg = "ATTEND_ADMIN_STATE";

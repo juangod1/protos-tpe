@@ -26,6 +26,12 @@
  */
 #define CONNECT_CLIENT_STAGE_THREE_STATE 3
 
+/* FD List
+ *  read_fds[0] = MUA_CONNECT_SOCKET
+ *  read_fds[1] = connect_origin_sock
+ */
+#define CONNECT_CLIENT_STAGE_FOUR_STATE 7
+
 
 /* FD List
  *  read_fds[0] = ADMIN_read_fd
@@ -65,6 +71,12 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 execution_state CONNECT_CLIENT_STAGE_THREE_on_resume(state s, file_descriptor fd, int is_read);
 
 state_code CONNECT_CLIENT_STAGE_THREE_on_leave(state s);
+
+execution_state CONNECT_CLIENT_STAGE_FOUR_on_arrive(state s, file_descriptor fd, int is_read);
+
+execution_state CONNECT_CLIENT_STAGE_FOUR_on_resume(state s, file_descriptor fd, int is_read);
+
+state_code CONNECT_CLIENT_STAGE_FOUR_on_leave(state s);
 
 execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read);
 

@@ -403,7 +403,7 @@ void print_buffer(buffer_p b)
 
 int buffer_write_string(char *string, buffer_p buffer)
 {
-	int  characters_to_write = buffer->count - 1;
+	int  characters_to_write = buffer->count ;
 	char *write_ptr          = buffer->data_ptr;
 	int  i                   = 0;
 
@@ -505,4 +505,9 @@ int buffer_starts_with_string(char *string, buffer_p buffer)
 		c = *string;
 	}
 	return true;
+}
+
+void buffer_clean(buffer_p buff){
+	buff->count=0;
+	buff->data_ptr = buff->data_start;
 }

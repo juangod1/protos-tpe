@@ -58,8 +58,8 @@ struct stateStruct
 	char            *pass;
 	struct addrinfo *current;
 	int             disconnect;
-	int				remaining_response;
-	char			*remaining_string;
+	int             remaining_response;
+	char            *remaining_string;
 };
 
 

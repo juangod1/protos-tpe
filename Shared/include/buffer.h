@@ -13,13 +13,13 @@ struct buffer_t
 
 int buffer_initialize(buffer_p *buffer, size_t size);
 
-int buffer_read_until_string(int file_descriptor, buffer_p buffer, char * str);
+int buffer_read_until_string(int file_descriptor, buffer_p buffer, char *str);
 
 int buffer_finalize(buffer_p buffer);
 
 int buffer_starts_with_string(char *string, buffer_p buffer);
 
-int buffer_ends_with_string(buffer_p buffer, char * string);
+int buffer_ends_with_string(buffer_p buffer, char *string);
 
 int buffer_indicates_parsable_message(buffer_p buffer);
 
@@ -48,5 +48,7 @@ int buffer_read_until_char(int file_descriptor, buffer_p buffer, char ch);
 int buffer_indicates_start_of_capa(buffer_p buffer);
 int buffer_indicates_start_of_list(buffer_p buffer);
 int buffer_indicates_start_of_multiline_message(buffer_p buffer);
+
+void buffer_clean(buffer_p buff);
 
 #endif
