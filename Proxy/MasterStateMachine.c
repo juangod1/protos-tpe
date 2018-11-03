@@ -129,6 +129,7 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
 	}
 
 	//NEW ADMIN CONNECTED
+	log_event(s,'+',"Seconecto");
 	get_app_context()->monitor_values[1] += 1;
 
 	state st = new_state(ATTEND_ADMIN_STATE, ATTEND_ADMIN_on_arrive, ATTEND_ADMIN_on_resume, ATTEND_ADMIN_on_leave);
@@ -903,8 +904,8 @@ void disconnect_all(state_machine *sm)
 	disconnect_all_rec(sm, sm->states->head);
 }
 
-void log_event(state s, char *local_endpoint, char *remote_endpoint, char event, char *data){
-	//date_time La fecha y hora del evento del protocolo. El valor tiene la forma aaaa-mm-ddhh:mm:ss.fffZ, en donde aaaa = año, mm = mes, dd = día, hh = hora, mm = minuto, ss = segundo,fff = fracciones de segundo y Z significa Zulú. Zulú es otra forma de indicar la Hora universal coordinada (UTC).
+void log_event(state s, char event, char *data){
+	//date_time_string La fecha y hora del evento del protocolo. El valor tiene la forma aaaa-mm-ddhh:mm:ss.fffZ, en donde aaaa = año, mm = mes, dd = día, hh = hora, mm = minuto, ss = segundo,fff = fracciones de segundo y Z significa Zulú. Zulú es otra forma de indicar la Hora universal coordinada (UTC).
 	//session-id        Un GUID que identifique de manera única la sesión de SMTP asociada con un evento de protocolo.
 	//sequence-number (es log_sequence en app_context)   Contador que se inicia en 0 y que aumenta para cada evento dentro de la misma sesión.
 	//local-endpoint    El extremo local de una sesión de POP3 o IMAP4. Se compone de una dirección IP y número de puerto TCP, con el formato siguiente: <dirección IP>:<puerto>.
@@ -912,11 +913,65 @@ void log_event(state s, char *local_endpoint, char *remote_endpoint, char event,
 	//evento            Un único carácter que representa el evento del protocolo. Los valores posibles para el evento son los siguientes: +Conectar -Desconectar >Enviar <Recibir \*Información
 	//datos             Información de texto asociada al evento de POP3 o IMAP4.
 
-	//Build date_time
-	char *date_time = "0";
+	app_context_p app_context = get_app_context();
+	//Build date_time_string, no utilizamos fff porque no tenemos esa precision.
+	char date_time_string[21] = {0};
+	time_t now = time(NULL);
+	struct tm *t = localtime(&now);
+	strftime(date_time_string, sizeof(date_time_string)-1, "%Y-%m-%d%H:%M:%S", t);
+	strcat(date_time_string, ".Z");
 
+	char *socket_address = NULL;
+	if(s->connection_addrinfo->sa_family == AF_INET)
+	{
+		struct sockaddr_in *addr_in = (struct sockaddr_in *)s->connection_addrinfo;
+		socket_address = malloc(INET_ADDRSTRLEN);
+		inet_ntop(AF_INET, &(addr_in->sin_addr), socket_address, INET_ADDRSTRLEN);
+	}
+	else
+	{
+		struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)s->connection_addrinfo;
+		socket_address = malloc(INET6_ADDRSTRLEN);
+		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), socket_address, INET6_ADDRSTRLEN);
+	}
 
-	void *array[7] = {date_time,NULL,NULL,local_endpoint,remote_endpoint,NULL,data};
+	char aux_port[6] = {0};
+	//Build local-endpoint string
+	char *local_endpoint = calloc(1,2);
+	*local_endpoint = '<';
+	int old_len = strlen(local_endpoint);
+	int increase_len = strlen(socket_address) + 4;//1 por el > otro pot el : otro el 0 y otro por el <
+	local_endpoint = realloc(local_endpoint, old_len + increase_len);
+	memset(local_endpoint+old_len, '\0', increase_len);
+	strcat(local_endpoint,socket_address);
+	strcat(local_endpoint,">:<");
+	old_len = strlen(local_endpoint);
+	sprintf(aux_port, "%hu", app_context->local_port);
+	increase_len = strlen(aux_port) + 2;// 1 por > y otro por 0
+	local_endpoint = realloc(local_endpoint,old_len + increase_len);
+	memset(local_endpoint+old_len, '\0', increase_len);
+	strcat(local_endpoint, aux_port);
+	strcat(local_endpoint,">");
+	memset(aux_port,'\0',6);
+
+	//Build remote-endpoint string
+	char *remote_endpoint = calloc(1,2);
+	*remote_endpoint = '<';
+	old_len = strlen(remote_endpoint);
+	increase_len = strlen(app_context->pop3_path) + 4;//1 por el > otro pot el : otro el 0 y otro por el <
+	remote_endpoint = realloc(remote_endpoint, old_len + increase_len);
+	memset(remote_endpoint+old_len, '\0', increase_len);
+	strcat(remote_endpoint,app_context->pop3_path);
+	strcat(remote_endpoint,">:<");
+	old_len = strlen(remote_endpoint);
+	sprintf(aux_port,"%hu",app_context->origin_port);
+	increase_len = strlen(aux_port) + 2;// 1 por > y otro por 0
+	remote_endpoint = realloc(remote_endpoint, old_len + increase_len);
+	memset(remote_endpoint+old_len, '\0', increase_len);
+	strcat(remote_endpoint,aux_port);
+	strcat(remote_endpoint,">");
+
+	void *array[7] = {date_time_string,NULL,NULL,local_endpoint,remote_endpoint,NULL,data};
 	//Aumento el numero de secuencia
 	int sequence_number=++(get_app_context()->log_sequence);
 	long session_id = s->session_id;
@@ -929,23 +984,28 @@ void log_event(state s, char *local_endpoint, char *remote_endpoint, char event,
 	{
 		switch(i){
 			case 0:
+				aux_len = strlen(log);
+				aux_increase_len = strlen(array[i]) + 1;//1 por la coma y otro por el final de string
+				log = realloc(log,aux_len + aux_increase_len);
+				memset(log + aux_len, '\0', aux_increase_len);
+				strcat(log, array[i]);
+				break;
 			case 3:
 			case 4:
 			case 6:
 				aux_len = strlen(log);
-				aux_increase_len = strlen(array[i]) + 2;
-				realloc(log,aux_len + aux_increase_len);//1 por la coma y otro por el final de string
-				memset(log + aux_len + 1, '\0', aux_increase_len);
+				aux_increase_len = strlen(array[i]) + 2;//1 por la coma y otro por el final de string
+				log = realloc(log,aux_len + aux_increase_len);
+				memset(log + aux_len, '\0', aux_increase_len);
 				strcat(log,",");
 				strcat(log, array[i]);
-				*(log+strlen(log)+1) = '\0';
 				break;
 			case 1:
 				sprintf(aux_number,"%ld",session_id);
 				aux_len = strlen(log);
 				aux_increase_len = strlen(aux_number) + 2;
-				realloc(log,aux_len + aux_increase_len);
-				memset(log + aux_len + 1, '\0', aux_increase_len);
+				log = realloc(log,aux_len + aux_increase_len);
+				memset(log + aux_len, '\0', aux_increase_len);
 				strcat(log,",");
 				strcat(log, aux_number);
 				memset(aux_number,'\0',24);
@@ -954,8 +1014,8 @@ void log_event(state s, char *local_endpoint, char *remote_endpoint, char event,
 				sprintf(aux_number,"%d",sequence_number);
 				aux_len = strlen(log);
 				aux_increase_len = strlen(aux_number) + 2;
-				realloc(log,aux_len + aux_increase_len);
-				memset(log + aux_len + 1, '\0', aux_increase_len);
+				log = realloc(log,aux_len + aux_increase_len);
+				memset(log + aux_len, '\0', aux_increase_len);
 				strcat(log,",");
 				strcat(log, aux_number);
 				memset(aux_number,'\0',24);
@@ -963,11 +1023,17 @@ void log_event(state s, char *local_endpoint, char *remote_endpoint, char event,
 			case 5:
 				aux_len = strlen(log);
 				aux_increase_len = 3;//1 por el char, 1 por la coma y otro por el final del string
-				realloc(log,aux_len + aux_increase_len);
-				memset(log + aux_len + 1, '\0', aux_increase_len);
+				log = realloc(log,aux_len + aux_increase_len);
+				memset(log + aux_len, '\0', aux_increase_len);
 				strcat(log,",");
-				*(log+strlen(log)+1) = event;
+				*(log+(size_t)strlen(log)) = event;
 				break;
 		}
 	}
+	printf("%s\n", log);
+	free(socket_address);
+	free(local_endpoint);
+	free(remote_endpoint);
+	free(aux_number);
+	free(log);
 }
