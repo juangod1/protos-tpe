@@ -132,7 +132,7 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
 	}
 
 	//NEW ADMIN CONNECTED
-	log_event(s, '+', "Seconecto");
+	log_event(s, '+', "Connection");
 	get_app_context()->monitor_values[1] += 1;
 
 	state st = new_state(CONNECT_ADMIN_STAGE_TWO_STATE, CONNECT_ADMIN_STAGE_TWO_on_arrive,
@@ -463,7 +463,7 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
 	{
 		printf("Unable to connect to dns origin host.\n");
 		shutdown(s->read_fds[0],SHUT_RDWR);
-		return WAITING;
+		return NOT_WAITING;
 	};
 
 	state st = new_state(CONNECT_CLIENT_STAGE_THREE_STATE, CONNECT_CLIENT_STAGE_THREE_on_arrive,
