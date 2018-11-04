@@ -159,10 +159,11 @@ int text_response_BS(int response_state, char *content, state s, file_descriptor
 int parse_message(const char *str, char sep, char **command, char **parameter)
 {
 	int          count = 0;
+	int 		escape_found = 0;
 	unsigned int start = 0, stop;
 	for(stop = 0; str[stop]; stop++)
 	{
-		if(str[stop] == sep)
+		if((str[stop] == sep && escape_found == 0))
 		{
 			if(count == 1)
 			{
@@ -177,6 +178,11 @@ int parse_message(const char *str, char sep, char **command, char **parameter)
             } else {
                 return 1;
 			}
+		}
+		else if(str[stop] == '@' && escape_found == 0)
+		{
+				escape_found = 1;
+				start++;
 		}
 	}
 	if(count == 0)
