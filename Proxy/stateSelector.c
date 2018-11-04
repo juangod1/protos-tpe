@@ -38,7 +38,7 @@ void select_state(int *ret)
 {
 	set_up_fd_sets(&read_fds, &write_fds);
 	int select_ret;
-	select_ret = pselect(MAX_FD + 1, &read_fds, &write_fds, NULL, NULL, NULL);
+	select_ret = select(MAX_FD + 1, &read_fds, &write_fds, NULL, NULL);
 	if(select_ret == -1)
 	{
 		perror("pselect error.");
