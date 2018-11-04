@@ -53,6 +53,11 @@ void destroy_app_context()
 {
 	free(app_context->command_specification);
 	free(app_context->addr);
+	free(app_context->replacement_message);
+	free(app_context->management_path);
+	free(app_context->error_path);
+	free(app_context->pop3_path);
+	free(app_context->censored_media_types);
 	for(int i=0; i< 5; i++)
 	{
 		free(app_context->monitor[i]);
