@@ -462,7 +462,7 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
 	else
 	{
 		printf("Unable to connect to dns origin host.\n");
-		disconnect_client(s);
+		shutdown(s->read_fds[0],SHUT_RDWR);
 		return WAITING;
 	};
 
