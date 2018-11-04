@@ -286,6 +286,24 @@ state_code CONNECT_CLIENT_on_leave(state s)
 {
 }
 
+execution_state CONNECT_CLIENT_CONN_REFUSED_on_arrive(state s, file_descriptor fd, int is_read)
+{
+	buffer_initialize(&(s->buffers[0]),BUFFER_SIZE);
+	buffer_read_string("-ERR Connection Refused\r\n",(s->buffers[0]));
+	buffer_write(fd,s->buffers[0]);
+	return NOT_WAITING;
+}
+
+execution_state CONNECT_CLIENT_CONN_REFUSED_on_resume(state s, file_descriptor fd, int is_read)
+{
+}
+
+state_code CONNECT_CLIENT_CONN_REFUSED_on_leave(state s)
+{
+	shutdown(s->write_fds[0],SHUT_RDWR);
+	remove_state(sm,s);
+}
+
 execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd, int is_read)
 {
 	if(get_app_context()->has_to_query_dns)
@@ -462,7 +480,10 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
 	else
 	{
 		printf("Unable to connect to dns origin host.\n");
-		shutdown(s->read_fds[0],SHUT_RDWR);
+		state st = new_state(CONNECT_CLIENT_CONN_REFUSED_STATE, CONNECT_CLIENT_CONN_REFUSED_on_arrive,
+		                     CONNECT_CLIENT_CONN_REFUSED_on_resume, CONNECT_CLIENT_CONN_REFUSED_on_leave);
+		st->write_fds[0] = s->read_fds[0];
+		add_state(sm,st);
 		return NOT_WAITING;
 	};
 
@@ -847,6 +868,9 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				}
 			}
 			break;
+		case CONNECT_CLIENT_CONN_REFUSED_STATE:
+			add_write_fd(curr->st->write_fds[0]);
+			break;
 		case CONNECT_CLIENT_STATE:
 			add_read_fd(curr->st->read_fds[0]);
 			break;
@@ -943,6 +967,9 @@ void debug_print_state(int state)
 			break;
 		case CONNECT_CLIENT_STAGE_FOUR_STATE:
 			msg = "CONNECT_CLIENT_STAGE_FOUR_STATE";
+			break;
+		case CONNECT_CLIENT_CONN_REFUSED_STATE:
+			msg = "CONNECT_CLIENT_CONN_REFUSED_STATE";
 			break;
 		case ATTEND_ADMIN_STATE:
 			msg = "ATTEND_ADMIN_STATE";

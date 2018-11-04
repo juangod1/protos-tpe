@@ -64,6 +64,8 @@
  */
 #define ATTEND_CLIENT_STATE 6
 
+#define CONNECT_CLIENT_CONN_REFUSED_STATE 9
+
 
 void disconnect_all(state_machine *sm);
 
@@ -74,6 +76,12 @@ state_machine *initialize_master_machine(file_descriptor MUA_sock, file_descript
 void set_up_fd_sets(fd_set *read_fds, fd_set *write_fds);
 
 void disconnect(state st);
+
+execution_state CONNECT_CLIENT_CONN_REFUSED_on_arrive(state s, file_descriptor fd, int is_read);
+
+execution_state CONNECT_CLIENT_CONN_REFUSED_on_resume(state s, file_descriptor fd, int is_read);
+
+state_code CONNECT_CLIENT_CONN_REFUSED_on_leave(state s);
 
 execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd, int is_read);
 
