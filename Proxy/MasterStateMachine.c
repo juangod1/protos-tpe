@@ -503,8 +503,10 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					// If EOF received, MUA read and Origin write must be closed
 					s->disconnects[0]=true;
 					shutdown(s->read_fds[0],SHUT_RD);
+					s->read_fds[0]=-1;
 					s->disconnects[3]=true;
 					shutdown(s->write_fds[1],SHUT_WR);
+					s->write_fds[1]=-1;
 
 					return WAITING;
 				}
@@ -524,8 +526,10 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					// If EOF received, Origin read and Origin write must be closed
 					s->disconnects[2]=true;
 					shutdown(s->read_fds[1],SHUT_RD);
+					s->read_fds[1]=-1;
 					s->disconnects[3]=true;
 					shutdown(s->write_fds[1],SHUT_WR);
+					s->write_fds[1]=-1;
 
 					if(!IS_PROCESSING){
 						disconnect(s);
@@ -600,7 +604,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					IS_PROCESSING = false;
 					close(s->read_fds[2]);
 					s->read_fds[2]  = -1;
-					s->write_fds[2] = -1;
+					s->write_fds[2]  = -1;
 
 					int ret = check_parser_exit_status(s->parser_pid);
 					if(ret == STANDARD)
@@ -693,12 +697,17 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					{
 						s->pipelining_data = true;
 					}
+					s->write_fds[2]=-1;
 				}
 			}
 			break;
 	}
 	if(!disconnection && IS_NEW_LINE && !IS_PROCESSING) //CREATE TRANSFORM
 	{
+		if(s->read_fds[2] && s->write_fds[2])
+		{
+			printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nPorque sos tan mierda\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+		}
 		char *command = (s->data_3 && get_app_context()->transform_status) ? get_app_context()->command_specification
 		                                                                   : "cat";
 		int  pipes[2];
@@ -973,6 +982,13 @@ void disconnect(state st)
 	}
 
 	close(st->read_fds[2]);
+
+	st->read_fds[0]=-1;
+	st->read_fds[1]=-1;
+	st->read_fds[2]=-1;
+	st->write_fds[0]=-1;
+	st->write_fds[1]=-1;
+	st->write_fds[2]=-1;
 
 	switch(st->id)
 	{
