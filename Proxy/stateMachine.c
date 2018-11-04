@@ -52,6 +52,10 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
 	new->remaining_response  = 0;
 	new->remaining_string    = NULL;
 	new->connection_addrinfo = malloc(sizeof(new->connection_addrinfo));
+	new->disconnects[0] = false;
+	new->disconnects[1] = false;
+	new->disconnects[2] = false;
+	new->disconnects[3] = false;
 	return new;
 }
 

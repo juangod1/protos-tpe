@@ -474,7 +474,7 @@ state_code CONNECT_CLIENT_STAGE_TWO_on_leave(state s)
 
 execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read)
 {
-	int disconnection = s->disconnect;
+	int disconnection = false;
 	switch(is_read)
 	{
 		case true:
@@ -487,7 +487,13 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					printf("--------------------------------------------------------\n");
 					printf("Client disconnected \n");
 					printf("--------------------------------------------------------\n");
-					disconnect(s);
+
+					// If EOF received, MUA read and Origin write must be closed
+					s->disconnects[0]=true;
+					shutdown(s->read_fds[0],SHUT_RD);
+					s->disconnects[3]=true;
+					shutdown(s->write_fds[1],SHUT_WR);
+
 					return WAITING;
 				}
 				printf("--------------------------------------------------------\n");
@@ -502,7 +508,18 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					printf("--------------------------------------------------------\n");
 					printf("Origin disconnected \n");
 					printf("--------------------------------------------------------\n");
-					return NOT_WAITING;
+
+					// If EOF received, Origin read and Origin write must be closed
+					s->disconnects[2]=true;
+					shutdown(s->read_fds[1],SHUT_RD);
+					s->disconnects[3]=true;
+					shutdown(s->write_fds[1],SHUT_WR);
+
+					if(!IS_PROCESSING){
+						disconnect(s);
+					}
+
+					return WAITING;
 				}
 				if(rd < 0)
 				{
@@ -582,14 +599,17 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					{
 						printf("FAIL: BAD PARSER EXIT\n");
 					}
-					/*printf("--------------------------------------------------------\n");
-					printf("Transform disconnected \n");
-					printf("--------------------------------------------------------\n");
-					return NOT_WAITING;*/
+
+					if(s->disconnects[2]){
+						disconnect(s);
+						disconnection=true;
+					}
 				}
-				printf("--------------------------------------------------------\n");
-				printf("Read buffer content from Transform: \n");
-				print_buffer(s->buffers[2]);
+				else{
+					printf("--------------------------------------------------------\n");
+					printf("Read buffer content from Transform: \n");
+					print_buffer(s->buffers[2]);
+				}
 			}
 			break;
 		case false:
@@ -615,6 +635,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				if(written_size < expected_size && s->disconnect)
 				{
 					disconnect(s);
+					disconnection=true;
 				}
 				get_app_context()->monitor_values[3] += written_size;
 			}
@@ -715,22 +736,29 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 					if(curr->st->write_fds[1] > 0)
 					{
 						printf("(ORIGIN WRITE) Buffer 1 is not empty ==> ");
-						if(get_app_context()->pipelining)
+						if(ORIGIN_WRITE_DISCONNECTED)
 						{
-							printf("OS has Pipelining enabled. Added origin write\n");
-							add_write_fd(curr->st->write_fds[1]); // Origin write
+							printf("Origin Write disconnected, fd not added.\n");
 						}
 						else
 						{
-							printf("OS has no Pipelining enabled. ");
-							if(curr->st->pipelining_data)
+							if(get_app_context()->pipelining)
 							{
-								printf("Added origin write\n");
+								printf("OS has Pipelining enabled. Added origin write\n");
 								add_write_fd(curr->st->write_fds[1]); // Origin write
 							}
 							else
 							{
-								printf("Waiting for server to process\n");
+								printf("OS has no Pipelining enabled. ");
+								if(curr->st->pipelining_data)
+								{
+									printf("Added origin write\n");
+									add_write_fd(curr->st->write_fds[1]); // Origin write
+								}
+								else
+								{
+									printf("Waiting for server to process\n");
+								}
 							}
 						}
 					}
@@ -740,14 +768,18 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 			{
 				if(buffer_is_empty(curr->st->buffers[1]))
 				{
-					if(curr->st->read_fds[1] > 0)
-					{
-						printf("(ORIGIN READ) Buffer 2 is empty ==> ");
-						if(!curr->st->disconnect)
-						{
-							add_read_fd(curr->st->read_fds[1]);
-						} // ORIGIN read
+					if(ORIGIN_READ_DISCONNECTED){
+						printf("Origin read disconnected, no fd added.");
 					}
+					else{
+						if(curr->st->read_fds[1] > 0)
+						{
+							printf("(ORIGIN READ) Buffer 2 is empty ==> ");
+							add_read_fd(curr->st->read_fds[1]);
+							// ORIGIN read
+						}
+					}
+
 				}
 				else
 				{
@@ -778,10 +810,15 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				}
 				else
 				{
-					if(curr->st->write_fds[0] > 0)
-					{
-						printf("(MUA WRITE) Buffer 3 is not empty ==> ");
-						add_write_fd(curr->st->write_fds[0]); // MUA write
+					if(MUA_WRITE_DISCONNECTED){
+						printf("MUA write disconnected, fd not added.");
+					}
+					else{
+						if(curr->st->write_fds[0] > 0)
+						{
+							printf("(MUA WRITE) Buffer 3 is not empty ==> ");
+							add_write_fd(curr->st->write_fds[0]); // MUA write
+						}
 					}
 				}
 			}

@@ -8,6 +8,11 @@
 #include <sys/select.h>
 #include "stateMachine.h"
 
+#define MUA_READ_DISCONNECTED curr->st->disconnects[0]
+#define MUA_WRITE_DISCONNECTED curr->st->disconnects[1]
+#define ORIGIN_READ_DISCONNECTED curr->st->disconnects[2]
+#define ORIGIN_WRITE_DISCONNECTED curr->st->disconnects[3]
+
 /* FD List
  *  read_fds[0] = MUA_CONNECT_SOCKET
  */

@@ -64,6 +64,7 @@ struct stateStruct
 	int             remaining_response;
 	char            *remaining_string;
 	struct sockaddr *connection_addrinfo;
+	int disconnects[4];
 };
 
 
