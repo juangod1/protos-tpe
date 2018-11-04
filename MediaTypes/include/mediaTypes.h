@@ -9,7 +9,6 @@
 #include "mediaTypesTest.h"
 
 
-#define buffer_size 100
 #define BOUNDARIES 5
 
 

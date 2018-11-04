@@ -67,7 +67,7 @@ int start_parser(char *cmd, int pipe_ret[2], state s)
 int check_parser_exit_status(int parser_pid)
 {
 	int status;
-	waitpid(parser_pid, &status, 0);
+	waitpid(parser_pid, &status, WNOHANG);
 
 	if(WIFEXITED(status) == false || WEXITSTATUS(status) != GOOD_EXIT_STATUS)
 	{

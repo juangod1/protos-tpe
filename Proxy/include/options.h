@@ -11,6 +11,7 @@ typedef struct
 	int             has_to_query_dns;
 	char            *address_server_string;
 	struct addrinfo *addr;
+	struct addrinfo *first;
 	char            *error_path;
 	char            *pop3_path;
 	char            *management_path;

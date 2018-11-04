@@ -23,7 +23,7 @@ void error_terminal()
 		disconnect_all(sm);
 		free_machine(sm);
 	}
-	exit(-1);
+	exit(1);
 }
 
 void disconnect_client(state s)

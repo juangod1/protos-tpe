@@ -33,6 +33,7 @@ void initialize_app_context()
 	app_context->replacement_message   = NULL;
 	app_context->address_server_string = NULL;
 	app_context->addr                  = NULL;
+	app_context->first                  = NULL;
 	app_context->has_to_query_dns      = 0;
 	app_context->pipelining            = false;
 	app_context->pop3filter_version    = version_number;
@@ -52,7 +53,7 @@ void initialize_app_context()
 void destroy_app_context()
 {
 	free(app_context->command_specification);
-	free(app_context->addr);
+	free(app_context->first);
 	free(app_context->replacement_message);
 	free(app_context->management_path);
 	free(app_context->error_path);

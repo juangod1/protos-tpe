@@ -191,33 +191,43 @@ void *query_dns(void *st)
 			.ai_next      = NULL,
 	};
 
-	char buff[7];
-	snprintf(buff, sizeof(buff), "%hu", get_app_context()->origin_port);
-	getaddrinfo(get_app_context()->address_server_string, buff, &hints, &(get_app_context()->addr));
-
-	s->current = get_app_context()->addr;
-	int ret = -1;
-	while(s->current != NULL && (ret = connect(s->read_fds[1], s->current->ai_addr, s->current->ai_addrlen)) < 0)
+	if(get_app_context()->first!=NULL)
 	{
-		s->current = s->current->ai_next;
+		freeaddrinfo(get_app_context()->first);
 	}
 
-	int buff1 = false, buff2 = true;
+	char buff[7];
+	snprintf(buff, sizeof(buff), "%hu", get_app_context()->origin_port);
+	getaddrinfo(get_app_context()->address_server_string, buff, &hints, &(get_app_context()->first));
+
+	get_app_context()->addr = get_app_context()->first;
+	int ret = -1;
+
+	while(get_app_context()->addr != NULL && (ret = connect(s->read_fds[1], get_app_context()->addr->ai_addr, get_app_context()->addr->ai_addrlen)) < 0)
+	{
+		get_app_context()->addr = get_app_context()->addr->ai_next;
+	}
+
+
+	char buff1[1] = {0};
+	char buff2[1] = {1};
 	if(ret < 0)
 	{
-		write(((int *) s->pipes)[1], &buff1, 1);
+		write(((int *) s->pipes)[1], buff1, 1);
 	}
 	else
 	{
-		write(((int *) s->pipes)[1], &buff2, 1);
+		write(((int *) s->pipes)[1], buff2, 1);
 		char buf[10];
-		if(inet_pton(AF_INET6, s->current->ai_addr->sa_data, buf))
+		if(inet_pton(AF_INET6, get_app_context()->addr->ai_addr->sa_data, buf))
 		{
+			printf("pls9\n");
 			printf("DNS found IPV6 address.\n");
 			get_app_context()->isIPV6 = true;
 		}
 		else
 		{
+			printf("pls9\n");
 			printf("DNS found IPV4 address.\n");
 			get_app_context()->isIPV6 = false;
 		}
