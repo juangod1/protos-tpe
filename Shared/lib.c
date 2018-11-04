@@ -21,15 +21,16 @@ char *my_strdup(const char *s)
 
 char *my_strndup(const char *s, int n)
 {
-    int len =  strlen(s) < n ? strlen(s) : n;
-    char* new = (char*) malloc(len + 1);
-    if (new == NULL)
-    {
-        return NULL;
-    }
-    new[len] = '\0';
-    return (char*) memcpy(new, s, len);
+	int  len  = strlen(s) < n ? strlen(s) : n;
+	char *new = (char *) malloc(len + 1);
+	if(new == NULL)
+	{
+		return NULL;
+	}
+	new[len] = '\0';
+	return (char *) memcpy(new, s, len);
 }
+
 char *my_strsep(char **string_ptr, char delimeter)
 {
 	if(string_ptr == NULL || *string_ptr == NULL)
@@ -199,7 +200,7 @@ char **divideMediaRangeList(char *mediaTypeList)
 int mediaTypeBelongsToMediaRange(char **mediaType, char **mediaRange)
 {
 
-    if(mediaType == NULL || mediaRange == NULL)
+	if(mediaType == NULL || mediaRange == NULL)
 	{
 		return 0;
 	}
@@ -213,7 +214,7 @@ int mediaTypeBelongsToMediaRange(char **mediaType, char **mediaRange)
 		mediaTypeToken  = mediaType[i];
 		mediaRangeToken = mediaRange[i];
 
-		if(mediaRangeToken == NULL )
+		if(mediaRangeToken == NULL)
 		{
 			return 1;
 		}
@@ -223,13 +224,13 @@ int mediaTypeBelongsToMediaRange(char **mediaType, char **mediaRange)
 		}
 		if(strcmp(mediaRangeToken, "*") == 0)
 		{
-            return 1;
+			return 1;
 		}
-        char* pos;
-        if((pos = strchr(mediaTypeToken, '\r')) != NULL)
-        {
-            *pos = '\0';
-        }
+		char *pos;
+		if((pos = strchr(mediaTypeToken, '\r')) != NULL)
+		{
+			*pos = '\0';
+		}
 		if(strcmp(mediaRangeToken, mediaTypeToken) != 0)
 		{
 			return 0;
@@ -265,8 +266,16 @@ int isValidMediaType(char **mediaType)
 	return 1;
 }
 
-long getMicrotime(){
+long getMicrotime()
+{
 	struct timeval currentTime;
 	gettimeofday(&currentTime, NULL);
-	return currentTime.tv_sec * (int)1e6 + currentTime.tv_usec;
+	return currentTime.tv_sec * (int) 1e6 + currentTime.tv_usec;
+}
+
+// Diapositiva 9 de Programación Imperativa :P
+int rand_int(int izq, int der)
+{
+	srand((unsigned int) getMicrotime());
+	return rand() % (der - izq + 1) + izq;
 }

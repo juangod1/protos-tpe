@@ -84,7 +84,7 @@ int removeRec(node curr, state s, list l)
 {
 	if(curr->st == s)
 	{
-		free_node(curr->next);
+		free_node(curr);
 		l->head = NULL;
 		return 0;
 	}

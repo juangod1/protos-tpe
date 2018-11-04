@@ -6,6 +6,7 @@
 #include "include/stateSelector.h"
 #include "include/MasterStateMachine.h"
 #include "include/error.h"
+#include "../Shared/include/lib.h"
 #include <sys/select.h>
 #include <stdio.h>
 #include <memory.h>
@@ -37,7 +38,7 @@ void select_state(int *ret)
 {
 	set_up_fd_sets(&read_fds, &write_fds);
 	int select_ret;
-
+	error_terminal();
 	select_ret = pselect(MAX_FD + 1, &read_fds, &write_fds, NULL, NULL, NULL);
 	if(select_ret == -1)
 	{
@@ -46,20 +47,34 @@ void select_state(int *ret)
 		return;
 	}
 
+	int random_skips = rand_int(0,select_ret-1);
+
 	int i;
 	for(i = 0; i < MAX_FD; i++)
 	{
 		if(FD_ISSET(i, &read_fds))
 		{
-			ret[0] = i;
-			ret[1] = 1;
-			return;
+			if(random_skips!=0){
+				random_skips--;
+			}
+			else{
+				ret[0] = i;
+				ret[1] = 1;
+				return;
+			}
 		}
 		if(FD_ISSET(i, &write_fds))
 		{
-			ret[0] = i;
-			ret[1] = 0;
-			return;
+			if(random_skips != 0)
+			{
+				random_skips--;
+			}
+			else
+			{
+				ret[0] = i;
+				ret[1] = 0;
+				return;
+			}
 		}
 	}
 }
