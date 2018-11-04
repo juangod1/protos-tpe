@@ -295,7 +295,8 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 			if(connect(s->read_fds[1], (struct sockaddr *) &address, sizeof(address)) < 0)
 			{
 				perror("Connect to origin error");
-				return NOT_WAITING;
+				disconnect(s);
+				return WAITING;
 			}
 		}
 		else
@@ -309,7 +310,8 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 			if(connect(s->read_fds[1], (struct sockaddr *) &address, sizeof(address)) < 0)
 			{
 				perror("Connect to origin error");
-				return NOT_WAITING;
+				disconnect(s);
+				return WAITING;
 			}
 		}
 	}
