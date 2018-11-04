@@ -43,6 +43,7 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
 	new->data_3              = false;
 	new->data_4              = false;
 	new->data_5              = false;
+	new->data_6				 = false;
 	new->parser_pid          = -1;
 	new->user                = NULL;
 	new->pass                = NULL;

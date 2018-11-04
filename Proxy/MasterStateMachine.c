@@ -607,12 +607,25 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				printf("--------------------------------------------------------\n");
 				printf("Wrote buffer content to MUA: \n");
 				print_buffer(s->buffers[2]);
-				int count;
-				if((count = buffer_write(fd, s->buffers[2])) < BUFFER_SIZE && s->disconnect)
+				int written_size=0;
+				int expected_size=0;
+				if(!IS_ALREADY_LINE_BUFFERED && buffer_must_be_line_buffered(s->buffers[2]))
+				{
+					written_size=write(s->write_fds[0],".",1);
+					IS_ALREADY_LINE_BUFFERED=true;
+					expected_size=1;
+				}
+				else
+				{
+					IS_ALREADY_LINE_BUFFERED=false;
+					written_size=buffer_write(fd, s->buffers[2]);
+					expected_size=BUFFER_SIZE;
+				}
+				if(written_size < expected_size && s->disconnect)
 				{
 					disconnect(s);
 				}
-				get_app_context()->monitor_values[3] += count;
+				get_app_context()->monitor_values[3] += written_size;
 			}
 			else if(s->write_fds[1] == fd)
 			{   // Origin WRITE
@@ -633,18 +646,22 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				int will_close;
 				if(IS_MULTILINE)
 				{
-//					if(buffer_is_line_buffered(buffer))
-					{
-
-					}
 					will_close = buffer_indicates_end_of_multiline_message(s->buffers[1]);
+					if(buffer_is_line_buffered(s->buffers[1]))
+					{
+						buffer_write_after_index(fd, s->buffers[1], 1);
+					}
+					else
+					{
+						buffer_write(fd,s->buffers[1]);
+					}
 				}
 				else
 				{
 					will_close = buffer_indicates_end_of_single_line_message(s->buffers[1]);
+					buffer_write(fd, s->buffers[1]);
 
 				}
-				buffer_write(fd, s->buffers[1]);
 				if(will_close)
 				{
 					close(s->write_fds[2]);

@@ -17,6 +17,7 @@
 #define IS_TRANS s->data_3
 #define IS_NEW_LINE s->data_4
 #define IS_MULTILINE s->data_5
+#define IS_ALREADY_LINE_BUFFERED s->data_6
 
 typedef int state_code;
 typedef int error_code;
@@ -53,6 +54,7 @@ struct stateStruct
 	int             data_3;
 	int             data_4;
 	int             data_5;
+	int 			data_6;
 	int             pipelining_data;
 	char            *user;
 	char            *pass;

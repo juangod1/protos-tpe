@@ -35,6 +35,10 @@ int buffer_is_empty(buffer_p buffer);
 
 int buffer_read(int file_descriptor, buffer_p buffer);
 
+int buffer_must_be_line_buffered(buffer_p buffer);
+int buffer_is_line_buffered(buffer_p buffer);
+int buffer_write_after_index(int file_descriptor, buffer_p buffer, int index);
+
 int buffer_read_until_char_block(int file_descriptor, buffer_p buffer, char ch);
 
 int buffer_write(int file_descriptor, buffer_p buffer);

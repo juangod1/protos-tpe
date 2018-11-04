@@ -78,6 +78,28 @@ int buffer_indicates_parsable_message(buffer_p buffer)
 	return true;
 }
 
+int buffer_write_after_index(int file_descriptor, buffer_p buffer, int index)
+{
+	int  characters_to_write = buffer->count - index;
+	char *write_ptr          = buffer->data_start + index;
+
+	if(characters_to_write<1)
+	{
+		return 0;
+	}
+
+	int amount = write(file_descriptor, write_ptr, characters_to_write);
+	if(amount != characters_to_write)
+	{
+		perror("buffer_write: wrote less than expected");
+	}
+	buffer->count    = 0;
+	buffer->data_ptr = buffer->data_start;
+
+	return amount;
+}
+
+
 int buffer_write(int file_descriptor, buffer_p buffer)
 {
 	int  characters_to_write = buffer->count;
@@ -304,6 +326,27 @@ int buffer_read_until_string(int file_descriptor, buffer_p buffer, char * str) /
 	buffer->count+=amount;
 	buffer->data_ptr+=amount;
 	return amount;
+}
+
+int buffer_is_line_buffered(buffer_p buffer)
+{
+	if(buffer->count<4)
+	{
+		return false;
+	}
+	return *(buffer->data_start)=='.' && *(buffer->data_start+1)!='\r';
+
+}
+
+
+int buffer_must_be_line_buffered(buffer_p buffer)
+{
+	if(buffer->count<3)
+	{
+		return false;
+	}
+	return *(buffer->data_start)=='.' && *(buffer->data_start+1)!='\r';
+
 }
 
 int buffer_read_until_char_block(int file_descriptor, buffer_p buffer, char ch)
