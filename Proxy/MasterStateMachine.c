@@ -599,7 +599,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					{
 						printf("FAIL: BAD PARSER EXIT\n");
 					}
-
+					s->parser_pid=-1;
 					if(s->disconnects[2]){
 						disconnect(s);
 						disconnection=true;
@@ -632,7 +632,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					written_size=buffer_write(fd, s->buffers[2]);
 					expected_size=BUFFER_SIZE;
 				}
-				if(written_size < expected_size && s->disconnect)
+				if(written_size<0)
 				{
 					disconnect(s);
 					disconnection=true;
@@ -727,8 +727,15 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				{
 					if(curr->st->read_fds[0] > 0)
 					{
-						printf("(MUA READ) Buffer 1 is empty ==> ");
-						add_read_fd(curr->st->read_fds[0]); // MUA read
+						if(MUA_READ_DISCONNECTED)
+						{
+							printf("Origin Write disconnected, fd not added.\n");
+						}
+						else
+						{
+							printf("(MUA READ) Buffer 1 is empty ==> ");
+							add_read_fd(curr->st->read_fds[0]); // MUA read
+						}
 					}
 				}
 				else
