@@ -480,15 +480,8 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 		case true:
 			if(s->read_fds[0] == fd)
 			{   // MUA READ
-				int read_response;
-				if(get_app_context()->pipelining)
-				{
-					read_response = buffer_read(fd, s->buffers[0]);
-				}
-				else
-				{
-					read_response = buffer_read_until_char(fd, s->buffers[0], '\n');
-				}
+				int read_response = buffer_read_until_char(fd, s->buffers[0], '\n');
+				buffer_remove_trailing_spaces(s->buffers[0]);
 				if(read_response == 0)
 				{
 					printf("--------------------------------------------------------\n");
@@ -535,6 +528,10 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					IS_NEW_LINE      = true;// ESTE ES NUEVO
 					IS_NEXT_NEW_LINE = true; //EL PROXIMO ES NUEVO
 					IS_MULTILINE     = false; //NO ES MULTILINEA
+					if(!get_app_context()->pipelining)
+					{
+						s->pipelining_data = true;
+					}
 				}
 				else if(IS_NEXT_NEW_LINE && buffer_indicates_parsable_message(s->buffers[1]))
 				{
@@ -561,23 +558,17 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					{
 						buffer_read_string("PIPELINING\r\n", s->buffers[1]);
 					}
-
-
 				}
 				else
 				{ //continuo impresion de multilinea
 					IS_NEW_LINE = false; //ESTE NO ES NUEVO
-				}
-				if(!get_app_context()->pipelining)
-				{
-					s->pipelining_data = true;
 				}
 			}
 			else if(s->read_fds[2] == fd)
 			{   // Transform READ
 				if(buffer_read(fd, s->buffers[2]) == 0)
 				{
-					s->data_1 = false;
+					IS_PROCESSING = false;
 					close(s->read_fds[2]);
 					s->read_fds[2]  = -1;
 					s->write_fds[2] = -1;
@@ -665,6 +656,10 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				if(will_close)
 				{
 					close(s->write_fds[2]);
+					if(!get_app_context()->pipelining)
+					{
+						s->pipelining_data = true;
+					}
 				}
 			}
 			break;

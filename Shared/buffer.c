@@ -251,6 +251,35 @@ int buffer_indicates_end_of_multiline_message(buffer_p buffer)
 	return buffer->count==3 && buffer_starts_with_string(".\r\n",buffer);
 }
 
+void buffer_remove_trailing_spaces(buffer_p buffer)
+{
+	char * ptr = buffer->data_start;
+	size_t count = buffer->count;
+	int last_space = -1;
+	size_t i=0;
+	while(i<count)
+	{
+		if(*(ptr+i)!='\n')
+		{
+			if(*(ptr+i)==' ')
+			{
+				last_space=(last_space==-1)?i:last_space;
+			}
+			else
+			{
+				last_space=-1;
+			}
+		}
+		i++;
+	}
+	if(last_space>-1 && last_space+1<buffer->size)
+	{
+		*(ptr+last_space)='\n';
+		*(ptr+last_space+1)=0;
+		buffer->count=last_space+1;
+	}
+}
+
 int buffer_indicates_end_of_single_line_message(buffer_p buffer)
 {
 	return buffer_ends_with_string(buffer,"\r\n");
