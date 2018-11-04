@@ -18,11 +18,11 @@ int main(int argc, char **argv)
 	setenv("POP3_USERNAME", argv[5], true);
 	setenv("POP3_SERVER", argv[6], true);
 
-	if(strcmp(argv[1],"mediatypes")==0)
+	if(strcmp(argv[1],"stripmime")==0)
 	{
 		char * args[1];
 		args[0] = NULL;
-		execv("mediatypes",args);
+		execv("stripmime",args);
 	}
 
 	response = run_parser(argv[1]);

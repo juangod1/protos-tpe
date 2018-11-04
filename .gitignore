@@ -6,6 +6,9 @@ Makefile
 control
 proxy
 mediatypes
+pop3ctl
+pop3filter
+stripmime
 parser
 CMakeCache.txt
 cmake_install.cmake

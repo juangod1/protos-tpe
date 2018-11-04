@@ -10,17 +10,17 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread --std=c99 -pedantic -pedantic-error
 AUX_SOURCE_DIRECTORY(Shared SHARED_SOURCE_FILES)
 
 AUX_SOURCE_DIRECTORY(Proxy PROXY_SOURCE_FILES)
-add_executable(proxy ${SHARED_SOURCE_FILES} ${PROXY_SOURCE_FILES})
+add_executable(pop3filter ${SHARED_SOURCE_FILES} ${PROXY_SOURCE_FILES})
 
-target_link_libraries(proxy sctp)
+target_link_libraries(pop3filter sctp)
 
 AUX_SOURCE_DIRECTORY(Control CONTROL_SOURCE_FILES)
-add_executable(control ${SHARED_SOURCE_FILES} ${CONTROL_SOURCE_FILES})
+add_executable(pop3ctl ${SHARED_SOURCE_FILES} ${CONTROL_SOURCE_FILES})
 
 AUX_SOURCE_DIRECTORY(Parser PARSER_SOURCE_FILES)
 add_executable(parser ${SHARED_SOURCE_FILES} ${PARSER_SOURCE_FILES})
 
 AUX_SOURCE_DIRECTORY(MediaTypes MEDIATYPES_SOURCE_FILES)
-add_executable(mediatypes ${SHARED_SOURCE_FILES} ${MEDIATYPES_SOURCE_FILES})
+add_executable(stripmime ${SHARED_SOURCE_FILES} ${MEDIATYPES_SOURCE_FILES})
 
-target_link_libraries(control sctp)
+target_link_libraries(pop3ctl sctp)
