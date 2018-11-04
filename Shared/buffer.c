@@ -261,7 +261,7 @@ void buffer_remove_trailing_spaces(buffer_p buffer)
 	{
 		if(*(ptr+i)!='\n')
 		{
-			if(*(ptr+i)==' ')
+			if(*(ptr+i)==' ' || *(ptr+i)=='\r')
 			{
 				last_space=(last_space==-1)?i:last_space;
 			}
