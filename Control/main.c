@@ -339,9 +339,9 @@ void interaction(int fd)
 			{
 				count = (int) p.we_wordc;
 				w     = p.we_wordv;
-				if(count == 1 || count == 2)
+                char *pos;
+                if(count == 1 || count == 2 || (pos = strchr(buffer,'@')) != NULL)
 				{
-					char *pos;
 					if((pos = strchr(buffer, '\0')) != NULL)
 					{
 						*pos = '\n';
@@ -349,6 +349,7 @@ void interaction(int fd)
 					ret = sctp_sendmsg(fd, (void *) buffer, length, NULL, 0, 0, 0, 0, 0, 0);
 					printResponse(fd);
 				}
+
 			}
 			wordfree(&p);
 		}
@@ -359,7 +360,8 @@ void interaction(int fd)
 			printf("ACTIVE [BOOL]-------- With no BOOL, returns the current transformation filter's status\n"
 			       "                      With BOOL, activates (1) or deactivates (0) the current filter\n");
 			printf("FILTER [CMD]--------- With no CMD, returns current transformation filter\n"
-			       "                      With CMD (a command name compatible with system(3)) changes the current tranformation filter into CMD\n");
+			       "                      With CMD (a command name compatible with system(3)) changes the current tranformation filter into CMD\n"
+                   "                      @ escapes all blank spaces after it\n");
 			printf("QUIT----------------- Closes the connection\n");
 			printf("HELP----------------- Lists the possible input options\n");
 
