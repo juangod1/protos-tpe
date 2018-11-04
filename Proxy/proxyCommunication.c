@@ -34,11 +34,13 @@ int start_parser(char *cmd, int pipe_ret[2], state s)
 	                 (s->pass == NULL) ? "Not logged in." : s->pass};
 	if(pid == 0)
 	{
+		FILE * fp= fopen("/dev/null", "w");
 		close(PROXY_READ_FD);
 		close(PROXY_WRITE_FD);
 
 		dup2(PARSER_READ_FD, STDIN_FILENO);
 		dup2(PARSER_WRITE_FD, STDOUT_FILENO);
+		dup2(fileno(fp),STDERR_FILENO);
 
 		close(PARSER_READ_FD);
 		close(PARSER_WRITE_FD);

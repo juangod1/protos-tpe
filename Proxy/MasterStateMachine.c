@@ -704,10 +704,6 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 	}
 	if(!disconnection && IS_NEW_LINE && !IS_PROCESSING) //CREATE TRANSFORM
 	{
-		if(s->read_fds[2] && s->write_fds[2])
-		{
-			printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nPorque sos tan mierda\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-		}
 		char *command = (s->data_3 && get_app_context()->transform_status) ? get_app_context()->command_specification
 		                                                                   : "cat";
 		int  pipes[2];
