@@ -21,7 +21,7 @@ typedef struct
 	uint16_t        origin_port;
 	char            *command_specification;
 	char            *monitor[5];
-	int             monitor_values[5];
+	long            monitor_values[5];
 	char            pipelining;
 	int             transform_status;
 	char            *pop3filter_version;

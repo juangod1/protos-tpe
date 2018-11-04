@@ -272,7 +272,7 @@ void process_request(state s, file_descriptor fd)
                     } else if (auth == 1) {
                         text_response_BS(FAILED, "FAILED. Try again or QUIT.", s, fd);
                     } else {
-                        text_response_BS(FAILED, "Conection error, try asgain later.", s, fd);
+                        text_response_BS(FAILED, "Connection error, try again later.", s, fd);
                     }
                 } else {
                     text_response_BS(FAILED, "Missing USER.", s, fd);
@@ -312,13 +312,13 @@ void process_request(state s, file_descriptor fd)
                         FORMAT_ERROR
                         //TODO:Cerrar la response y solicitar un nuevo request.
                     } else {
-                        int resmonitor = monitor(paramNum);
+                        long resmonitor = monitor(paramNum);
                         if (resmonitor == -1) {
                             text_response_BS(FAILED, "Function not found, use LISTS.", s, fd);
                         } else {
-                            char textomonitor[5];
-                            char content[50] = "El resultado es ";
-                            sprintf(textomonitor, "%d", resmonitor);
+                            char textomonitor[25];
+                            char content[50] = "The result is: ";
+                            sprintf(textomonitor, "%ld", resmonitor);
                             //Aca se puede hacer referencia a la funcion o al numero de funcion que fue llamado.
                             text_response_BS(SUCCESS, strcat(content, textomonitor), s,
                                              fd);//TODO: Hay que acomodar el strcat
@@ -470,7 +470,7 @@ char **get_monitor_array()
 }
 
 //Busca la estadistica correspondiente al monitor(i)
-int monitor(int numero)
+long monitor(int numero)
 {
 	//TODO Tiene que buscar las metricas en el contexto
 	return get_app_context()->monitor_values[numero-1];
@@ -494,63 +494,3 @@ char *get_transformation_filter()
 {
 	return get_app_context()->command_specification;
 }
-
-//DEPRECATED
-/*
-admin_response_p requestBuilder(){
-    //Recibo el mensaje de sctp
-    //sctp_recvmsg
-    //Si devuelve -1 doy error
-    //Sino armo el admin_response_p
-    if(command == NULL || !(estado == 0 || estado == 1) || tam < 0){
-        return NULL;
-    }
-    admin_response_p res = malloc(RESPONSE_SIZE);
-    if(res == NULL) {
-        //Mensaje de error
-        return NULL;
-    }
-    res->command = malloc(TAM_command);
-    if(res->command == NULL) {
-        //Mensaje de error
-        return NULL;
-    }
-    strcpy(res->command, command);
-    res->estado = estado;
-    res->tamcontent = tam;
-    res->content = malloc(tam);
-    if(res->content == NULL) {
-        //Mensaje de error
-        return NULL;
-    }
-    strcpy(res->content, content);
-    return res;
-}
-
-admin_response_p responseBuilder(char* command, int estado, int tam, char* content){
-    if(command == NULL || !(estado == 0 || estado == 1) || tam < 0){
-        return NULL;
-    }
-    admin_response_p res = malloc(RESPONSE_SIZE);
-    if(res == NULL) {
-        //Mensaje de error
-        return NULL;
-    }
-    res->command = malloc(TAM_command);
-    if(res->command == NULL) {
-        //Mensaje de error
-        return NULL;
-    }
-    strcpy(res->command, command);
-    res->estado = estado;
-    res->tamcontent = tam;
-    res->content = malloc(tam);
-    if(res->content == NULL) {
-        //Mensaje de error
-        return NULL;
-    }
-    strcpy(res->content, content);
-    return res;
-}
-
- */

@@ -44,7 +44,7 @@ int authenticate(char *user, char *pass);
 
 char **get_monitor_array();
 
-int monitor(int numero);
+long monitor(int numero);
 
 int get_transformation_state();
 
