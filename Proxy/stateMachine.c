@@ -13,6 +13,7 @@
 #include "include/MasterStateMachine.h"
 #include "include/error.h"
 #include "../Shared/include/lib.h"
+#include "include/options.h"
 
 state new_state(state_code id, execution_state (*on_arrive)(state s, file_descriptor fd, int is_read),
                 execution_state (*on_resume)(state s, file_descriptor fd, int is_read), state_code (*on_leave)(state s))
@@ -62,12 +63,16 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
 void
 free_state(state st)
 {
+	buffer_finalize(st->buffers[0]);
+	buffer_finalize(st->buffers[1]);
+	buffer_finalize(st->buffers[2]);
 	free(st->connection_addrinfo);
 	free(st);
 }
 
 void free_machine(state_machine *machine)
 {
+	destroy_app_context();
 	free_list(machine->states);
 	free(machine);
 }

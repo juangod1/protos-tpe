@@ -52,6 +52,7 @@ void initialize_app_context()
 void destroy_app_context()
 {
 	free(app_context->command_specification);
+	free(app_context->addr);
 	for(int i=0; i< 5; i++)
 	{
 		free(app_context->monitor[i]);
