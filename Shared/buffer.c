@@ -226,7 +226,7 @@ int buffer_indicates_start_of_multiline_message(buffer_p buffer)
 
 int buffer_indicates_end_of_multiline_message(buffer_p buffer)
 {
-	return buffer_ends_with_string(buffer,"\r\n.\r\n") || (buffer->count==3 && buffer_starts_with_string(".\r\n",buffer));
+	return buffer->count==3 && buffer_starts_with_string(".\r\n",buffer);
 }
 
 int buffer_indicates_end_of_single_line_message(buffer_p buffer)
@@ -235,7 +235,8 @@ int buffer_indicates_end_of_single_line_message(buffer_p buffer)
 }
 int buffer_read_until_string(int file_descriptor, buffer_p buffer, char * str) //\r\n\0 || \r\n\r\n\0
 {
-	int read_index=0, write_index=0, circular_buffer_size=0;
+	int read_index=0, write_index=0;
+	size_t circular_buffer_size=0;
 	size_t size = strlen(str);
 	if(size==0){
 		return 0;
@@ -276,9 +277,12 @@ int buffer_read_until_string(int file_descriptor, buffer_p buffer, char * str) /
 		circular_buffer[write_index++]=ch;
 		write_index=write_index%size;
 
+		if(circular_buffer_size<size)
+		{
+			circular_buffer_size++;
+		}
 		if(circular_buffer_size==size)
 		{
-			read_index=(read_index+1)%size;
 			int i=0;
 			while(i>=0)
 			{
@@ -294,11 +298,7 @@ int buffer_read_until_string(int file_descriptor, buffer_p buffer, char * str) /
 					i++;
 				}
 			}
-
-		}
-		else
-		{
-			circular_buffer_size++;
+			read_index=(read_index+1)%size;
 		}
 	}
 	buffer->count+=amount;

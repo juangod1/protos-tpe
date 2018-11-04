@@ -608,7 +608,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				printf("Wrote buffer content to MUA: \n");
 				print_buffer(s->buffers[2]);
 				int count;
-				if(count = buffer_write(fd, s->buffers[2]) < BUFFER_SIZE && s->disconnect)
+				if((count = buffer_write(fd, s->buffers[2])) < BUFFER_SIZE && s->disconnect)
 				{
 					disconnect(s);
 				}
@@ -633,6 +633,10 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				int will_close;
 				if(IS_MULTILINE)
 				{
+//					if(buffer_is_line_buffered(buffer))
+					{
+
+					}
 					will_close = buffer_indicates_end_of_multiline_message(s->buffers[1]);
 				}
 				else
