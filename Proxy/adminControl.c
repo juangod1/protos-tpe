@@ -205,6 +205,46 @@ int parse_message(const char *str, char sep, char **command, char **parameter)
     }
 	return 0;
 }
+int parse_message_with_colon(char *str, char **command, char **parameter)
+{
+    char *s = str;
+    int count = 0;
+    while(*s != ' ')
+    {
+        count++;
+        s++;
+    }
+    *command = calloc(count,1);
+    strncpy(*command,str,count);
+    *command[count-1] = '\0';
+    printf("%s\n",command);
+    int start = count;
+    s++;
+    char * a = s;
+    if(*s != '"')
+    {
+        free(*command);
+        return -1;
+    }
+    s++;
+    while(*s != '"' && *s != '\0')
+    {
+        start++;
+        s++;
+    }
+    if(*s != '"' || *(s++) != '\0')
+    {
+        free(*command);
+        free(*parameter);
+        return -1;
+    }
+    *parameter = calloc(start - count + 1, 1);
+    strncpy(*parameter,a,start-count+1);
+    *parameter[start-count+1] = '\0';
+    printf("%s\n",parameter);
+    return 1;
+
+}
 
 void admin_greeting(state s, file_descriptor fd)
 {
@@ -224,13 +264,16 @@ void process_request(state s, file_descriptor fd)
 	//Separo el string de response por espacios y analizo cada cosa.
 	char *command   = NULL;
 	char *parameter = NULL;
+
 	if(parse_message(response, ' ', &command, &parameter) == 1)
 	{
 		//Error de mensaje
 		text_response_BS(FAILED, "Message format error.", s, fd);
 		//TODO:Puedo cerrar la conexion o dejar que siga un poco mas.
+
 	}
-	else {
+	else
+	{
         switch (parse_admin_command(command)) {
             case USER:
                 if (s->protocol_state != AUTENTICATION) {

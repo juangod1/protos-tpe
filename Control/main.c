@@ -339,7 +339,9 @@ void interaction(int fd)
 			{
 				count = (int) p.we_wordc;
 				w     = p.we_wordv;
-				if(count == 1 || count == 2)
+				char* p;
+				if(count == 1 || count == 2 || (count > 1 && w[1]!=NULL && w[1][0]=='"'
+				                && w[count-1]!=NULL && w[count-1][strlen(w[count-1])-1] == '"' ))
 				{
 					char *pos;
 					if((pos = strchr(buffer, '\0')) != NULL)
