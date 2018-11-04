@@ -38,7 +38,6 @@ void select_state(int *ret)
 {
 	set_up_fd_sets(&read_fds, &write_fds);
 	int select_ret;
-	error_terminal();
 	select_ret = pselect(MAX_FD + 1, &read_fds, &write_fds, NULL, NULL, NULL);
 	if(select_ret == -1)
 	{
