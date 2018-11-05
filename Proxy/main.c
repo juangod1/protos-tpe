@@ -130,7 +130,7 @@ file_descriptor setup_MUA_socket()
 		memset(&address, 0, sizeof(address));
 		address.sin6_port   = htons(app_context->local_port);
 		address.sin6_family = AF_INET6;
-		address.sin6_addr   = IN6ADDR_ANY_INIT;
+		address.sin6_addr   = in6addr_any; 
 
 		int             flag = 1;
 		file_descriptor sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
