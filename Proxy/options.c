@@ -125,7 +125,7 @@ void error_specification(char *arg)
 		}
 	}
 	fflush(stderr);
-	get_app_context()->error_descriptor = dup(fileno(stderr));*/
+	get_app_context()->error_descriptor = dup(fileno(stderr));
 }
 
 void management_direction(char *arg)
