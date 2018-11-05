@@ -10,13 +10,20 @@
 #include "include/buffer.h"
 #include "../Proxy/include/error.h"
 
-int buffer_initialize(buffer_p *buffer, size_t size)
+int buffer_big_read(int file_descriptor, const struct buffer_t *buffer);
+
+int buffer_initialize(buffer_p *buffer, size_t size, size_t big_buffer_size)
 {
 	(*buffer) = malloc(sizeof(struct buffer_t));
 	(*buffer)->count      = 0;
 	(*buffer)->size       = size;
 	(*buffer)->data_start = calloc(1, size);
 	(*buffer)->data_ptr   = (*buffer)->data_start;
+	(*buffer)->big_buffer = malloc(sizeof(struct big_buffer_t));
+	(*buffer)->big_buffer->data_start = malloc(big_buffer_size);
+	(*buffer)->big_buffer->size = big_buffer_size;
+	(*buffer)->big_buffer->write_index = 0;
+	(*buffer)->big_buffer->read_size = 0;
 }
 
 int buffer_finalize(buffer_p buffer)
@@ -33,24 +40,51 @@ int buffer_finalize(buffer_p buffer)
 		buffer->data_start = NULL;
 		buffer->data_ptr   = NULL;
 	}
+	if(buffer->big_buffer !=NULL)
+	{
+		if(buffer->big_buffer->data_start != NULL)
+		{
+			free(buffer->big_buffer->data_start);
+			buffer->big_buffer->data_start=NULL;
+		}
+		buffer->big_buffer->size=0;
+		buffer->big_buffer->write_index=0;
+		buffer->big_buffer->read_size=0;
+		free(buffer->big_buffer);
+	}
 	free(buffer);
 	return 0;
 }
 
 int buffer_is_empty(buffer_p buffer)
 {
-	return buffer->count == 0;
+	return buffer->count==0;
+}
+
+int buffer_big_is_empty(buffer_p buffer)
+{
+	return buffer->big_buffer->read_size==buffer->big_buffer->write_index;
 }
 
 int buffer_read(int file_descriptor, buffer_p buffer)
 {
-	int  characters_to_read = buffer->size - (buffer->data_ptr - buffer->data_start);
-	char *read_ptr          = buffer->data_ptr;
+	int ret = buffer_fill_until_string(buffer,"\n");
+	if(!ret)
+	{
+		buffer_big_read(file_descriptor, buffer);
+		ret = buffer_fill_until_string(buffer,"\n");
+	}
+	return ret;
+}
+
+int buffer_big_read(int file_descriptor, const struct buffer_t *buffer) {
+	size_t  characters_to_read = buffer->big_buffer->size;
+	char *read_ptr          = buffer->big_buffer->data_start;
 
 	int amount = read(file_descriptor, read_ptr, characters_to_read);
 	if(amount != -1)
 	{
-		buffer->count += amount;
+		buffer->big_buffer->read_size = amount;
 	}
 	else if(errno == ECONNRESET)
 	{
@@ -60,7 +94,30 @@ int buffer_read(int file_descriptor, buffer_p buffer)
 	{
 		perror("Read error");
 	}
+	buffer->big_buffer->write_index=0;
+	buffer->big_buffer->read_size=amount;
 	return amount;
+}
+
+int buffer_fill_until_string(buffer_p buffer, char * str)
+{
+	if(buffer_big_is_empty(buffer)) return false;
+	int ret=true;
+	char * read_ptr = buffer->big_buffer->data_start + buffer->big_buffer->write_index;
+	int characters_to_read = buffer->big_buffer->size - buffer->big_buffer->write_index;
+	int characters_to_copy = find_substring(read_ptr,characters_to_read,str);
+	if(characters_to_copy==-1)
+	{
+		characters_to_copy = buffer->big_buffer->size - buffer->big_buffer->write_index;
+		ret=false;
+	}
+	int available_size = buffer->size-buffer->count;
+	characters_to_copy=(characters_to_copy<available_size)?characters_to_copy:available_size;
+	memcpy(buffer->data_ptr,read_ptr,characters_to_copy);
+	buffer->big_buffer->write_index+=characters_to_copy;
+	buffer->count+=characters_to_copy;
+	buffer->data_ptr+=characters_to_copy;
+	return ret;
 }
 
 
@@ -299,81 +356,13 @@ int buffer_indicates_end_of_single_line_message(buffer_p buffer)
 
 int buffer_read_until_string(int file_descriptor, buffer_p buffer, char *str) //\r\n\0 || \r\n\r\n\0
 {
-	int    read_index           = 0, write_index = 0;
-	size_t circular_buffer_size = 0;
-	size_t size                 = strlen(str);
-	if(size == 0)
+	int ret = buffer_fill_until_string(buffer,str);
+	if(!ret)
 	{
-		return 0;
+		buffer_big_read(file_descriptor, buffer);
+		ret = buffer_fill_until_string(buffer,str);
 	}
-	char circular_buffer[size];
-	memset(circular_buffer, 0, size);
-
-	int  characters_to_read = buffer->size - (buffer->data_ptr - buffer->data_start);
-	char *read_ptr          = buffer->data_ptr;
-	int  amount             = 0;
-
-	while(characters_to_read > amount)
-	{
-		struct pollfd polls[1];
-		polls[0].fd     = file_descriptor;
-		polls[0].events = POLLIN;
-
-		int resp = poll(polls, 1, 0);
-
-		if(resp <= 0)
-		{ break; }
-
-		int count = read(file_descriptor, read_ptr, 1);
-		if(count == 1)
-		{
-			amount++;
-		}
-		else if(count == 0 || errno == ECONNRESET)
-		{
-			break;
-		}
-		else
-		{
-			perror("Read error");
-			break;
-		}
-		char ch = *read_ptr++;
-
-		circular_buffer[write_index++] = ch;
-		write_index = write_index % size;
-
-		if(circular_buffer_size < size)
-		{
-			circular_buffer_size++;
-		}
-		if(circular_buffer_size == size)
-		{
-			int i      = 0;
-			while(i >= 0)
-			{
-				if(*(str + i) == 0)
-				{
-					buffer->count += amount;
-					buffer->data_ptr += amount;
-					return amount;
-				}
-				int read_from = (read_index + i) % size;
-				if(*(str + i) != circular_buffer[read_from])
-				{
-					i = -1;
-				}
-				else
-				{
-					i++;
-				}
-			}
-			read_index = (read_index + 1) % size;
-		}
-	}
-	buffer->count += amount;
-	buffer->data_ptr += amount;
-	return amount;
+	return ret;
 }
 
 int buffer_is_line_buffered(buffer_p buffer)
@@ -433,45 +422,16 @@ int buffer_read_until_char_block(int file_descriptor, buffer_p buffer, char ch)
 
 int buffer_read_until_char(int file_descriptor, buffer_p buffer, char ch)
 {
-	int  characters_to_read = buffer->size - (buffer->data_ptr - buffer->data_start);
-	char *read_ptr          = buffer->data_ptr;
-	int  amount             = 0;
-
-	while(characters_to_read > 0)
+	char str[2];
+	str[0]=ch;
+	str[1]=0;
+	int ret = buffer_fill_until_string(buffer,str);
+	if(!ret)
 	{
-		struct pollfd polls[1];
-		polls[0].fd     = file_descriptor;
-		polls[0].events = POLLIN;
-
-		int resp = poll(polls, 1, 0);
-
-		if(resp <= 0)
-		{ break; }
-
-		int count = read(file_descriptor, read_ptr, 1);
-		if(count == 1)
-		{
-			amount++;
-			if(*read_ptr == ch)
-			{
-				break;
-			}
-
-		}
-		else if(count == 0 || errno == ECONNRESET)
-		{
-			break;
-		}
-		else
-		{
-			perror("Read error");
-			break;
-		}
-		characters_to_read--;
-		read_ptr++;
+		buffer_big_read(file_descriptor, buffer);
+		ret = buffer_fill_until_string(buffer,"\n");
 	}
-	buffer->count += amount;
-	return amount;
+	return ret;
 }
 
 /**
@@ -493,7 +453,7 @@ int find_substring(char *buffer, int size, char *substring)
 		{
 			do
 			{
-				if(buffer - init_buffer > size - len)
+				if(buffer - init_buffer >= size - len)
 				{
 					return -1;
 				}
@@ -502,6 +462,19 @@ int find_substring(char *buffer, int size, char *substring)
 		} while(strncmp(buffer, substring, len) != 0);
 	}
 	return buffer - init_buffer + len;
+}
+
+void print_big_buffer(buffer_p buff)
+{
+	int i;
+
+	printf("--------------------------------------------------------\n");
+	for(i = 0; i < buff->big_buffer->read_size; i++)
+	{
+		putchar(buff->big_buffer->data_start[i]);
+	}
+	printf("\n--------------------------------------------------------\n");
+
 }
 
 void print_buffer(buffer_p b)

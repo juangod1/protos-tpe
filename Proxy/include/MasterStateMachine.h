@@ -141,4 +141,6 @@ void debug_print_state(int state);
 
 void log_event(state s, char event, char *data);
 
+int read_origin(state s, int fd);
+
 #endif //PROTOS_TPE_TOPLEVELSTATEMACHINE_H

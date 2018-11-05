@@ -1,6 +1,16 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
+typedef struct big_buffer_t *big_buffer_p;
+
+struct big_buffer_t
+{
+	size_t size;
+	size_t write_index;
+	size_t read_size;
+	char   *data_start;
+};
+
 typedef struct buffer_t *buffer_p;
 
 struct buffer_t
@@ -9,9 +19,10 @@ struct buffer_t
 	size_t count;
 	char   *data_start;
 	char   *data_ptr;
+	big_buffer_p big_buffer;
 };
 
-int buffer_initialize(buffer_p *buffer, size_t size);
+int buffer_initialize(buffer_p *buffer, size_t size, size_t big_buffer_size);
 
 int buffer_read_until_string(int file_descriptor, buffer_p buffer, char *str);
 
@@ -34,6 +45,7 @@ int buffer_indicates_end_of_single_line_message(buffer_p buffer);
 int buffer_read_string_endline(char *string, buffer_p buffer, int type);
 
 int buffer_is_empty(buffer_p buffer);
+int buffer_big_is_empty(buffer_p buffer);
 
 int buffer_read(int file_descriptor, buffer_p buffer);
 
@@ -64,5 +76,11 @@ int buffer_indicates_start_of_list(buffer_p buffer);
 int buffer_indicates_start_of_multiline_message(buffer_p buffer);
 
 void buffer_clean(buffer_p buff);
+
+
+int buffer_write_until_string(buffer_p buffer, char * str, int file_descriptor);
+int buffer_fill_until_string(buffer_p buffer, char * str);
+void print_big_buffer(buffer_p buff);
+
 
 #endif

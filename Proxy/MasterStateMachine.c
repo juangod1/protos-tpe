@@ -32,6 +32,8 @@
 
 state_machine *sm;
 
+void add_origin_write(const struct nodeStruct *curr);
+
 state_machine *initialize_master_machine(file_descriptor MUA_sock, file_descriptor admin_sock)
 {
 	sm = new_machine();
@@ -140,7 +142,7 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
 
 	st->read_fds[0]  = accept_ret;
 	st->write_fds[0] = accept_ret;
-	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[0]),BUFFER_SIZE,BIG_BUFFER_SIZE);
 	add_state(sm, st);
 
 	return NOT_WAITING;
@@ -176,7 +178,7 @@ state_code CONNECT_ADMIN_STAGE_TWO_on_leave(state s)
 	st->session_id = s->session_id;
 	st->read_fds[0]  = s->read_fds[0];
 	st->write_fds[0] = s->write_fds[0];
-	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE,BIG_BUFFER_SIZE);
 	add_state(sm, st);
 	remove_state(sm, s);
 }
@@ -298,9 +300,9 @@ state_code CONNECT_CLIENT_on_leave(state s)
 
 execution_state CONNECT_CLIENT_CONN_REFUSED_on_arrive(state s, file_descriptor fd, int is_read)
 {
-	buffer_initialize(&(s->buffers[0]), BUFFER_SIZE);
-	buffer_read_string("-ERR Connection Refused\r\n", (s->buffers[0]));
-	buffer_write(fd, s->buffers[0]);
+	buffer_initialize(&(s->buffers[0]),BUFFER_SIZE,BIG_BUFFER_SIZE);
+	buffer_read_string("-ERR Connection Refused\r\n",(s->buffers[0]));
+	buffer_write(fd,s->buffers[0]);
 	return NOT_WAITING;
 }
 
@@ -372,7 +374,7 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 	st->read_fds[2]  = ret[0];
 	st->write_fds[2] = ret[1];
 	st->data_1 = false;
-	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE,BIG_BUFFER_SIZE);
 
 	add_state(sm, st);
 
@@ -411,13 +413,6 @@ execution_state CONNECT_CLIENT_STAGE_FOUR_on_arrive(state s, file_descriptor fd,
 
 execution_state CONNECT_CLIENT_STAGE_FOUR_on_resume(state s, file_descriptor fd, int is_read)
 {
-	//
-	// It is assumed that each line received from CAPA
-	// fits in a single buffer (50 octets).
-	//
-	// It is assumed that the content after the +OK greeting
-	// fits in a single buffer (50 octets).
-	//
 	switch(s->data_1)
 	{
 		case 0: // Read +OK from Origin
@@ -435,31 +430,33 @@ execution_state CONNECT_CLIENT_STAGE_FOUR_on_resume(state s, file_descriptor fd,
 			get_app_context()->pipelining = false;
 			return WAITING;
 		case 3: // Process CAPA reply
-			buffer_read_until_string(fd, s->buffers[0], "\r\n");
-			char buf[BUFFER_SIZE]         = {0};
-			buffer_write_string(buf, s->buffers[0]);
-			buffer_clean(s->buffers[0]);
+			while(true)
+			{
+				if(buffer_read_until_string(fd, s->buffers[0], "\r\n")==0)
+				{
+					break;
+				}
+				char buf[BUFFER_SIZE]         = {0};
+				buffer_write_string(buf, s->buffers[0]);
+				buffer_clean(s->buffers[0]);
 
-			int i = 0;
-			while(i < BUFFER_SIZE && buf[i] != 0)
-			{
-				buf[i] = tolower((int) buf[i]);
-				i++;
-			}
+				int i = 0;
+				while(i < BUFFER_SIZE && buf[i] != 0)
+				{
+					buf[i] = tolower((int) buf[i]);
+					i++;
+				}
 
-			if(!strcmp(buf, "pipelining\r\n"))
-			{
-				get_app_context()->pipelining = true;
-				return WAITING;
+				if(!strcmp(buf, "pipelining\r\n"))
+				{
+					get_app_context()->pipelining = true;
+				}
+				else if(!strcmp(buf, ".\r\n"))
+				{
+					return NOT_WAITING;
+				}
 			}
-			else if(!strcmp(buf, ".\r\n"))
-			{
-				return NOT_WAITING;
-			}
-			else
-			{
-				return WAITING;
-			}
+			return WAITING;
 	}
 }
 
@@ -474,9 +471,9 @@ state_code CONNECT_CLIENT_STAGE_FOUR_on_leave(state s)
 	st->write_fds[1] = s->write_fds[1];
 	st->read_fds[2]  = s->read_fds[2];
 	st->write_fds[2] = s->write_fds[2];
-	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
-	buffer_initialize(&(st->buffers[1]), BUFFER_SIZE);
-	buffer_initialize(&(st->buffers[2]), BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE,BIG_BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[1]), BUFFER_SIZE,BIG_BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[2]), BUFFER_SIZE,BIG_BUFFER_SIZE);
 
 	add_state(sm, st);
 	remove_state(sm, s);
@@ -529,6 +526,24 @@ state_code CONNECT_CLIENT_STAGE_TWO_on_leave(state s)
 
 execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read)
 {
+	if(!is_read)
+	{
+		if(s->write_fds[0]==fd && buffer_is_empty(s->buffers[2]))
+		{
+			fd=s->read_fds[2];
+			is_read=!is_read;
+		}
+		if(s->write_fds[1]==fd && buffer_is_empty(s->buffers[0]))
+		{
+			fd=s->read_fds[0];
+			is_read=!is_read;
+		}
+		if(s->write_fds[2]==fd && buffer_is_empty(s->buffers[1]))
+		{
+			fd=s->read_fds[1];
+			is_read=!is_read;
+		}
+	}
 	int disconnection = false;
 	switch(is_read)
 	{
@@ -559,87 +574,14 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			}
 			else if(s->read_fds[1] == fd)
 			{   // Origin READ
-				int rd = buffer_read_until_string(fd, s->buffers[1], "\r\n");
-				if(rd == 0)
+				int ret = read_origin(s,fd);
+				if(ret!=0)
 				{
-
-
-
-
-					// If EOF received, Origin read and Origin write must be closed
-					s->disconnects[2] = true;
-					shutdown(s->read_fds[1], SHUT_RD);
-					s->read_fds[1]    = -1;
-					s->disconnects[3] = true;
-					shutdown(s->write_fds[1], SHUT_WR);
-					s->write_fds[1] = -1;
-
-					if(!IS_PROCESSING)
-					{
-						disconnect(s);
-					}
-
-					return WAITING;
-				}
-				if(rd < 0)
-				{
-
-					perror("Origin error \n");
-
-					switch(errno)
-					{
-						default:
-							buffer_read_string("-ERR Origin Error\n", s->buffers[1]);
-							break;
-					}
-					return NOT_WAITING;
-				}
-
-
-				if(buffer_starts_with_string("+OK", s->buffers[1]) ||
-				   buffer_starts_with_string("-ERR", s->buffers[1]))
-				{
-					IS_NEW_LINE      = true;
-					IS_NEXT_NEW_LINE = true;
-					IS_MULTILINE     = false;
-					if(!get_app_context()->pipelining)
-					{
-						s->pipelining_data = true;
-					}
-				}
-				else if(IS_NEXT_NEW_LINE && buffer_indicates_parsable_message(s->buffers[1]))
-				{
-					IS_NEW_LINE      = true;
-					IS_NEXT_NEW_LINE = false;
-					IS_TRANS         = true;
-					IS_MULTILINE     = true;
-				}
-				else if(IS_NEXT_NEW_LINE && buffer_indicates_start_of_list(s->buffers[1]))
-				{
-					IS_NEW_LINE      = true;
-					IS_NEXT_NEW_LINE = false;
-					IS_TRANS         = true;
-					IS_MULTILINE     = true;
-
-				}
-				else if(IS_NEXT_NEW_LINE && buffer_indicates_start_of_capa(s->buffers[1]))
-				{
-					IS_NEW_LINE      = true;
-					IS_NEXT_NEW_LINE = false;
-					IS_TRANS         = true;
-					IS_MULTILINE     = true;
-					if(!get_app_context()->pipelining)
-					{
-						buffer_read_string("PIPELINING\r\n", s->buffers[1]);
-					}
-				}
-				else
-				{
-					IS_NEW_LINE = false;
+					return ret;
 				}
 			}
 			else if(s->read_fds[2] == fd)
-			{
+			{ //TRANSFORM READ
 				if(buffer_read(fd, s->buffers[2]) == 0)
 				{
 					IS_PROCESSING = false;
@@ -661,6 +603,15 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					{
 						disconnect(s);
 						disconnection = true;
+					}
+					else if(!buffer_big_is_empty(s->buffers[1]))
+					{
+						ret = read_origin(s,fd);
+						if(ret!=0)
+						{
+							return ret;
+						}
+
 					}
 				}
 				else
@@ -771,6 +722,90 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 	return WAITING;
 }
 
+int read_origin(state s, int fd)
+{
+	int rd = buffer_read_until_string(fd, s->buffers[1], "\r\n");
+	if(rd == 0)
+	{
+		printf("--------------------------------------------------------\n");
+		printf("Origin disconnected \n");
+		printf("--------------------------------------------------------\n");
+
+		// If EOF received, Origin read and Origin write must be closed
+		s->disconnects[2]=true;
+		shutdown(s->read_fds[1],SHUT_RD);
+		s->read_fds[1]=-1;
+		s->disconnects[3]=true;
+		shutdown(s->write_fds[1],SHUT_WR);
+		s->write_fds[1]=-1;
+
+		if(!IS_PROCESSING){
+			disconnect(s);
+		}
+
+		return WAITING;
+	}
+	if(rd < 0)
+	{
+		printf("--------------------------------------------------------\n");
+		perror("Origin error \n");
+		printf("--------------------------------------------------------\n");
+		switch(errno)
+		{
+			default:
+				buffer_read_string("-ERR Origin Error\n", s->buffers[1]);
+				break;
+		}
+		return NOT_WAITING;
+	}
+	printf("--------------------------------------------------------\n");
+	printf("Read buffer content from Origin: \n");
+	print_buffer(s->buffers[1]);
+	if(buffer_starts_with_string("+OK", s->buffers[1]) ||
+	   buffer_starts_with_string("-ERR", s->buffers[1]))
+	{
+		IS_NEW_LINE      = true;
+		IS_NEXT_NEW_LINE = true;
+		IS_MULTILINE     = false;
+		if(!get_app_context()->pipelining)
+		{
+			s->pipelining_data = true;
+		}
+	}
+	else if(IS_NEXT_NEW_LINE && buffer_indicates_parsable_message(s->buffers[1]))
+	{
+		IS_NEW_LINE      = true;
+		IS_NEXT_NEW_LINE = false;
+		IS_TRANS         = true;
+		IS_MULTILINE     = true;
+	}
+	else if(IS_NEXT_NEW_LINE && buffer_indicates_start_of_list(s->buffers[1]))
+	{
+		IS_NEW_LINE      = true;
+		IS_NEXT_NEW_LINE = false;
+		IS_TRANS         = true;
+		IS_MULTILINE     = true;
+
+	}
+	else if(IS_NEXT_NEW_LINE && buffer_indicates_start_of_capa(s->buffers[1]))
+	{
+		IS_NEW_LINE      = true;
+		IS_NEXT_NEW_LINE = false;
+		IS_TRANS         = true;
+		IS_MULTILINE     = true;
+		if(!get_app_context()->pipelining)
+		{
+			buffer_read_string("PIPELINING\r\n", s->buffers[1]);
+		}
+	}
+	else
+	{
+		IS_NEW_LINE = false;
+	}
+	return 0;
+}
+
+
 execution_state ATTEND_CLIENT_on_resume(state s, file_descriptor fd, int is_read)
 {
 	ATTEND_CLIENT_on_arrive(s, fd, is_read);
@@ -793,13 +828,13 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 		case ATTEND_CLIENT_STATE:
 			if(curr->st->buffers[0] != NULL)
 			{
-				if(buffer_is_empty(curr->st->buffers[0]))
+				if(buffer_big_is_empty(curr->st->buffers[0]))
 				{
 					if(curr->st->read_fds[0] > 0)
 					{
 						if(MUA_READ_DISCONNECTED)
 						{
-
+							printf("MUA READ disconnected, fd not added.\n");
 						}
 						else
 						{
@@ -807,43 +842,19 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 							add_read_fd(curr->st->read_fds[0]); // MUA read
 						}
 					}
+					if(buffer_ends_with_string(curr->st->buffers[0],"\n"))
+					{
+						add_origin_write(curr);
+					}
 				}
 				else
 				{
-					if(curr->st->write_fds[1] > 0)
-					{
-
-						if(ORIGIN_WRITE_DISCONNECTED)
-						{
-
-						}
-						else
-						{
-							if(get_app_context()->pipelining)
-							{
-
-								add_write_fd(curr->st->write_fds[1]); // Origin write
-							}
-							else
-							{
-
-								if(curr->st->pipelining_data)
-								{
-
-									add_write_fd(curr->st->write_fds[1]); // Origin write
-								}
-								else
-								{
-
-								}
-							}
-						}
-					}
+					add_origin_write(curr);
 				}
 			}
 			if(curr->st->buffers[1] != NULL)
 			{
-				if(buffer_is_empty(curr->st->buffers[1]))
+				if(buffer_big_is_empty(curr->st->buffers[1]))
 				{
 					if(ORIGIN_READ_DISCONNECTED)
 					{
@@ -856,6 +867,22 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 
 							add_read_fd(curr->st->read_fds[1]);
 							// ORIGIN read
+						}
+					}
+					if(buffer_ends_with_string(curr->st->buffers[1],"\n"))
+					{
+						if(curr->st->write_fds[2] > 0)
+						{
+							printf("(TRANSFORM WRITE) Buffer 2 is not empty ==> ");
+							if(curr->st->data_1 && !curr->st->data_4)
+							{
+								printf("Will write to transform process.\n");
+								add_write_fd(curr->st->write_fds[2]); // Transform write
+							}
+							else
+							{
+								printf("Can't write, waiting for new transform process.\n");
+							}
 						}
 					}
 
@@ -879,12 +906,25 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 			}
 			if(curr->st->buffers[2] != NULL)
 			{
-				if(buffer_is_empty(curr->st->buffers[2]))
+				if(buffer_big_is_empty(curr->st->buffers[2]))
 				{
 					if(curr->st->read_fds[2] > 0)
 					{
 
 						add_read_fd(curr->st->read_fds[2]); // Transform read
+					}
+					if(buffer_ends_with_string(curr->st->buffers[2],"\n"))
+					{
+						if(MUA_WRITE_DISCONNECTED){
+							printf("MUA write disconnected, fd not added.");
+						}
+						else{
+							if(curr->st->write_fds[0] > 0)
+							{
+								printf("(MUA WRITE) Buffer 3 is not empty ==> ");
+								add_write_fd(curr->st->write_fds[0]); // MUA write
+							}
+						}
 					}
 				}
 				else
@@ -968,6 +1008,38 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 	}
 
 	set_up_fd_sets_rec(read_fds, write_fds, curr->next);
+}
+
+void add_origin_write(const struct nodeStruct *curr) {
+	if(curr->st->write_fds[1] > 0)
+						{
+							printf("(ORIGIN WRITE) Buffer 1 is not empty ==> ");
+							if(ORIGIN_WRITE_DISCONNECTED)
+							{
+								printf("Origin Write disconnected, fd not added.\n");
+							}
+							else
+							{
+								if(get_app_context()->pipelining)
+								{
+									printf("OS has Pipelining enabled. Added origin write\n");
+									add_write_fd(curr->st->write_fds[1]); // Origin write
+								}
+								else
+								{
+									printf("OS has no Pipelining enabled. ");
+									if(curr->st->pipelining_data)
+									{
+										printf("Added origin write\n");
+										add_write_fd(curr->st->write_fds[1]); // Origin write
+									}
+									else
+									{
+										printf("Waiting for server to process\n");
+									}
+								}
+							}
+						}
 }
 
 void set_up_fd_sets(fd_set *read_fds, fd_set *write_fds)

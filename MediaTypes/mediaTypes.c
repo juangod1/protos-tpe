@@ -73,8 +73,8 @@ int evaluate_mime(char *mime, char **media_type_complete_list)
 int
 media_type_state_machine(char **media_type_complete_list, char *replacement_message, size_t replacement_message_size)
 {
-	buffer_p buffer;
-	buffer_initialize(&buffer, BUFFER_SIZE);
+  buffer_p buffer;
+  buffer_initialize(&buffer, BUFFER_SIZE,BIG_BUFFER_SIZE);
 
 	int finished = false;
 	int state    = READ_LINE;
