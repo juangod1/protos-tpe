@@ -321,7 +321,7 @@ void process_request(state s, file_descriptor fd)
                 break;
             case QUIT:
                 s->protocol_state = CLOSE;
-                text_response_BS(SUCCESS, "Goodbye!", s, fd);
+                text_response_BS(SUCCESS, "Quitting", s, fd);
                 free(s->user);
                 free(s->pass);
                 s->disconnect = 1;
