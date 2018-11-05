@@ -39,7 +39,7 @@ file_descriptor setup_admin_socket()
 
 	bzero((void *) &servaddr, sizeof(servaddr));
 	servaddr.sin_family      = AF_INET;
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	servaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	servaddr.sin_port        = htons(get_app_context()->management_port);
 
 	ret = bind(listenSock, (struct sockaddr *) &servaddr, sizeof(servaddr));

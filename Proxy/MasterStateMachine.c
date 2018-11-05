@@ -334,7 +334,7 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 			memset(&address, 0, sizeof(address));
 			address.sin_port        = htons((uint16_t) get_app_context()->origin_port);
 			address.sin_family      = AF_INET;
-			address.sin_addr.s_addr = inet_addr(get_app_context()->address_server_string);
+			address.sin_addr.s_addr = htonl(INADDR_ANY);
 
 			if(connect(s->read_fds[1], (struct sockaddr *) &address, sizeof(address)) < 0)
 			{
