@@ -26,8 +26,8 @@
 
 file_descriptor setup_admin_socket()
 {
-	int                 listenSock, ret;
-	struct sockaddr_in  servaddr;
+	int                listenSock, ret;
+	struct sockaddr_in servaddr;
 
 	listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP);
 	if(listenSock == -1)
@@ -66,10 +66,10 @@ file_descriptor setup_admin_socket()
 
 int text_response_BS(int response_state, char *content, state s, file_descriptor fd)
 {
-	char *res = calloc(1,300);
-	char *ok      = "+OK - ";
-	char *err     = "-ERR - ";
-	char *esp     = "* - ";
+	char *res = calloc(1, 300);
+	char *ok  = "+OK - ";
+	char *err = "-ERR - ";
+	char *esp = "* - ";
 	if(response_state == 0)
 	{
 		strcat(res, ok);
@@ -83,12 +83,12 @@ int text_response_BS(int response_state, char *content, state s, file_descriptor
 		strcat(res, esp);
 	}
 	strcat(res, content);
-	strcat(res,"\r\n\r\n");
-	int read = buffer_read_string(res,s->buffers[0]);
-	if(*(res+read) != 0)
+	strcat(res, "\r\n\r\n");
+	int read = buffer_read_string(res, s->buffers[0]);
+	if(*(res + read) != 0)
 	{
 		s->remaining_response = read;
-		s->remaining_string = res;
+		s->remaining_string   = res;
 	}
 	else
 	{
@@ -101,9 +101,9 @@ int text_response_BS(int response_state, char *content, state s, file_descriptor
 
 int parse_message(const char *str, char sep, char **command, char **parameter)
 {
-	int          count = 0;
-	int     escape_found = 0;
-	unsigned int start = 0, stop;
+	int          count        = 0;
+	int          escape_found = 0;
+	unsigned int start        = 0, stop;
 	for(stop = 0; str[stop]; stop++)
 	{
 		if((str[stop] == sep && escape_found == 0))
@@ -113,13 +113,15 @@ int parse_message(const char *str, char sep, char **command, char **parameter)
 				return 1;
 			}
 			*command = calloc(1, stop - start + 1);
-			if(stop-start != 0)
+			if(stop - start != 0)
 			{
-                memcpy(*command, str + start, stop - start);
-                count++;
-                start = stop + 1;
-            } else {
-                return 1;
+				memcpy(*command, str + start, stop - start);
+				count++;
+				start = stop + 1;
+			}
+			else
+			{
+				return 1;
 			}
 		}
 		else if(str[stop] == '@' && escape_found == 0)
@@ -131,42 +133,43 @@ int parse_message(const char *str, char sep, char **command, char **parameter)
 	if(count == 0)
 	{
 		*command = calloc(1, stop - start + 1);
-		if(stop-start != 0)
+		if(stop - start != 0)
 		{
-            memcpy(*command, str + start, stop - start);
-            count++;
-            start = stop + 1;
-        }
-        else
-        {
-            return 1;
-        }
+			memcpy(*command, str + start, stop - start);
+			count++;
+			start = stop + 1;
+		}
+		else
+		{
+			return 1;
+		}
 		return 0;
 	}
-	if(stop-start != 0)
+	if(stop - start != 0)
 	{
-        *parameter = calloc(1, stop - start + 1);
-        memcpy(*parameter, str + start, stop - start);
-    }
-    else
-    {
-        return 1;
-    }
+		*parameter = calloc(1, stop - start + 1);
+		memcpy(*parameter, str + start, stop - start);
+	}
+	else
+	{
+		return 1;
+	}
 	return 0;
 }
 
 void admin_greeting(state s, file_descriptor fd)
 {
-    text_response_BS(SUCCESS, "Successfull conection! Now log in.", s, fd);
+	text_response_BS(SUCCESS, "Successfull conection! Now log in.", s, fd);
 }
 
 void process_request(state s, file_descriptor fd)
 {
-	buffer_p buffer               = s->buffers[0];
+	buffer_p buffer                      = s->buffers[0];
 	char     response[MAX_FILTER_BUFFER] = {0};
 	buffer_write_string(response, buffer);
-	char*p;
-	if((p = strchr(response,'\n')) != NULL){
+	char *p;
+	if((p = strchr(response, '\n')) != NULL)
+	{
 		*p = '\0';
 	}
 	printf("%s", response);
@@ -177,171 +180,217 @@ void process_request(state s, file_descriptor fd)
 		text_response_BS(FAILED, "Message format error.", s, fd);
 		//TODO:Puedo cerrar la conexion o dejar que siga un poco mas.
 	}
-	else {
-        switch (parse_admin_command(command)) {
-            case USER:
-                if (s->protocol_state != AUTENTICATION) {
-                    SCOPE_ERROR
-                    //TODO:Cerrar la response y solicitar un nuevo request.
-                    break;
-                }
-                if (parameter != NULL) {
-                    s->user = calloc(1, strlen(parameter) + 1);
-                    memcpy(s->user, parameter, strlen(parameter));
-                    text_response_BS(SUCCESS, "Continue with PASS.", s, fd);
-                } else {
-                    text_response_BS(FAILED, "Missing argument", s, fd);
-                }
-                break;
-            case PASS:
-                if (s->protocol_state != AUTENTICATION) {
-                    SCOPE_ERROR
-                    //TODO:Cerrar la response y solicitar un nuevo request.
-                    break;
-                }
-                if (s->user != NULL) {
-                    s->pass = calloc(1, strlen(parameter) + 1);
-                    memcpy(s->pass, parameter, strlen(parameter));
-                    int auth = authenticate(s->user, s->pass);
-                    if (auth == 0) {
-                        text_response_BS(SUCCESS, "Entering EXCHAGE.", s, fd);
-                        s->protocol_state = EXCHANGE;
-                    } else if (auth == 1) {
-                        text_response_BS(FAILED, "FAILED. Try again or QUIT.", s, fd);
-                    } else {
-                        text_response_BS(FAILED, "Connection error, try again later.", s, fd);
-                    }
-                } else {
-                    text_response_BS(FAILED, "Missing USER.", s, fd);
-                }
-                break;
-            case LISTS:
-                if (s->protocol_state != EXCHANGE) {
-                    SCOPE_ERROR
-                    //TODO:Cerrar la response y solicitar un nuevo request.
-                    break;
-                }
-                if (parameter != NULL) {
-                    FORMAT_ERROR
-                    //TODO:Cerrar la response y solicitar un nuevo request.
-                } else {
-                    char content[300] = {0};
-                    strcat(content, "List:");
-                    char **monitorArray = get_monitor_array();
-                    for (int i = 0; i < MONITORING_OPTIONS; i++) {
-                        strcat(content, "\n");
-                        strcat(content, monitorArray[i]);
-                    }
-                    text_response_BS(SUCCESS, content, s, fd);
-                }
-                break;
-            case STATS:
-                if (s->protocol_state != EXCHANGE) {
-                    SCOPE_ERROR
-                    //TODO:Cerrar la response y solicitar un nuevo request.
-                } else if (parameter != NULL) {
-                    int paramNum = parse_positive_int(parameter);
-                    if (paramNum == -1) {
-                        FORMAT_ERROR
-                        //TODO:Cerrar la response y solicitar un nuevo request.
-                    } else {
-                        long resmonitor = monitor(paramNum);
-                        if (resmonitor == -1) {
-                            text_response_BS(FAILED, "Option not found, use LISTS.", s, fd);
-                        } else {
-                            char textomonitor[25];
-                            char* content = calloc(1,64);
-                            switch(paramNum)
+	else
+	{
+		switch(parse_admin_command(command))
+		{
+			case USER:
+				if(s->protocol_state != AUTENTICATION)
+				{
+					SCOPE_ERROR
+					//TODO:Cerrar la response y solicitar un nuevo request.
+					break;
+				}
+				if(parameter != NULL)
+				{
+					s->user = calloc(1, strlen(parameter) + 1);
+					memcpy(s->user, parameter, strlen(parameter));
+					text_response_BS(SUCCESS, "Continue with PASS.", s, fd);
+				}
+				else
+				{
+					text_response_BS(FAILED, "Missing argument", s, fd);
+				}
+				break;
+			case PASS:
+				if(s->protocol_state != AUTENTICATION)
+				{
+					SCOPE_ERROR
+					//TODO:Cerrar la response y solicitar un nuevo request.
+					break;
+				}
+				if(s->user != NULL)
+				{
+					s->pass  = calloc(1, strlen(parameter) + 1);
+					memcpy(s->pass, parameter, strlen(parameter));
+					int auth = authenticate(s->user, s->pass);
+					if(auth == 0)
+					{
+						text_response_BS(SUCCESS, "Entering EXCHAGE.", s, fd);
+						s->protocol_state = EXCHANGE;
+					}
+					else if(auth == 1)
+					{
+						text_response_BS(FAILED, "FAILED. Try again or QUIT.", s, fd);
+					}
+					else
+					{
+						text_response_BS(FAILED, "Connection error, try again later.", s, fd);
+					}
+				}
+				else
+				{
+					text_response_BS(FAILED, "Missing USER.", s, fd);
+				}
+				break;
+			case LISTS:
+				if(s->protocol_state != EXCHANGE)
+				{
+					SCOPE_ERROR
+					//TODO:Cerrar la response y solicitar un nuevo request.
+					break;
+				}
+				if(parameter != NULL)
+				{
+					FORMAT_ERROR
+					//TODO:Cerrar la response y solicitar un nuevo request.
+				}
+				else
+				{
+					char content[300] = {0};
+					strcat(content, "List:");
+					char    **monitorArray = get_monitor_array();
+					for(int i              = 0; i < MONITORING_OPTIONS; i++)
+					{
+						strcat(content, "\n");
+						strcat(content, monitorArray[i]);
+					}
+					text_response_BS(SUCCESS, content, s, fd);
+				}
+				break;
+			case STATS:
+				if(s->protocol_state != EXCHANGE)
+				{
+					SCOPE_ERROR
+					//TODO:Cerrar la response y solicitar un nuevo request.
+				}
+				else if(parameter != NULL)
+				{
+					int paramNum = parse_positive_int(parameter);
+					if(paramNum == -1)
+					{
+						FORMAT_ERROR
+						//TODO:Cerrar la response y solicitar un nuevo request.
+					}
+					else
+					{
+						long resmonitor = monitor(paramNum);
+						if(resmonitor == -1)
+						{
+							text_response_BS(FAILED, "Option not found, use LISTS.", s, fd);
+						}
+						else
+						{
+							char textomonitor[25];
+							char *content = calloc(1, 64);
+							switch(paramNum)
 							{
-							    case 1:
-							        memcpy(content,"Connected MUAs: ", strlen("Connected MUAs: "));
-							        break;
-							    case 2:
-                                    memcpy(content,"Connected admins: ", strlen("Connected admins: "));
-							        break;
-							    case 3:
-                                    memcpy(content,"Historical MUA accesses: ", strlen("Historical MUA accesses: "));
-							        break;
-							    case 4:
-                                    memcpy(content,"Total transferred bytes: ", strlen("Total transferred bytes: "));
-							        break;
-                                default:
-                                    memcpy(content,"The result is: ", strlen("The results is: "));
-                                    break;
+								case 1:
+									memcpy(content, "Connected MUAs: ", strlen("Connected MUAs: "));
+									break;
+								case 2:
+									memcpy(content, "Connected admins: ", strlen("Connected admins: "));
+									break;
+								case 3:
+									memcpy(content, "Historical MUA accesses: ", strlen("Historical MUA accesses: "));
+									break;
+								case 4:
+									memcpy(content, "Total transferred bytes: ", strlen("Total transferred bytes: "));
+									break;
+								default:
+									memcpy(content, "The result is: ", strlen("The results is: "));
+									break;
 							}
-                            sprintf(textomonitor, "%ld", resmonitor);
-                            text_response_BS(SUCCESS, strcat(content, textomonitor), s,
-                                             fd);
-                            free(content);
-                        }
-                    }
-                } else {
-                    FORMAT_ERROR
-                }
-                break;
-            case ACTIVE:
-                if (s->protocol_state != EXCHANGE) {
-                    SCOPE_ERROR
-                    //TODO:Cerrar la response y solicitar un nuevo request.
-                } else {
-                    if (parameter == NULL) {
-                        //Significa que no paso parameter entonces quiere saber cual es el estado actual
-                        int estadoT = get_transformation_state();
-                        char resp[MAX_FILTER_BUFFER] = "Transformation is: ";
-                        text_response_BS(SUCCESS, strcat(resp, (estadoT ? "Active" : "Inactive")), s, fd);
-                    } else {
-                        int paramNum = parse_positive_int(parameter);
-                        if (paramNum != 1 && paramNum != 0) {
-                            FORMAT_ERROR
-                            //TODO:Cerrar la response y solicitar un nuevo request.
-                        } else {
-                            set_transformation_state(paramNum, s);
-                            char resp[40] = "SUCCESS. Transformation is: ";
-                            text_response_BS(SUCCESS, strcat(resp,
-                                                             (paramNum ? "Active" : "Inactive")), s, fd);
-                        }
-                    }
-                }
-                break;
-            case FILTER:
-                if (s->protocol_state != EXCHANGE) {
-                    SCOPE_ERROR
-                    //TODO:Cerrar la response y solicitar un nuevo request.
-                } else {
-                    if (parameter == NULL) {
-                        char *filtro = get_transformation_filter();
-                        char resp[MAX_FILTER_BUFFER] = "Current transformation: ";
-                        text_response_BS(SUCCESS, strcat(resp, filtro), s, fd);
-                    } else {
-                        command_specification(parameter);
+							sprintf(textomonitor, "%ld", resmonitor);
+							text_response_BS(SUCCESS, strcat(content, textomonitor), s,
+							                 fd);
+							free(content);
+						}
+					}
+				}
+				else
+				{
+					FORMAT_ERROR
+				}
+				break;
+			case ACTIVE:
+				if(s->protocol_state != EXCHANGE)
+				{
+					SCOPE_ERROR
+					//TODO:Cerrar la response y solicitar un nuevo request.
+				}
+				else
+				{
+					if(parameter == NULL)
+					{
+						//Significa que no paso parameter entonces quiere saber cual es el estado actual
+						int  estadoT                 = get_transformation_state();
+						char resp[MAX_FILTER_BUFFER] = "Transformation is: ";
+						text_response_BS(SUCCESS, strcat(resp, (estadoT ? "Active" : "Inactive")), s, fd);
+					}
+					else
+					{
+						int paramNum = parse_positive_int(parameter);
+						if(paramNum != 1 && paramNum != 0)
+						{
+							FORMAT_ERROR
+							//TODO:Cerrar la response y solicitar un nuevo request.
+						}
+						else
+						{
+							set_transformation_state(paramNum, s);
+							char resp[40] = "SUCCESS. Transformation is: ";
+							text_response_BS(SUCCESS, strcat(resp,
+							                                 (paramNum ? "Active" : "Inactive")), s, fd);
+						}
+					}
+				}
+				break;
+			case FILTER:
+				if(s->protocol_state != EXCHANGE)
+				{
+					SCOPE_ERROR
+					//TODO:Cerrar la response y solicitar un nuevo request.
+				}
+				else
+				{
+					if(parameter == NULL)
+					{
+						char *filtro                 = get_transformation_filter();
+						char resp[MAX_FILTER_BUFFER] = "Current transformation: ";
+						text_response_BS(SUCCESS, strcat(resp, filtro), s, fd);
+					}
+					else
+					{
+						command_specification(parameter);
 
-						char *log = calloc(1,1);
+						char *log   = calloc(1, 1);
 						char *trans = "NOT POP3 - TRANSFORMATION COMMAND CHANGED TO: ";
-						log = realloc(log,strlen(trans) + strlen(parameter) + 1);
-						memset(log,'\0',strlen(trans)+strlen(parameter)+1);
-						strcat(log,trans);
-						strcat(log,parameter);
-						log_event(s,'*', log);
+						log = realloc(log, strlen(trans) + strlen(parameter) + 1);
+						memset(log, '\0', strlen(trans) + strlen(parameter) + 1);
+						strcat(log, trans);
+						strcat(log, parameter);
+						log_event(s, '*', log);
 						free(log);
 
-                        char resp[MAX_FILTER_BUFFER] = "SUCCESS. Current transformation: ";
-                        text_response_BS(SUCCESS, strcat(resp, parameter), s, fd);
-                    }
-                }
-                break;
-            case QUIT:
-                s->protocol_state = CLOSE;
-                text_response_BS(SUCCESS, "Quitting", s, fd);
-                free(s->user);
-                free(s->pass);
-                s->disconnect = 1;
-                break;
-            default:
-                text_response_BS(FAILED, "Command unknown. Refer to the RFC.", s, fd);
-                break;
-        }
-    }
-    free(command);
+						char resp[MAX_FILTER_BUFFER] = "SUCCESS. Current transformation: ";
+						text_response_BS(SUCCESS, strcat(resp, parameter), s, fd);
+					}
+				}
+				break;
+			case QUIT:
+				s->protocol_state = CLOSE;
+				text_response_BS(SUCCESS, "Quitting", s, fd);
+				free(s->user);
+				free(s->pass);
+				s->disconnect = 1;
+				break;
+			default:
+				text_response_BS(FAILED, "Command unknown. Refer to the RFC.", s, fd);
+				break;
+		}
+	}
+	free(command);
 	free(parameter);
 }
 
@@ -423,8 +472,10 @@ long monitor(int number)
 {
 	//TODO Tiene que buscar las metricas en el contexto
 	if(number > MONITORING_OPTIONS || number < 1)
-        return -1;
-	return get_app_context()->monitor_values[number-1];
+	{
+		return -1;
+	}
+	return get_app_context()->monitor_values[number - 1];
 }
 
 int get_transformation_state()
@@ -436,14 +487,14 @@ int get_transformation_state()
 void set_transformation_state(int estado, state s)
 {
 	get_app_context()->transform_status = estado;
-	char *log = calloc(1,1);
-	char *trans = "NOT POP3 - TRANSFORMATION STATUS CHANGED TO: ";
-	char *active = (estado?"ON":"OFF");
-	log = realloc(log,strlen(trans) + strlen(active) + 1);
-	memset(log,'\0',strlen(trans)+strlen(active)+1);
-	strcat(log,trans);
-	strcat(log,active);
-	log_event(s,'*', log);
+	char *log                           = calloc(1, 1);
+	char *trans                         = "NOT POP3 - TRANSFORMATION STATUS CHANGED TO: ";
+	char *active                        = (estado ? "ON" : "OFF");
+	log = realloc(log, strlen(trans) + strlen(active) + 1);
+	memset(log, '\0', strlen(trans) + strlen(active) + 1);
+	strcat(log, trans);
+	strcat(log, active);
+	log_event(s, '*', log);
 	free(log);
 }
 

@@ -36,8 +36,8 @@ void closeConnection(int fd);
 
 void reportNotAvailableResource();
 
-int charbuffer_ends_with_doubleCRLF(char* buffer);
+int charbuffer_ends_with_doubleCRLF(char *buffer);
 
-void clean_buffer(char* buffer);
+void clean_buffer(char *buffer);
 
 #endif

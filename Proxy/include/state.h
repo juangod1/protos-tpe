@@ -54,7 +54,7 @@ struct stateStruct
 	int             data_3;
 	int             data_4;
 	int             data_5;
-	int 			data_6;
+	int             data_6;
 	int             pipelining_data;
 	char            *user;
 	char            *pass;
@@ -63,7 +63,7 @@ struct stateStruct
 	long            session_id;
 	int             remaining_response;
 	char            *remaining_string;
-	int disconnects[4];
+	int             disconnects[4];
 };
 
 

@@ -104,38 +104,38 @@ file_descriptor setup_origin_socket()
 
 file_descriptor setup_MUA_socket()
 {
-		struct sockaddr_in6 address;
-		memset(&address, 0, sizeof(address));
-		address.sin6_port   = htons(app_context->local_port);
-		address.sin6_family = AF_INET6;
-		address.sin6_addr   = in6addr_any; 
+	struct sockaddr_in6 address;
+	memset(&address, 0, sizeof(address));
+	address.sin6_port   = htons(app_context->local_port);
+	address.sin6_family = AF_INET6;
+	address.sin6_addr   = in6addr_any;
 
-		int             flag = 1;
-		file_descriptor sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
-		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
+	int             flag = 1;
+	file_descriptor sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
 
-		if(sock < 0)
-		{
-			perror("Unable to create socket.");
-			error_terminal();
-			return -1;
-		}
+	if(sock < 0)
+	{
+		perror("Unable to create socket.");
+		error_terminal();
+		return -1;
+	}
 
-		if(bind(sock, (struct sockaddr *) &address, sizeof(address)) < 0)
-		{
-			perror("Unable to bind socket.\n");
-			error_terminal();
-			return -1;
-		}
+	if(bind(sock, (struct sockaddr *) &address, sizeof(address)) < 0)
+	{
+		perror("Unable to bind socket.\n");
+		error_terminal();
+		return -1;
+	}
 
-		if(listen(sock, MAXIMUM_PENDING_CONNECTIONS) < 0)
-		{
-			perror("Unable to listen.\n");
-			error_terminal();
-			return -1;
-		}
+	if(listen(sock, MAXIMUM_PENDING_CONNECTIONS) < 0)
+	{
+		perror("Unable to listen.\n");
+		error_terminal();
+		return -1;
+	}
 
-		return sock;
+	return sock;
 }
 
 int findMax(int *a, int size)

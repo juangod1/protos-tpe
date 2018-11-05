@@ -22,24 +22,25 @@ static char *version_number = "SNAPSHOT 1.0.0";
 void initialize_app_context()
 {
 	app_context = malloc(sizeof(app_context_t));
-	app_context->censored_media_types  = NULL;
-	app_context->pop3_path             = NULL;
-	app_context->command_specification = NULL;
-	app_context->error_descriptor      = -1;
-	app_context->local_port            = 0;
-	app_context->isIPV6                = 0;
-	app_context->management_path       = NULL;
-	app_context->management_port       = 0;
-	app_context->origin_port           = 0;
-	app_context->replacement_message   = NULL;
-	app_context->address_server_string = NULL;
-	app_context->addr                  = NULL;
-	app_context->first                  = NULL;
-	app_context->has_to_query_dns      = 0;
-	app_context->pipelining            = false;
-	app_context->pop3filter_version    = version_number;
-	app_context->log_sequence          = 0;
-	char *monitoring[MONITORING_OPTIONS]                 = {"1 - Connected MUAs", "2 - Connected admins", "3 - Historical MUA accesses", "4 - Total transferred bytes"};
+	app_context->censored_media_types    = NULL;
+	app_context->pop3_path               = NULL;
+	app_context->command_specification   = NULL;
+	app_context->error_descriptor        = -1;
+	app_context->local_port              = 0;
+	app_context->isIPV6                  = 0;
+	app_context->management_path         = NULL;
+	app_context->management_port         = 0;
+	app_context->origin_port             = 0;
+	app_context->replacement_message     = NULL;
+	app_context->address_server_string   = NULL;
+	app_context->addr                    = NULL;
+	app_context->first                   = NULL;
+	app_context->has_to_query_dns        = 0;
+	app_context->pipelining              = false;
+	app_context->pop3filter_version      = version_number;
+	app_context->log_sequence            = 0;
+	char *monitoring[MONITORING_OPTIONS] = {"1 - Connected MUAs", "2 - Connected admins", "3 - Historical MUA accesses",
+	                                        "4 - Total transferred bytes"};
 	app_context->transform_status = true;
 	for(int i = 0; i < MONITORING_OPTIONS; i++)
 	{
@@ -59,12 +60,12 @@ void destroy_app_context()
 	free(app_context->pop3_path);
 	free(app_context->censored_media_types);
 
-	if(app_context->error_descriptor<0)
+	if(app_context->error_descriptor < 0)
 	{
 		close(app_context->error_descriptor);
 	}
 
-	for(int i=0; i< MONITORING_OPTIONS; i++)
+	for(int i = 0; i < MONITORING_OPTIONS; i++)
 	{
 		free(app_context->monitor[i]);
 	}
@@ -104,7 +105,7 @@ void initialize_options()
 
 void pop3_direction(char *arg)
 {
-    //Receives an direction and uses it to specify the address of the proxy service.
+	//Receives an direction and uses it to specify the address of the proxy service.
 
 	fflush(stdout);
 	app_context->pop3_path = my_strdup(arg);
@@ -112,12 +113,12 @@ void pop3_direction(char *arg)
 
 void error_specification(char *arg)
 {
-	FILE * newStream = freopen(arg, "w+", stderr);
-	if(newStream==NULL)
+	FILE *newStream = freopen(arg, "w+", stderr);
+	if(newStream == NULL)
 	{
 		perror("Fopen error. Setting error path to default /dev/null");
-		newStream=freopen("/dev/null","w",stderr);
-		if(newStream==NULL)
+		newStream = freopen("/dev/null", "w", stderr);
+		if(newStream == NULL)
 		{
 			perror("Fopen error. Setting error path to stderr.");
 			return;

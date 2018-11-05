@@ -6,16 +6,16 @@
 
 void thenSuccess()
 {
-    ok();
+	ok();
 }
 
 void ok()
 {
-    printf("    Ok!\n");
+	printf("    Ok!\n");
 }
 
-void fail(char * errorMsg)
+void fail(char *errorMsg)
 {
-    printf("    Failed\n");
-    printf("%s\n",errorMsg );
+	printf("    Failed\n");
+	printf("%s\n", errorMsg);
 }

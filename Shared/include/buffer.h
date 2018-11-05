@@ -28,16 +28,21 @@ int buffer_write_string(char *string, buffer_p buffer);
 int buffer_read_string(char *string, buffer_p buffer);
 
 int buffer_indicates_end_of_multiline_message(buffer_p buffer);
+
 int buffer_indicates_end_of_single_line_message(buffer_p buffer);
-int buffer_read_string_endline(char* string, buffer_p buffer, int type);
+
+int buffer_read_string_endline(char *string, buffer_p buffer, int type);
 
 int buffer_is_empty(buffer_p buffer);
 
 int buffer_read(int file_descriptor, buffer_p buffer);
 
 int buffer_must_be_line_buffered(buffer_p buffer);
+
 int buffer_is_line_buffered(buffer_p buffer);
+
 int buffer_write_after_index(int file_descriptor, buffer_p buffer, int index);
+
 void buffer_remove_trailing_spaces(buffer_p buffer);
 
 int buffer_read_until_char_block(int file_descriptor, buffer_p buffer, char ch);
@@ -53,7 +58,9 @@ int find_substring(char *buffer, int size, char *substring);
 int buffer_read_until_char(int file_descriptor, buffer_p buffer, char ch);
 
 int buffer_indicates_start_of_capa(buffer_p buffer);
+
 int buffer_indicates_start_of_list(buffer_p buffer);
+
 int buffer_indicates_start_of_multiline_message(buffer_p buffer);
 
 void buffer_clean(buffer_p buff);

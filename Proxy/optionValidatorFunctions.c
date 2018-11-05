@@ -20,31 +20,32 @@ validate_server_string(char *string, response_p response) //TODO: parse string, 
 void pop3_direction_validation(int argc, char **argv,
                                response_p resp)//TODO: parse string, make sure it has the correct format.
 {
-    if(argc<1 || argv[0] == NULL)
-    {
-        resp->success    = FALSE;
-        resp->error_text = "Pop3 proxy address accepts only one parameter";
-        return;
-    }
-    else
-    {
-        char buf[16];
+	if(argc < 1 || argv[0] == NULL)
+	{
+		resp->success    = FALSE;
+		resp->error_text = "Pop3 proxy address accepts only one parameter";
+		return;
+	}
+	else
+	{
+		char buf[16];
 
-        if(inet_pton(AF_INET, argv[0], buf) || inet_pton(AF_INET6, argv[0], buf))
-        {
-            resp->success       = TRUE;
-            resp->next_argument = 1;
-        }
-        else
-        {
-            resp->success    = FALSE;
-            resp->error_text = "Invalid pop3 proxy address";
-            return;
-        }
-    }
+		if(inet_pton(AF_INET, argv[0], buf) || inet_pton(AF_INET6, argv[0], buf))
+		{
+			resp->success       = TRUE;
+			resp->next_argument = 1;
+		}
+		else
+		{
+			resp->success    = FALSE;
+			resp->error_text = "Invalid pop3 proxy address";
+			return;
+		}
+	}
 }
 
-void error_specification_validation(int argc, char **argv, response_p resp) //TODO: parse string, make sure it has the correct format.
+void error_specification_validation(int argc, char **argv,
+                                    response_p resp) //TODO: parse string, make sure it has the correct format.
 {
 	resp->success       = TRUE;
 	resp->next_argument = 1;
@@ -53,38 +54,38 @@ void error_specification_validation(int argc, char **argv, response_p resp) //TO
 void management_direction_validation(int argc, char **argv,
                                      response_p resp) //TODO: parse string, make sure it has the correct format.
 {//tiene que ser una direccion ipv4 o ipv6 valida
-    if(argc<1 || argv[0] == NULL)
-    {
-        resp->success    = FALSE;
-        resp->error_text = "Management address accepts only one parameter";
-        return;
-    }
-    else
-    {
-        char buf[16];
+	if(argc < 1 || argv[0] == NULL)
+	{
+		resp->success    = FALSE;
+		resp->error_text = "Management address accepts only one parameter";
+		return;
+	}
+	else
+	{
+		char buf[16];
 
-        if(inet_pton(AF_INET, argv[0], buf) || inet_pton(AF_INET6, argv[0], buf))
-        {
-            resp->success       = TRUE;
-            resp->next_argument = 1;
-        }
-        else
-        {
-            resp->success    = FALSE;
-            resp->error_text = "Invalid management address";
-            return;
-        }
-    }
+		if(inet_pton(AF_INET, argv[0], buf) || inet_pton(AF_INET6, argv[0], buf))
+		{
+			resp->success       = TRUE;
+			resp->next_argument = 1;
+		}
+		else
+		{
+			resp->success    = FALSE;
+			resp->error_text = "Invalid management address";
+			return;
+		}
+	}
 }
 
 void replacement_message_validation(int argc, char **argv, response_p resp)
 {
-    if(argc<1 || argv[0] == NULL)
-    {
-        resp->success    = FALSE;
-        resp->error_text = "Replacement message accepts only one parameter";
-        return;
-    }
+	if(argc < 1 || argv[0] == NULL)
+	{
+		resp->success    = FALSE;
+		resp->error_text = "Replacement message accepts only one parameter";
+		return;
+	}
 	resp->success       = TRUE;
 	resp->next_argument = 1;
 }
@@ -92,12 +93,12 @@ void replacement_message_validation(int argc, char **argv, response_p resp)
 void command_specification_validation(int argc, char **argv,
                                       response_p resp) //TODO: parse string, make sure it has the correct format.
 {
-    if(argc<1 || argv[0] == NULL)
-    {
-        resp->success    = FALSE;
-        resp->error_text = "Command specification accepts only one parameter";
-        return;
-    }
+	if(argc < 1 || argv[0] == NULL)
+	{
+		resp->success    = FALSE;
+		resp->error_text = "Command specification accepts only one parameter";
+		return;
+	}
 	resp->success       = TRUE;
 	resp->next_argument = 1;
 }

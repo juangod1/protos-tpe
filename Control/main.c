@@ -60,7 +60,7 @@ void socket_config()
 
 int createConnection()
 {
-	int                         fd, ret;
+	int fd, ret;
 
 
 	if((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP)) == -1)
@@ -121,17 +121,19 @@ void loginSuccess(char *status)
 	printf("Login succesful\n");
 	*status = 1;
 }
+
 void receiveGreeting(int fd)
 {
-    char buffer[MAX_BUFFER] = {0};
-    sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
-    printf("%s",buffer);
+	char buffer[MAX_BUFFER] = {0};
+	sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
+	printf("%s", buffer);
 }
+
 char requestLoginToProxy(int fd)
 {
 	char buffer[MAX_BUFFER] = {0};
-	char *usernameInput = calloc(1, INITIAL_INPUT_SIZE);
-	char *passwordInput = calloc(1, INITIAL_INPUT_SIZE);
+	char *usernameInput     = calloc(1, INITIAL_INPUT_SIZE);
+	char *passwordInput     = calloc(1, INITIAL_INPUT_SIZE);
 
 	printf("Please enter your username: ");
 	fetchLineFromStdin(&usernameInput, INITIAL_INPUT_SIZE);
@@ -168,7 +170,7 @@ char requestLoginToProxy(int fd)
 	}
 
 	ret = sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
-    printf("%s",buffer);
+	printf("%s", buffer);
 	free(usernameInput);
 	free(passwordInput);
 
@@ -226,7 +228,7 @@ void interaction(int fd)
 				*pos = '\n';
 			}
 			ret = sctp_sendmsg(fd, (void *) buffer, length, NULL, 0, 0, 0, 0, 0, 0);
-            printResponse(fd);
+			printResponse(fd);
 		}
 		else if(strncmp(buffer, "STATS", 5) == 0)
 		{
@@ -314,8 +316,8 @@ void interaction(int fd)
 			{
 				count = (int) p.we_wordc;
 				w     = p.we_wordv;
-                char *pos;
-                if(count == 1 || count == 2 || (pos = strchr(buffer,'@')) != NULL)
+				char *pos;
+				if(count == 1 || count == 2 || (pos = strchr(buffer, '@')) != NULL)
 				{
 					if((pos = strchr(buffer, '\0')) != NULL)
 					{
@@ -336,7 +338,7 @@ void interaction(int fd)
 			       "                      With BOOL, activates (1) or deactivates (0) the current filter\n");
 			printf("FILTER [CMD]--------- With no CMD, returns current transformation filter\n"
 			       "                      With CMD (a command name compatible with system(3)) changes the current tranformation filter into CMD\n"
-                   "                      @ escapes all blank spaces after it\n");
+			       "                      @ escapes all blank spaces after it\n");
 			printf("QUIT----------------- Closes the connection\n");
 			printf("HELP----------------- Lists the possible input options\n");
 
@@ -352,7 +354,7 @@ void interaction(int fd)
 			ret = sctp_sendmsg(fd, (void *) buffer, length, NULL, 0, 0, 0, 0, 0, 0);
 			printResponse(fd);
 			closeConnection(fd);
-            exit(EXIT_SUCCESS);
+			exit(EXIT_SUCCESS);
 
 		}
 		else
@@ -369,65 +371,69 @@ void interaction(int fd)
 		}
 	}
 }
+
 void printResponse(int fd)
 {
-    char responseBuffer[MAX_BUFFER] = {0};
+	char responseBuffer[MAX_BUFFER] = {0};
 
-    int flag = 0;
+	int flag = 0;
 
-    while(!flag)
-    {
-        sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
-        if(charbuffer_ends_with_doubleCRLF(responseBuffer))
-        {
-            flag = 1;
-        }
-        printf("%s",responseBuffer);
-        clean_buffer(responseBuffer);
-    }
+	while(!flag)
+	{
+		sctp_recvmsg(fd, responseBuffer, sizeof(responseBuffer), NULL, 0, 0, 0);
+		if(charbuffer_ends_with_doubleCRLF(responseBuffer))
+		{
+			flag = 1;
+		}
+		printf("%s", responseBuffer);
+		clean_buffer(responseBuffer);
+	}
 
 }
-int charbuffer_ends_with_doubleCRLF(char* buffer)
+
+int charbuffer_ends_with_doubleCRLF(char *buffer)
 {
-    char* s = buffer;
-    while(*s != '\0')
-    {
-        if(*s=='\r')
-        {
-            s++;
-            if(*s == '\n')
-            {
-                s++;
-                if(*s == '\r')
-                {
-                    s++;
-                    if(*s == '\n')
-                    {
-                        s++;
-                        if(*s == '\0')
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            s++;
-        }
-    }
-    return false;
+	char *s = buffer;
+	while(*s != '\0')
+	{
+		if(*s == '\r')
+		{
+			s++;
+			if(*s == '\n')
+			{
+				s++;
+				if(*s == '\r')
+				{
+					s++;
+					if(*s == '\n')
+					{
+						s++;
+						if(*s == '\0')
+						{
+							return true;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			s++;
+		}
+	}
+	return false;
 }
-void clean_buffer(char* buffer)
+
+void clean_buffer(char *buffer)
 {
-    char* s = buffer;
-    while(*s != '\0')
-    {
-        *s = '\0';
-        *s++;
-    }
+	char *s = buffer;
+	while(*s != '\0')
+	{
+		*s = '\0';
+		*s++;
+	}
 }
+
 void closeConnection(int fd)
 {
 	printf("Goodbye, hope to see you soon!\n");

@@ -46,17 +46,19 @@ void select_state(int *ret)
 		return;
 	}
 
-	int random_skips = rand_int(0,select_ret-1);
+	int random_skips = rand_int(0, select_ret - 1);
 
 	int i;
 	for(i = 0; i < MAX_FD; i++)
 	{
 		if(FD_ISSET(i, &read_fds))
 		{
-			if(random_skips!=0){
+			if(random_skips != 0)
+			{
 				random_skips--;
 			}
-			else{
+			else
+			{
 				ret[0] = i;
 				ret[1] = 1;
 				return;

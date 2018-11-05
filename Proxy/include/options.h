@@ -6,6 +6,7 @@
 #define PROTOS_TPE_OPTIONS_H
 
 #include <stdint.h>
+
 #define MONITORING_OPTIONS 4
 typedef struct
 {
@@ -13,7 +14,7 @@ typedef struct
 	char            *address_server_string;
 	struct addrinfo *addr;
 	struct addrinfo *first;
-	int	            error_descriptor;
+	int             error_descriptor;
 	char            *pop3_path;
 	char            *management_path;
 	char            *replacement_message;
@@ -28,7 +29,7 @@ typedef struct
 	int             transform_status;
 	char            *pop3filter_version;
 	int             isIPV6;
-	int				log_sequence;
+	int             log_sequence;
 } app_context_t;
 
 typedef app_context_t *app_context_p;

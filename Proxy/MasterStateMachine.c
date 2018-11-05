@@ -64,7 +64,6 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 			{
 
 
-
 				disconnect(s);
 				return WAITING;
 			}
@@ -104,7 +103,6 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 			}
 
 
-
 			break;
 	}
 }
@@ -122,8 +120,8 @@ state_code ATTEND_ADMIN_on_leave(state s)
 execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 {
 	struct sockaddr a;
-	socklen_t sl         = sizeof(a);
-	int       accept_ret = accept(s->read_fds[0], &a, &sl);
+	socklen_t       sl         = sizeof(a);
+	int             accept_ret = accept(s->read_fds[0], &a, &sl);
 	if(accept_ret == -1)
 	{
 		perror("accept()");
@@ -133,16 +131,16 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
 
 	s->session_id = getMicrotime();
 	//NEW ADMIN CONNECTED
-	log_event(s,'+',"NOT POP3 - ADMIN CONNECTED");
+	log_event(s, '+', "NOT POP3 - ADMIN CONNECTED");
 	get_app_context()->monitor_values[1] += 1;
 
 	state st = new_state(CONNECT_ADMIN_STAGE_TWO_STATE, CONNECT_ADMIN_STAGE_TWO_on_arrive,
 	                     CONNECT_ADMIN_STAGE_TWO_on_resume, CONNECT_ADMIN_STAGE_TWO_on_leave);
-	st->session_id=s->session_id;
+	st->session_id = s->session_id;
 
 	st->read_fds[0]  = accept_ret;
 	st->write_fds[0] = accept_ret;
-	buffer_initialize(&(st->buffers[0]),BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
 	add_state(sm, st);
 
 	return NOT_WAITING;
@@ -159,8 +157,8 @@ state_code CONNECT_ADMIN_on_leave(state s)
 
 execution_state CONNECT_ADMIN_STAGE_TWO_on_arrive(state s, file_descriptor fd, int is_read)
 {
-	buffer_read_string("+OK Greetings Earthlings. Now log in.\r\n",s->buffers[0]);
-	buffer_write(fd,s->buffers[0]);
+	buffer_read_string("+OK Greetings Earthlings. Now log in.\r\n", s->buffers[0]);
+	buffer_write(fd, s->buffers[0]);
 
 	return NOT_WAITING;
 }
@@ -180,7 +178,7 @@ state_code CONNECT_ADMIN_STAGE_TWO_on_leave(state s)
 	st->write_fds[0] = s->write_fds[0];
 	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
 	add_state(sm, st);
-	remove_state(sm,s);
+	remove_state(sm, s);
 }
 
 void *query_dns(void *st)
@@ -196,7 +194,7 @@ void *query_dns(void *st)
 			.ai_next      = NULL,
 	};
 
-	if(get_app_context()->first!=NULL)
+	if(get_app_context()->first != NULL)
 	{
 		freeaddrinfo(get_app_context()->first);
 	}
@@ -208,7 +206,8 @@ void *query_dns(void *st)
 	get_app_context()->addr = get_app_context()->first;
 	int ret = -1;
 
-	while(get_app_context()->addr != NULL && (ret = connect(s->read_fds[1], get_app_context()->addr->ai_addr, get_app_context()->addr->ai_addrlen)) < 0)
+	while(get_app_context()->addr != NULL &&
+	      (ret = connect(s->read_fds[1], get_app_context()->addr->ai_addr, get_app_context()->addr->ai_addrlen)) < 0)
 	{
 		get_app_context()->addr = get_app_context()->addr->ai_next;
 	}
@@ -242,8 +241,8 @@ void *query_dns(void *st)
 execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_read)
 {
 	struct sockaddr a;
-	socklen_t addrlen    = sizeof(a);
-	int       accept_ret = accept(s->read_fds[0], &(a), &addrlen);
+	socklen_t       addrlen    = sizeof(a);
+	int             accept_ret = accept(s->read_fds[0], &(a), &addrlen);
 
 	if(accept_ret < 0)
 	{
@@ -299,9 +298,9 @@ state_code CONNECT_CLIENT_on_leave(state s)
 
 execution_state CONNECT_CLIENT_CONN_REFUSED_on_arrive(state s, file_descriptor fd, int is_read)
 {
-	buffer_initialize(&(s->buffers[0]),BUFFER_SIZE);
-	buffer_read_string("-ERR Connection Refused\r\n",(s->buffers[0]));
-	buffer_write(fd,s->buffers[0]);
+	buffer_initialize(&(s->buffers[0]), BUFFER_SIZE);
+	buffer_read_string("-ERR Connection Refused\r\n", (s->buffers[0]));
+	buffer_write(fd, s->buffers[0]);
 	return NOT_WAITING;
 }
 
@@ -311,8 +310,8 @@ execution_state CONNECT_CLIENT_CONN_REFUSED_on_resume(state s, file_descriptor f
 
 state_code CONNECT_CLIENT_CONN_REFUSED_on_leave(state s)
 {
-	shutdown(s->write_fds[0],SHUT_RDWR);
-	remove_state(sm,s);
+	shutdown(s->write_fds[0], SHUT_RDWR);
+	remove_state(sm, s);
 }
 
 execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd, int is_read)
@@ -336,7 +335,7 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 				state st = new_state(CONNECT_CLIENT_CONN_REFUSED_STATE, CONNECT_CLIENT_CONN_REFUSED_on_arrive,
 				                     CONNECT_CLIENT_CONN_REFUSED_on_resume, CONNECT_CLIENT_CONN_REFUSED_on_leave);
 				st->write_fds[0] = s->read_fds[0];
-				add_state(sm,st);
+				add_state(sm, st);
 				return NOT_WAITING;
 			}
 		}
@@ -352,9 +351,9 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 			{
 				perror("Connect to origin error");
 				state st = new_state(CONNECT_CLIENT_CONN_REFUSED_STATE, CONNECT_CLIENT_CONN_REFUSED_on_arrive,
-				                      CONNECT_CLIENT_CONN_REFUSED_on_resume, CONNECT_CLIENT_CONN_REFUSED_on_leave);
+				                     CONNECT_CLIENT_CONN_REFUSED_on_resume, CONNECT_CLIENT_CONN_REFUSED_on_leave);
 				st->write_fds[0] = s->read_fds[0];
-				add_state(sm,st);
+				add_state(sm, st);
 				return NOT_WAITING;
 			}
 		}
@@ -468,7 +467,7 @@ state_code CONNECT_CLIENT_STAGE_FOUR_on_leave(state s)
 {
 	state st = new_state(ATTEND_CLIENT_STATE, ATTEND_CLIENT_on_arrive, ATTEND_CLIENT_on_resume, ATTEND_CLIENT_on_leave);
 
-	st->session_id 		= s->session_id;
+	st->session_id = s->session_id;
 	st->read_fds[0]  = s->read_fds[0];
 	st->write_fds[0] = s->write_fds[0];
 	st->read_fds[1]  = s->read_fds[1];
@@ -504,7 +503,7 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
 		state st = new_state(CONNECT_CLIENT_CONN_REFUSED_STATE, CONNECT_CLIENT_CONN_REFUSED_on_arrive,
 		                     CONNECT_CLIENT_CONN_REFUSED_on_resume, CONNECT_CLIENT_CONN_REFUSED_on_leave);
 		st->write_fds[0] = s->read_fds[0];
-		add_state(sm,st);
+		add_state(sm, st);
 		return NOT_WAITING;
 	};
 
@@ -513,7 +512,7 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
 	st->read_fds[0] = s->read_fds[0];
 	st->read_fds[1] = s->read_fds[1];
 
-	st->session_id		= s->session_id;
+	st->session_id = s->session_id;
 
 	add_state(sm, st);
 	return NOT_WAITING;
@@ -545,12 +544,12 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 
 
 					// If EOF received, MUA read and Origin write must be closed
-					s->disconnects[0]=true;
-					shutdown(s->read_fds[0],SHUT_RD);
-					s->read_fds[0]=-1;
-					s->disconnects[3]=true;
-					shutdown(s->write_fds[1],SHUT_WR);
-					s->write_fds[1]=-1;
+					s->disconnects[0] = true;
+					shutdown(s->read_fds[0], SHUT_RD);
+					s->read_fds[0]    = -1;
+					s->disconnects[3] = true;
+					shutdown(s->write_fds[1], SHUT_WR);
+					s->write_fds[1] = -1;
 
 					return WAITING;
 				}
@@ -568,14 +567,15 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 
 
 					// If EOF received, Origin read and Origin write must be closed
-					s->disconnects[2]=true;
-					shutdown(s->read_fds[1],SHUT_RD);
-					s->read_fds[1]=-1;
-					s->disconnects[3]=true;
-					shutdown(s->write_fds[1],SHUT_WR);
-					s->write_fds[1]=-1;
+					s->disconnects[2] = true;
+					shutdown(s->read_fds[1], SHUT_RD);
+					s->read_fds[1]    = -1;
+					s->disconnects[3] = true;
+					shutdown(s->write_fds[1], SHUT_WR);
+					s->write_fds[1] = -1;
 
-					if(!IS_PROCESSING){
+					if(!IS_PROCESSING)
+					{
 						disconnect(s);
 					}
 
@@ -645,7 +645,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					IS_PROCESSING = false;
 					close(s->read_fds[2]);
 					s->read_fds[2]  = -1;
-					s->write_fds[2]  = -1;
+					s->write_fds[2] = -1;
 
 					int ret = check_parser_exit_status(s->parser_pid);
 					if(ret == STANDARD)
@@ -656,13 +656,15 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					{
 
 					}
-					s->parser_pid=-1;
-					if(s->disconnects[2]){
+					s->parser_pid = -1;
+					if(s->disconnects[2])
+					{
 						disconnect(s);
-						disconnection=true;
+						disconnection = true;
 					}
 				}
-				else{
+				else
+				{
 
 				}
 			}
@@ -672,24 +674,24 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			{   // MUA WRITE
 
 
-				int written_size=0;
-				int expected_size=0;
+				int written_size  = 0;
+				int expected_size = 0;
 				if(!IS_ALREADY_LINE_BUFFERED && buffer_must_be_line_buffered(s->buffers[2]))
 				{
-					written_size=write(s->write_fds[0],".",1);
-					IS_ALREADY_LINE_BUFFERED=true;
-					expected_size=1;
+					written_size = write(s->write_fds[0], ".", 1);
+					IS_ALREADY_LINE_BUFFERED = true;
+					expected_size = 1;
 				}
 				else
 				{
-					IS_ALREADY_LINE_BUFFERED=false;
-					written_size=buffer_write(fd, s->buffers[2]);
-					expected_size=BUFFER_SIZE;
+					IS_ALREADY_LINE_BUFFERED = false;
+					written_size  = buffer_write(fd, s->buffers[2]);
+					expected_size = BUFFER_SIZE;
 				}
-				if(written_size<0)
+				if(written_size < 0)
 				{
 					disconnect(s);
-					disconnection=true;
+					disconnection = true;
 				}
 				log_event(s, '<', "MUA WRITE");
 				get_app_context()->monitor_values[3] += written_size;
@@ -718,7 +720,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					}
 					else
 					{
-						buffer_write(fd,s->buffers[1]);
+						buffer_write(fd, s->buffers[1]);
 					}
 				}
 				else
@@ -734,7 +736,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					{
 						s->pipelining_data = true;
 					}
-					s->write_fds[2]=-1;
+					s->write_fds[2] = -1;
 				}
 			}
 			break;
@@ -743,20 +745,21 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 	{
 		char *command = (s->data_3 && get_app_context()->transform_status) ? get_app_context()->command_specification
 		                                                                   : "cat";
-		if(s->data_3) {
-			char *log = calloc(1, 1);
-			char *trans = "NOT POP3 - TRANSFORMATION - ";
-			char *active = get_app_context()->transform_status ? "ON: ":"OFF: ";
-			log = realloc(log, strlen(trans) +strlen(active) + strlen(command) + 1);
+		if(s->data_3)
+		{
+			char *log    = calloc(1, 1);
+			char *trans  = "NOT POP3 - TRANSFORMATION - ";
+			char *active = get_app_context()->transform_status ? "ON: " : "OFF: ";
+			log = realloc(log, strlen(trans) + strlen(active) + strlen(command) + 1);
 			memset(log, '\0', strlen(trans) + strlen(active) + strlen(command) + 1);
 			strcat(log, trans);
-			strcat(log,active);
+			strcat(log, active);
 			strcat(log, command);
 			log_event(s, '*', log);
 			free(log);
 		}
 
-		int  pipes[2];
+		int pipes[2];
 		s->parser_pid = start_parser(command, pipes, s);
 		s->read_fds[2]  = pipes[0];
 		s->write_fds[2] = pipes[1];
@@ -842,10 +845,12 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 			{
 				if(buffer_is_empty(curr->st->buffers[1]))
 				{
-					if(ORIGIN_READ_DISCONNECTED){
+					if(ORIGIN_READ_DISCONNECTED)
+					{
 
 					}
-					else{
+					else
+					{
 						if(curr->st->read_fds[1] > 0)
 						{
 
@@ -884,10 +889,12 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				}
 				else
 				{
-					if(MUA_WRITE_DISCONNECTED){
+					if(MUA_WRITE_DISCONNECTED)
+					{
 
 					}
-					else{
+					else
+					{
 						if(curr->st->write_fds[0] > 0)
 						{
 
@@ -1035,12 +1042,12 @@ void disconnect(state st)
 
 	close(st->read_fds[2]);
 
-	st->read_fds[0]=-1;
-	st->read_fds[1]=-1;
-	st->read_fds[2]=-1;
-	st->write_fds[0]=-1;
-	st->write_fds[1]=-1;
-	st->write_fds[2]=-1;
+	st->read_fds[0]  = -1;
+	st->read_fds[1]  = -1;
+	st->read_fds[2]  = -1;
+	st->write_fds[0] = -1;
+	st->write_fds[1] = -1;
+	st->write_fds[2] = -1;
 
 	switch(st->id)
 	{
@@ -1049,19 +1056,19 @@ void disconnect(state st)
 			get_app_context()->monitor_values[0]--;
 			break;
 		case CONNECT_CLIENT_STAGE_FOUR_STATE:
-			log_event(st,'-', "MUA DISCONNECTED");
+			log_event(st, '-', "MUA DISCONNECTED");
 			get_app_context()->monitor_values[0]--;
 			break;
 		case ATTEND_CLIENT_STATE:
-			log_event(st,'-', "MUA DISCONNECTED");
+			log_event(st, '-', "MUA DISCONNECTED");
 			get_app_context()->monitor_values[0]--;
 			break;
 		case CONNECT_ADMIN_STATE:
-			log_event(st,'-', "NOT POP3 - ADMIN DISCONNECTED");
+			log_event(st, '-', "NOT POP3 - ADMIN DISCONNECTED");
 			get_app_context()->monitor_values[1]--;
 			break;
 		case ATTEND_ADMIN_STATE:
-			log_event(st,'-', "NOT POP3 - ADMIN DISCONNECTED");
+			log_event(st, '-', "NOT POP3 - ADMIN DISCONNECTED");
 			get_app_context()->monitor_values[1]--;
 			break;
 	}
@@ -1110,7 +1117,7 @@ void log_event(state s, char event, char *data)
 	*local_endpoint = '<';
 	int old_len = strlen(local_endpoint);
 	sprintf(aux_port, "%hu", app_context->local_port);
-	int increase_len   = strlen(aux_port) + 2;// 1 por > y otro por 0
+	int increase_len = strlen(aux_port) + 2;// 1 por > y otro por 0
 	local_endpoint = realloc(local_endpoint, old_len + increase_len);
 	memset(local_endpoint + old_len, '\0', increase_len);
 	strcat(local_endpoint, aux_port);
