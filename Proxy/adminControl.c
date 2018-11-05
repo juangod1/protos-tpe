@@ -228,7 +228,7 @@ void process_request(state s, file_descriptor fd)
                     char content[300] = {0};
                     strcat(content, "List:");
                     char **monitorArray = get_monitor_array();
-                    for (int i = 0; i < 5; i++) {
+                    for (int i = 0; i < MONITORING_OPTIONS; i++) {
                         strcat(content, "\n");
                         strcat(content, monitorArray[i]);
                     }
@@ -247,13 +247,32 @@ void process_request(state s, file_descriptor fd)
                     } else {
                         long resmonitor = monitor(paramNum);
                         if (resmonitor == -1) {
-                            text_response_BS(FAILED, "Function not found, use LISTS.", s, fd);
+                            text_response_BS(FAILED, "Option not found, use LISTS.", s, fd);
                         } else {
                             char textomonitor[25];
-                            char content[64] = "The result is: ";
+                            char* content = calloc(1,64);
+                            switch(paramNum)
+							{
+							    case 1:
+							        memcpy(content,"Connected MUAs: ", strlen("Connected MUAs: "));
+							        break;
+							    case 2:
+                                    memcpy(content,"Connected admins: ", strlen("Connected admins: "));
+							        break;
+							    case 3:
+                                    memcpy(content,"Historical MUA accesses: ", strlen("Historical MUA accesses: "));
+							        break;
+							    case 4:
+                                    memcpy(content,"Total transferred bytes: ", strlen("Total transferred bytes: "));
+							        break;
+                                default:
+                                    memcpy(content,"The result is: ", strlen("The results is: "));
+                                    break;
+							}
                             sprintf(textomonitor, "%ld", resmonitor);
                             text_response_BS(SUCCESS, strcat(content, textomonitor), s,
-                                             fd);//TODO: Hay que acomodar el strcat
+                                             fd);
+                            free(content);
                         }
                     }
                 } else {
@@ -356,8 +375,8 @@ int parse_admin_command(const char *resp)
 
 int authenticate(char *user, char *pass)
 {
-	char    *users[2]  = {"pablito", "juancito"};
-	char    *passes[2] = {"pabs", "juans"};
+	char    *users[2]  = {"juan", "marcelo"};
+	char    *passes[2] = {"juan", "marcelo"};
 	for(int i          = 0; i < 2; i++)
 	{
 		if(strcmp(users[i], user) == 0)
@@ -390,10 +409,12 @@ char **get_monitor_array()
 	return app->monitor;
 }
 
-long monitor(int numero)
+long monitor(int number)
 {
 	//TODO Tiene que buscar las metricas en el contexto
-	return get_app_context()->monitor_values[numero-1];
+	if(number > MONITORING_OPTIONS || number < 1)
+        return -1;
+	return get_app_context()->monitor_values[number-1];
 }
 
 int get_transformation_state()

@@ -6,6 +6,7 @@
 #define PROTOS_TPE_OPTIONS_H
 
 #include <stdint.h>
+#define MONITORING_OPTIONS 4
 typedef struct
 {
 	int             has_to_query_dns;

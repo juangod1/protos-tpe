@@ -14,6 +14,7 @@
 #include "../Shared/include/lib.h"
 #include "include/proxyParse.h"
 
+
 static app_context_p app_context = NULL;
 
 static char *version_number = "SNAPSHOT 1.0.0";
@@ -38,14 +39,13 @@ void initialize_app_context()
 	app_context->pipelining            = false;
 	app_context->pop3filter_version    = version_number;
 	app_context->log_sequence          = 0;
-	char *monitoreo[5]                 = {"1 - Connected muas", "2 - Connected Admins", "3 - Cantidad de muas historicos", "4 - Bytes totales transferidos",
-	                                      "5 - Missing"};
+	char *monitoring[MONITORING_OPTIONS]                 = {"1 - Connected MUAs", "2 - Connected admins", "3 - Historical MUA accesses", "4 - Total transferred bytes"};
 	app_context->transform_status = true;
-	for(int i = 0; i < 5; i++)
+	for(int i = 0; i < MONITORING_OPTIONS; i++)
 	{
-		size_t len = strlen(monitoreo[i]);
+		size_t len = strlen(monitoring[i]);
 		(app_context->monitor)[i] = calloc(1, len + 1);
-		memcpy((app_context->monitor)[i], monitoreo[i], len);
+		memcpy((app_context->monitor)[i], monitoring[i], len);
 		(app_context->monitor_values)[i] = 0;
 	}
 }
@@ -64,7 +64,7 @@ void destroy_app_context()
 		close(app_context->error_descriptor);
 	}
 
-	for(int i=0; i< 5; i++)
+	for(int i=0; i< MONITORING_OPTIONS; i++)
 	{
 		free(app_context->monitor[i]);
 	}
@@ -119,7 +119,7 @@ void error_specification(char *arg)
 		newStream=freopen("/dev/null","w",stderr);
 		if(newStream==NULL)
 		{
-			perror("Fopen error. SEtting error path to stderr.");
+			perror("Fopen error. Setting error path to stderr.");
 			return;
 		}
 	}
