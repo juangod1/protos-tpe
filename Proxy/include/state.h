@@ -63,7 +63,7 @@ struct stateStruct
 	long            session_id;
 	int             remaining_response;
 	char            *remaining_string;
-	struct sockaddr *connection_addrinfo;
+	char * address;
 	int disconnects[4];
 };
 

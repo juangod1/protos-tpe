@@ -49,10 +49,10 @@ state new_state(state_code id, execution_state (*on_arrive)(state s, file_descri
 	new->user                = NULL;
 	new->pass                = NULL;
 	new->disconnect          = 0;
-	new->session_id          = getMicrotime();
+	new->session_id          = 0;
 	new->remaining_response  = 0;
 	new->remaining_string    = NULL;
-	new->connection_addrinfo = malloc(sizeof(new->connection_addrinfo));
+	new->address = NULL;
 	new->disconnects[0] = false;
 	new->disconnects[1] = false;
 	new->disconnects[2] = false;
@@ -66,7 +66,7 @@ free_state(state st)
 	buffer_finalize(st->buffers[0]);
 	buffer_finalize(st->buffers[1]);
 	buffer_finalize(st->buffers[2]);
-	free(st->connection_addrinfo);
+	free(st->address);
 	free(st);
 }
 

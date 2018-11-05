@@ -122,20 +122,39 @@ state_code ATTEND_ADMIN_on_leave(state s)
 
 execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 {
-	socklen_t sl         = sizeof(s->connection_addrinfo);
-	int       accept_ret = accept(s->read_fds[0], (s->connection_addrinfo), &sl);
+	struct sockaddr a;
+	socklen_t sl         = sizeof(a);
+	int       accept_ret = accept(s->read_fds[0], &a, &sl);
 	if(accept_ret == -1)
 	{
 		perror("accept()");
 		disconnect(s);
 		return NOT_WAITING;
 	}
-
-	log_event(s, '+', "Connection");
+	char * ad;
+	if(a.sa_family == AF_INET)
+	{
+			struct sockaddr_in *addr_in = (struct sockaddr_in *) &a;
+			ad = calloc(1,INET_ADDRSTRLEN+1);
+			inet_ntop(AF_INET, &(addr_in->sin_addr),ad, INET_ADDRSTRLEN);
+	}
+	else
+	{
+		struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *) &a;
+		ad= calloc(1,INET6_ADDRSTRLEN+1);
+		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ad, INET6_ADDRSTRLEN);
+	}
+	s->address=ad;
+	s->session_id = getMicrotime();
+	//NEW ADMIN CONNECTED
+	log_event(s,'+',"NOT POP3 - ADMIN CONNECTED");
 	get_app_context()->monitor_values[1] += 1;
 
 	state st = new_state(CONNECT_ADMIN_STAGE_TWO_STATE, CONNECT_ADMIN_STAGE_TWO_on_arrive,
 	                     CONNECT_ADMIN_STAGE_TWO_on_resume, CONNECT_ADMIN_STAGE_TWO_on_leave);
+	st->session_id=s->session_id;
+	st->address			= calloc(1,strlen(s->address)+1);
+	st->address 		= memcpy(st->address,s->address,strlen(s->address));
 	st->read_fds[0]  = accept_ret;
 	st->write_fds[0] = accept_ret;
 	buffer_initialize(&(st->buffers[0]),BUFFER_SIZE);
@@ -170,6 +189,9 @@ state_code CONNECT_ADMIN_STAGE_TWO_on_leave(state s)
 {
 	state st = new_state(ATTEND_ADMIN_STATE, ATTEND_ADMIN_on_arrive,
 	                     ATTEND_ADMIN_on_resume, ATTEND_ADMIN_on_leave);
+	st->address			= calloc(1,strlen(s->address)+1);
+	st->address 		= memcpy(st->address,s->address,strlen(s->address));
+	st->session_id = s->session_id;
 	st->read_fds[0]  = s->read_fds[0];
 	st->write_fds[0] = s->write_fds[0];
 	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE);
@@ -235,8 +257,9 @@ void *query_dns(void *st)
 
 execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_read)
 {
-	socklen_t addrlen    = sizeof(s->connection_addrinfo);
-	int       accept_ret = accept(s->read_fds[0], (s->connection_addrinfo), &addrlen);
+	struct sockaddr a;
+	socklen_t addrlen    = sizeof(a);
+	int       accept_ret = accept(s->read_fds[0], &(a), &addrlen);
 
 	if(accept_ret < 0)
 	{
@@ -245,13 +268,32 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
 		return NOT_WAITING;
 	}
 
+	char * ad;
+	if(a.sa_family == AF_INET)
+	{
+		struct sockaddr_in *addr_in = (struct sockaddr_in *) &a;
+		ad = calloc(1,INET_ADDRSTRLEN+1);
+		inet_ntop(AF_INET, &(addr_in->sin_addr),ad, INET_ADDRSTRLEN);
+	}
+	else
+	{
+		struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *) &a;
+		ad= calloc(1,INET6_ADDRSTRLEN+1);
+		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ad, INET6_ADDRSTRLEN);
+	}
+
+	s->address=ad;
+	s->session_id = getMicrotime();
+
 	if(get_app_context()->has_to_query_dns)
 	{
 		state st = new_state(CONNECT_CLIENT_STAGE_TWO_STATE, CONNECT_CLIENT_STAGE_TWO_on_arrive,
 		                     CONNECT_CLIENT_STAGE_TWO_on_resume, CONNECT_CLIENT_STAGE_TWO_on_leave);
 		st->read_fds[0] = accept_ret;
 		st->read_fds[1] = setup_origin_socket();
-
+		st->address			= calloc(1,strlen(s->address)+1);
+		st->address 		= memcpy(st->address,s->address,strlen(s->address));
+		st->session_id = s->session_id;
 		int ret = pipe(st->pipes);
 		if(ret < 0)
 		{
@@ -269,6 +311,9 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
 	{
 		state st = new_state(CONNECT_CLIENT_STAGE_THREE_STATE, CONNECT_CLIENT_STAGE_THREE_on_arrive,
 		                     CONNECT_CLIENT_STAGE_THREE_on_resume, CONNECT_CLIENT_STAGE_THREE_on_leave);
+		st->address			= calloc(1,strlen(s->address)+1);
+		st->address 		= memcpy(st->address,s->address,strlen(s->address));
+		st->session_id = s->session_id;
 		st->read_fds[0] = accept_ret;
 		st->read_fds[1] = setup_origin_socket();
 
@@ -350,6 +395,9 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 
 	state st = new_state(CONNECT_CLIENT_STAGE_FOUR_STATE, CONNECT_CLIENT_STAGE_FOUR_on_arrive,
 	                     CONNECT_CLIENT_STAGE_FOUR_on_resume, CONNECT_CLIENT_STAGE_FOUR_on_leave);
+	st->address			= calloc(1,strlen(s->address)+1);
+	st->address 		= memcpy(st->address,s->address,strlen(s->address));
+	st->session_id = s->session_id;
 	st->read_fds[0]  = s->read_fds[0];
 	st->write_fds[0] = s->read_fds[0];
 	st->read_fds[1]  = fd;
@@ -363,6 +411,8 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 
 	add_state(sm, st);
 
+	//NEW MUA CONNECTED
+	log_event(s, '+', "MUA CONNECTED");
 	get_app_context()->monitor_values[0] += 1;
 	get_app_context()->monitor_values[2] += 1;
 
@@ -451,6 +501,9 @@ execution_state CONNECT_CLIENT_STAGE_FOUR_on_resume(state s, file_descriptor fd,
 state_code CONNECT_CLIENT_STAGE_FOUR_on_leave(state s)
 {
 	state st = new_state(ATTEND_CLIENT_STATE, ATTEND_CLIENT_on_arrive, ATTEND_CLIENT_on_resume, ATTEND_CLIENT_on_leave);
+	st->address			= calloc(1,strlen(s->address)+1);
+	st->address 		= memcpy(st->address,s->address,strlen(s->address));
+	st->session_id 		= s->session_id;
 	st->read_fds[0]  = s->read_fds[0];
 	st->write_fds[0] = s->write_fds[0];
 	st->read_fds[1]  = s->read_fds[1];
@@ -494,6 +547,9 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
 	                     CONNECT_CLIENT_STAGE_THREE_on_resume, CONNECT_CLIENT_STAGE_THREE_on_leave);
 	st->read_fds[0] = s->read_fds[0];
 	st->read_fds[1] = s->read_fds[1];
+	st->address			= calloc(1,strlen(s->address)+1);
+	st->address 		= memcpy(st->address,s->address,strlen(s->address));
+	st->session_id		= s->session_id;
 
 	add_state(sm, st);
 	return NOT_WAITING;
@@ -536,6 +592,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				}
 				printf("--------------------------------------------------------\n");
 				printf("Read buffer content from MUA: \n");
+				log_event(s, '>', "MUA READ");
 				print_buffer(s->buffers[0]);
 			}
 			else if(s->read_fds[1] == fd)
@@ -675,6 +732,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					disconnect(s);
 					disconnection=true;
 				}
+				log_event(s, '<', "MUA WRITE");
 				get_app_context()->monitor_values[3] += written_size;
 			}
 			else if(s->write_fds[1] == fd)
@@ -728,6 +786,19 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 	{
 		char *command = (s->data_3 && get_app_context()->transform_status) ? get_app_context()->command_specification
 		                                                                   : "cat";
+		if(s->data_3) {
+			char *log = calloc(1, 1);
+			char *trans = "NOT POP3 - TRANSFORMATION - ";
+			char *active = get_app_context()->transform_status ? "ON: ":"OFF: ";
+			log = realloc(log, strlen(trans) +strlen(active) + strlen(command) + 1);
+			memset(log, '\0', strlen(trans) + strlen(active) + strlen(command) + 1);
+			strcat(log, trans);
+			strcat(log,active);
+			strcat(log, command);
+			log_event(s, '*', log);
+			free(log);
+		}
+
 		int  pipes[2];
 		s->parser_pid = start_parser(command, pipes, s);
 		s->read_fds[2]  = pipes[0];
@@ -1017,18 +1088,23 @@ void disconnect(state st)
 	switch(st->id)
 	{
 		case CONNECT_CLIENT_STAGE_THREE_STATE:
+			log_event(st, '-', "MUA DISCONNECTED");
 			get_app_context()->monitor_values[0]--;
 			break;
 		case CONNECT_CLIENT_STAGE_FOUR_STATE:
+			log_event(st,'-', "MUA DISCONNECTED");
 			get_app_context()->monitor_values[0]--;
 			break;
 		case ATTEND_CLIENT_STATE:
+			log_event(st,'-', "MUA DISCONNECTED");
 			get_app_context()->monitor_values[0]--;
 			break;
 		case CONNECT_ADMIN_STATE:
+			log_event(st,'-', "NOT POP3 - ADMIN DISCONNECTED");
 			get_app_context()->monitor_values[1]--;
 			break;
 		case ATTEND_ADMIN_STATE:
+			log_event(st,'-', "NOT POP3 - ADMIN DISCONNECTED");
 			get_app_context()->monitor_values[1]--;
 			break;
 	}
@@ -1070,19 +1146,8 @@ void log_event(state s, char event, char *data)
 	strftime(date_time_string, sizeof(date_time_string) - 1, "%Y-%m-%d%H:%M:%S", t);
 	strcat(date_time_string, ".Z");
 
-	char *socket_address = NULL;
-	if(s->connection_addrinfo->sa_family == AF_INET)
-	{
-		struct sockaddr_in *addr_in = (struct sockaddr_in *) s->connection_addrinfo;
-		socket_address = malloc(INET_ADDRSTRLEN);
-		inet_ntop(AF_INET, &(addr_in->sin_addr), socket_address, INET_ADDRSTRLEN);
-	}
-	else
-	{
-		struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *) s->connection_addrinfo;
-		socket_address = malloc(INET6_ADDRSTRLEN);
-		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), socket_address, INET6_ADDRSTRLEN);
-	}
+	char *socket_address = s->address;
+
 
 	char aux_port[6]     = {0};
 	//Build local-endpoint string
@@ -1181,7 +1246,6 @@ void log_event(state s, char event, char *data)
 		}
 	}
 	printf("%s\n", log);
-	free(socket_address);
 	free(local_endpoint);
 	free(remote_endpoint);
 	free(aux_number);

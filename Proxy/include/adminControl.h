@@ -48,7 +48,7 @@ long monitor(int numero);
 
 int get_transformation_state();
 
-void set_transformation_state(int estado);
+void set_transformation_state(int estado, state s);
 
 char *get_transformation_filter();
 
