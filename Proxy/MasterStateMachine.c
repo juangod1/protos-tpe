@@ -131,20 +131,7 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
 		disconnect(s);
 		return NOT_WAITING;
 	}
-	char * ad;
-	if(a.sa_family == AF_INET)
-	{
-			struct sockaddr_in *addr_in = (struct sockaddr_in *) &a;
-			ad = calloc(1,INET_ADDRSTRLEN+1);
-			inet_ntop(AF_INET, &(addr_in->sin_addr),ad, INET_ADDRSTRLEN);
-	}
-	else
-	{
-		struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *) &a;
-		ad= calloc(1,INET6_ADDRSTRLEN+1);
-		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ad, INET6_ADDRSTRLEN);
-	}
-	s->address=ad;
+
 	s->session_id = getMicrotime();
 	//NEW ADMIN CONNECTED
 	log_event(s,'+',"NOT POP3 - ADMIN CONNECTED");
@@ -153,8 +140,7 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
 	state st = new_state(CONNECT_ADMIN_STAGE_TWO_STATE, CONNECT_ADMIN_STAGE_TWO_on_arrive,
 	                     CONNECT_ADMIN_STAGE_TWO_on_resume, CONNECT_ADMIN_STAGE_TWO_on_leave);
 	st->session_id=s->session_id;
-	st->address			= calloc(1,strlen(s->address)+1);
-	st->address 		= memcpy(st->address,s->address,strlen(s->address));
+
 	st->read_fds[0]  = accept_ret;
 	st->write_fds[0] = accept_ret;
 	buffer_initialize(&(st->buffers[0]),BUFFER_SIZE);
@@ -189,8 +175,7 @@ state_code CONNECT_ADMIN_STAGE_TWO_on_leave(state s)
 {
 	state st = new_state(ATTEND_ADMIN_STATE, ATTEND_ADMIN_on_arrive,
 	                     ATTEND_ADMIN_on_resume, ATTEND_ADMIN_on_leave);
-	st->address			= calloc(1,strlen(s->address)+1);
-	st->address 		= memcpy(st->address,s->address,strlen(s->address));
+
 	st->session_id = s->session_id;
 	st->read_fds[0]  = s->read_fds[0];
 	st->write_fds[0] = s->write_fds[0];
@@ -268,21 +253,6 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
 		return NOT_WAITING;
 	}
 
-	char * ad;
-	if(a.sa_family == AF_INET)
-	{
-		struct sockaddr_in *addr_in = (struct sockaddr_in *) &a;
-		ad = calloc(1,INET_ADDRSTRLEN+1);
-		inet_ntop(AF_INET, &(addr_in->sin_addr),ad, INET_ADDRSTRLEN);
-	}
-	else
-	{
-		struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *) &a;
-		ad= calloc(1,INET6_ADDRSTRLEN+1);
-		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ad, INET6_ADDRSTRLEN);
-	}
-
-	s->address=ad;
 	s->session_id = getMicrotime();
 
 	if(get_app_context()->has_to_query_dns)
@@ -291,8 +261,7 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
 		                     CONNECT_CLIENT_STAGE_TWO_on_resume, CONNECT_CLIENT_STAGE_TWO_on_leave);
 		st->read_fds[0] = accept_ret;
 		st->read_fds[1] = setup_origin_socket();
-		st->address			= calloc(1,strlen(s->address)+1);
-		st->address 		= memcpy(st->address,s->address,strlen(s->address));
+
 		st->session_id = s->session_id;
 		int ret = pipe(st->pipes);
 		if(ret < 0)
@@ -311,8 +280,7 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
 	{
 		state st = new_state(CONNECT_CLIENT_STAGE_THREE_STATE, CONNECT_CLIENT_STAGE_THREE_on_arrive,
 		                     CONNECT_CLIENT_STAGE_THREE_on_resume, CONNECT_CLIENT_STAGE_THREE_on_leave);
-		st->address			= calloc(1,strlen(s->address)+1);
-		st->address 		= memcpy(st->address,s->address,strlen(s->address));
+
 		st->session_id = s->session_id;
 		st->read_fds[0] = accept_ret;
 		st->read_fds[1] = setup_origin_socket();
@@ -395,8 +363,7 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 
 	state st = new_state(CONNECT_CLIENT_STAGE_FOUR_STATE, CONNECT_CLIENT_STAGE_FOUR_on_arrive,
 	                     CONNECT_CLIENT_STAGE_FOUR_on_resume, CONNECT_CLIENT_STAGE_FOUR_on_leave);
-	st->address			= calloc(1,strlen(s->address)+1);
-	st->address 		= memcpy(st->address,s->address,strlen(s->address));
+
 	st->session_id = s->session_id;
 	st->read_fds[0]  = s->read_fds[0];
 	st->write_fds[0] = s->read_fds[0];
@@ -501,8 +468,7 @@ execution_state CONNECT_CLIENT_STAGE_FOUR_on_resume(state s, file_descriptor fd,
 state_code CONNECT_CLIENT_STAGE_FOUR_on_leave(state s)
 {
 	state st = new_state(ATTEND_CLIENT_STATE, ATTEND_CLIENT_on_arrive, ATTEND_CLIENT_on_resume, ATTEND_CLIENT_on_leave);
-	st->address			= calloc(1,strlen(s->address)+1);
-	st->address 		= memcpy(st->address,s->address,strlen(s->address));
+
 	st->session_id 		= s->session_id;
 	st->read_fds[0]  = s->read_fds[0];
 	st->write_fds[0] = s->write_fds[0];
@@ -547,8 +513,7 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
 	                     CONNECT_CLIENT_STAGE_THREE_on_resume, CONNECT_CLIENT_STAGE_THREE_on_leave);
 	st->read_fds[0] = s->read_fds[0];
 	st->read_fds[1] = s->read_fds[1];
-	st->address			= calloc(1,strlen(s->address)+1);
-	st->address 		= memcpy(st->address,s->address,strlen(s->address));
+
 	st->session_id		= s->session_id;
 
 	add_state(sm, st);
@@ -1133,7 +1098,7 @@ void log_event(state s, char event, char *data)
 	//date_time_string La fecha y hora del evento del protocolo. El valor tiene la forma aaaa-mm-ddhh:mm:ss.fffZ, en donde aaaa = año, mm = mes, dd = día, hh = hora, mm = minuto, ss = segundo,fff = fracciones de segundo y Z significa Zulú. Zulú es otra forma de indicar la Hora universal coordinada (UTC).
 	//session-id        Un GUID que identifique de manera única la sesión de SMTP asociada con un evento de protocolo.
 	//sequence-number (es log_sequence en app_context)   Contador que se inicia en 0 y que aumenta para cada evento dentro de la misma sesión.
-	//local-endpoint    El extremo local de una sesión de POP3 o IMAP4. Se compone de una dirección IP y número de puerto TCP, con el formato siguiente: <dirección IP>:<puerto>.
+	//local-endpoint    El extremo local de una sesión de POP3 o IMAP4. Se compone de una dirección IP y número de puerto TCP, con el formato siguiente: <puerto>.
 	//remote-endpoint   El extremo remoto de una sesión de POP3 o IMAP4. Se compone de una dirección IP y número de puerto TCP, con el formato siguiente: <dirección IP>:<puerto>.
 	//evento            Un único carácter que representa el evento del protocolo. Los valores posibles para el evento son los siguientes: +Conectar -Desconectar >Enviar <Recibir \*Información
 	//datos             Información de texto asociada al evento de POP3 o IMAP4.
@@ -1146,22 +1111,14 @@ void log_event(state s, char event, char *data)
 	strftime(date_time_string, sizeof(date_time_string) - 1, "%Y-%m-%d%H:%M:%S", t);
 	strcat(date_time_string, ".Z");
 
-	char *socket_address = s->address;
-
 
 	char aux_port[6]     = {0};
 	//Build local-endpoint string
 	char *local_endpoint = calloc(1, 2);
 	*local_endpoint = '<';
-	int old_len      = strlen(local_endpoint);
-	int increase_len = strlen(socket_address) + 4;//1 por el > otro pot el : otro el 0 y otro por el <
-	local_endpoint = realloc(local_endpoint, old_len + increase_len);
-	memset(local_endpoint + old_len, '\0', increase_len);
-	strcat(local_endpoint, socket_address);
-	strcat(local_endpoint, ">:<");
-	old_len = strlen(local_endpoint);
+	int old_len = strlen(local_endpoint);
 	sprintf(aux_port, "%hu", app_context->local_port);
-	increase_len   = strlen(aux_port) + 2;// 1 por > y otro por 0
+	int increase_len   = strlen(aux_port) + 2;// 1 por > y otro por 0
 	local_endpoint = realloc(local_endpoint, old_len + increase_len);
 	memset(local_endpoint + old_len, '\0', increase_len);
 	strcat(local_endpoint, aux_port);
