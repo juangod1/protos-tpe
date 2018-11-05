@@ -105,7 +105,7 @@ void initialize_options()
 void pop3_direction(char *arg)
 {
     //Receives an direction and uses it to specify the address of the proxy service.
-    printf("This is pop3 direction: %s!\n",arg);
+
 	fflush(stdout);
 	app_context->pop3_path = my_strdup(arg);
 }
@@ -130,7 +130,7 @@ void error_specification(char *arg)
 void management_direction(char *arg)
 {
 	//Receives an direction and uses it to specify the address of the management service.
-	printf("This is management direction: %s!\n",arg);
+
 	fflush(stdout);
 	app_context->management_path = my_strdup(arg);
 }
@@ -138,7 +138,7 @@ void management_direction(char *arg)
 void replacement_message(char *arg)
 {
 	//Specifies the message to replace filtered text
-	printf("This is replacement message: %s!\n",arg);
+
 	fflush(stdout);
 	app_context->replacement_message = my_strdup(arg);
 
@@ -147,7 +147,7 @@ void replacement_message(char *arg)
 void censored_mediatype(char *arg)
 {
 	//Receives list of media types and applies a condition for the server to censor them 
-	printf("This is censored mediatype: %s!\n",arg);
+
 	fflush(stdout);
 	app_context->censored_media_types = my_strdup(arg);
 
@@ -156,7 +156,7 @@ void censored_mediatype(char *arg)
 void management_port(char *arg)
 {
 	//Specifies the SCTP port the management server listens to. By default 9090
-	printf("This is management port: %s!\n",arg);
+
 	fflush(stdout);
 	uint16_t val = string_to_port(arg);
 	app_context->management_port = val;
@@ -165,7 +165,7 @@ void management_port(char *arg)
 void local_port(char *arg)
 {
 	//Specifies the TCP port for incoming POP3 connections. By default 1110
-	printf("This is local port: %s!\n",arg);
+
 	fflush(stdout);
 	uint16_t val = string_to_port(arg);
 	app_context->local_port = val;
@@ -174,7 +174,7 @@ void local_port(char *arg)
 void origin_port(char *arg)
 {
 	//Receives a port and specifies it as the origin server POP3 port
-	printf("This is origin port: %s!\n",arg);
+
 	fflush(stdout);
 	uint16_t val = string_to_port(arg);
 	app_context->origin_port = val;
@@ -183,7 +183,7 @@ void origin_port(char *arg)
 void command_specification(char *arg)
 {
 	//Receives a command from stdin and applies it to the content that passes through proxy.
-	printf("This is command_specification: %s!\n",arg);
+
 	fflush(stdout);
 	app_context->command_specification = my_strdup(arg);
 
@@ -206,7 +206,7 @@ void help()
 
 void server_string(char *server_string)
 {
-	printf("This is server string: %s!\n",server_string);
+
 	fflush(stdout);
 
 	char buf[16];
@@ -215,17 +215,17 @@ void server_string(char *server_string)
 	{
 		get_app_context()->has_to_query_dns = false;
 		get_app_context()->isIPV6           = false;
-		printf("IPv4 Address received.\n");
+
 	}
 	else if(inet_pton(AF_INET6, server_string, buf))
 	{
 		get_app_context()->has_to_query_dns = false;
 		get_app_context()->isIPV6           = true;
-		printf("IPv6 Address received.\n");
+
 	}
 	else
 	{
-		printf("Origin name requires DNS query.\n");
+
 		get_app_context()->has_to_query_dns = true;
 	}
 	app_context->address_server_string = server_string;

@@ -19,7 +19,7 @@ response_p validate_arguments(int argc, char **argv, response_p response)
 		validate_argument(argc - counter, argv + counter, response);
 		if(!response->success)
 		{
-			printf("Invalid argument: '%s': %s.\n", argv[counter], response->error_text);
+
 			return response;
 		}
 		int argument_shift = 1 + response->next_argument;;
@@ -121,6 +121,6 @@ void option_help()
 	for(int i = 0; i < options_size; i++)
 	{
 		option_t option = options[i];
-		printf("\t-%c:\t%-30s - %s\n", option.command, option.name, option.description);
+
 	}
 }

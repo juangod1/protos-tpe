@@ -19,14 +19,14 @@ fd_set write_fds;
 
 void add_read_fd(file_descriptor fd)
 {
-	printf("Adding fd %d to selector as READ\n", fd);
+
 	fflush(stdout);
 	FD_SET(fd, &read_fds);
 }
 
 void add_write_fd(file_descriptor fd)
 {
-	printf("Adding fd %d to selector as WRITE\n", fd);
+
 	fflush(stdout);
 	FD_SET(fd, &write_fds);
 }

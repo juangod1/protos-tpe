@@ -32,7 +32,7 @@ file_descriptor setup_admin_socket()
 	listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP);
 	if(listenSock == -1)
 	{
-		printf("Failed to create socket\n");
+
 		perror("socket()");
 		error_terminal();
 	}
@@ -46,7 +46,7 @@ file_descriptor setup_admin_socket()
 
 	if(ret == -1)
 	{
-		printf("Bind failed \n");
+
 		perror("bind()");
 		close(listenSock);
 		error_terminal();
@@ -55,7 +55,7 @@ file_descriptor setup_admin_socket()
 	ret = listen(listenSock, 5);
 	if(ret == -1)
 	{
-		printf("listen() failed \n");
+
 		perror("listen()");
 		close(listenSock);
 		error_terminal();
@@ -169,7 +169,7 @@ void process_request(state s, file_descriptor fd)
 	if((p = strchr(response,'\n')) != NULL){
 		*p = '\0';
 	}
-	printf("%s", response);
+
 	char *command   = NULL;
 	char *parameter = NULL;
 	if(parse_message(response, ' ', &command, &parameter) == 1)

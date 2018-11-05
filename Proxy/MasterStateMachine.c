@@ -62,18 +62,17 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 			int ret = buffer_read(fd, s->buffers[0]);
 			if(ret == 0 || (ret == -1 && errno == ECONNRESET))
 			{
-				printf("--------------------------------------------------------\n");
-				printf("Administrator disconnected \n");
-				printf("--------------------------------------------------------\n");
+
+
+
 				disconnect(s);
 				return WAITING;
 			}
-			printf("--------------------------------------------------------\n");
-			printf("Read buffer content from ADMIN: \n");
-			print_buffer(s->buffers[0]);
+
+
 			break;
 		case 0:
-			printf("Processing command!\n");
+
 			if(s->remaining_response == 0)
 			{
 				process_request(s, fd);
@@ -103,8 +102,8 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 					disconnect(s);
 				}
 			}
-			printf("--------------------------------------------------------\n");
-			printf("Wrote buffer content to ADMIN: \n");
+
+
 
 			break;
 	}
@@ -227,14 +226,14 @@ void *query_dns(void *st)
 		char buf[10];
 		if(inet_pton(AF_INET6, get_app_context()->addr->ai_addr->sa_data, buf))
 		{
-			printf("pls9\n");
-			printf("DNS found IPV6 address.\n");
+
+
 			get_app_context()->isIPV6 = true;
 		}
 		else
 		{
-			printf("pls9\n");
-			printf("DNS found IPV4 address.\n");
+
+
 			get_app_context()->isIPV6 = false;
 		}
 	}
@@ -497,11 +496,11 @@ execution_state CONNECT_CLIENT_STAGE_TWO_on_arrive(state s, file_descriptor fd, 
 	}
 	if(buff)
 	{
-		printf("Connected to DNS origin host correctly.\n");
+
 	}
 	else
 	{
-		printf("Unable to connect to dns origin host.\n");
+
 		state st = new_state(CONNECT_CLIENT_CONN_REFUSED_STATE, CONNECT_CLIENT_CONN_REFUSED_on_arrive,
 		                     CONNECT_CLIENT_CONN_REFUSED_on_resume, CONNECT_CLIENT_CONN_REFUSED_on_leave);
 		st->write_fds[0] = s->read_fds[0];
@@ -541,9 +540,9 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				buffer_remove_trailing_spaces(s->buffers[0]);
 				if(read_response == 0)
 				{
-					printf("--------------------------------------------------------\n");
-					printf("Client disconnected \n");
-					printf("--------------------------------------------------------\n");
+
+
+
 
 					// If EOF received, MUA read and Origin write must be closed
 					s->disconnects[0]=true;
@@ -555,19 +554,18 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 
 					return WAITING;
 				}
-				printf("--------------------------------------------------------\n");
-				printf("Read buffer content from MUA: \n");
+
+
 				log_event(s, '>', "MUA READ");
-				print_buffer(s->buffers[0]);
 			}
 			else if(s->read_fds[1] == fd)
 			{   // Origin READ
 				int rd = buffer_read_until_string(fd, s->buffers[1], "\r\n");
 				if(rd == 0)
 				{
-					printf("--------------------------------------------------------\n");
-					printf("Origin disconnected \n");
-					printf("--------------------------------------------------------\n");
+
+
+
 
 					// If EOF received, Origin read and Origin write must be closed
 					s->disconnects[2]=true;
@@ -585,9 +583,9 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				}
 				if(rd < 0)
 				{
-					printf("--------------------------------------------------------\n");
+
 					perror("Origin error \n");
-					printf("--------------------------------------------------------\n");
+
 					switch(errno)
 					{
 						default:
@@ -596,9 +594,8 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					}
 					return NOT_WAITING;
 				}
-				printf("--------------------------------------------------------\n");
-				printf("Read buffer content from Origin: \n");
-				print_buffer(s->buffers[1]);
+
+
 				if(buffer_starts_with_string("+OK", s->buffers[1]) ||
 				   buffer_starts_with_string("-ERR", s->buffers[1]))
 				{
@@ -653,11 +650,11 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					int ret = check_parser_exit_status(s->parser_pid);
 					if(ret == STANDARD)
 					{
-						printf("OK: Parser exited correctly\n");
+
 					}
 					else
 					{
-						printf("FAIL: BAD PARSER EXIT\n");
+
 					}
 					s->parser_pid=-1;
 					if(s->disconnects[2]){
@@ -666,18 +663,15 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					}
 				}
 				else{
-					printf("--------------------------------------------------------\n");
-					printf("Read buffer content from Transform: \n");
-					print_buffer(s->buffers[2]);
+
 				}
 			}
 			break;
 		case false:
 			if(s->write_fds[0] == fd)
 			{   // MUA WRITE
-				printf("--------------------------------------------------------\n");
-				printf("Wrote buffer content to MUA: \n");
-				print_buffer(s->buffers[2]);
+
+
 				int written_size=0;
 				int expected_size=0;
 				if(!IS_ALREADY_LINE_BUFFERED && buffer_must_be_line_buffered(s->buffers[2]))
@@ -702,20 +696,18 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			}
 			else if(s->write_fds[1] == fd)
 			{   // Origin WRITE
-				print_buffer(s->buffers[0]);
 				buffer_write(fd, s->buffers[0]);
 				if(!get_app_context()->pipelining)
 				{
 					s->pipelining_data = false;
 				}
-				printf("--------------------------------------------------------\n");
-				printf("Wrote buffer content to Origin: \n");
+
+
 			}
 			else if(s->write_fds[2] == fd)
 			{   // Transform WRITE
-				printf("--------------------------------------------------------\n");
-				printf("Wrote buffer content to Transform: \n");
-				print_buffer(s->buffers[1]);
+
+
 				int will_close;
 				if(IS_MULTILINE)
 				{
@@ -771,7 +763,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 		IS_PROCESSING = true;
 		IS_TRANS      = false;
 		IS_NEW_LINE   = false;
-		printf("Created new Transform Process with command %s.\n", command);
+
 	}
 	return WAITING;
 }
@@ -804,11 +796,11 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 					{
 						if(MUA_READ_DISCONNECTED)
 						{
-							printf("Origin Write disconnected, fd not added.\n");
+
 						}
 						else
 						{
-							printf("(MUA READ) Buffer 1 is empty ==> ");
+
 							add_read_fd(curr->st->read_fds[0]); // MUA read
 						}
 					}
@@ -817,29 +809,29 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				{
 					if(curr->st->write_fds[1] > 0)
 					{
-						printf("(ORIGIN WRITE) Buffer 1 is not empty ==> ");
+
 						if(ORIGIN_WRITE_DISCONNECTED)
 						{
-							printf("Origin Write disconnected, fd not added.\n");
+
 						}
 						else
 						{
 							if(get_app_context()->pipelining)
 							{
-								printf("OS has Pipelining enabled. Added origin write\n");
+
 								add_write_fd(curr->st->write_fds[1]); // Origin write
 							}
 							else
 							{
-								printf("OS has no Pipelining enabled. ");
+
 								if(curr->st->pipelining_data)
 								{
-									printf("Added origin write\n");
+
 									add_write_fd(curr->st->write_fds[1]); // Origin write
 								}
 								else
 								{
-									printf("Waiting for server to process\n");
+
 								}
 							}
 						}
@@ -851,12 +843,12 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				if(buffer_is_empty(curr->st->buffers[1]))
 				{
 					if(ORIGIN_READ_DISCONNECTED){
-						printf("Origin read disconnected, no fd added.");
+
 					}
 					else{
 						if(curr->st->read_fds[1] > 0)
 						{
-							printf("(ORIGIN READ) Buffer 2 is empty ==> ");
+
 							add_read_fd(curr->st->read_fds[1]);
 							// ORIGIN read
 						}
@@ -867,15 +859,15 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				{
 					if(curr->st->write_fds[2] > 0)
 					{
-						printf("(TRANSFORM WRITE) Buffer 2 is not empty ==> ");
+
 						if(curr->st->data_1 && !curr->st->data_4)
 						{
-							printf("Will write to transform process.\n");
+
 							add_write_fd(curr->st->write_fds[2]); // Transform write
 						}
 						else
 						{
-							printf("Can't write, waiting for new transform process.\n");
+
 						}
 					}
 				}
@@ -886,19 +878,19 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 				{
 					if(curr->st->read_fds[2] > 0)
 					{
-						printf("(TRANSFORM READ) Buffer 3 is empty ==> ");
+
 						add_read_fd(curr->st->read_fds[2]); // Transform read
 					}
 				}
 				else
 				{
 					if(MUA_WRITE_DISCONNECTED){
-						printf("MUA write disconnected, fd not added.");
+
 					}
 					else{
 						if(curr->st->write_fds[0] > 0)
 						{
-							printf("(MUA WRITE) Buffer 3 is not empty ==> ");
+
 							add_write_fd(curr->st->write_fds[0]); // MUA write
 						}
 					}
@@ -937,12 +929,12 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 		case ATTEND_ADMIN_STATE:
 			if(buffer_is_empty(curr->st->buffers[0]))
 			{
-				printf("Admin buffer is empty ==> ");
+
 				add_read_fd(curr->st->read_fds[0]);
 			}
 			else
 			{
-				printf("Admin buffer is not empty ==> ");
+
 				add_write_fd(curr->st->write_fds[0]);
 			}
 			break;
@@ -977,12 +969,12 @@ void set_up_fd_sets(fd_set *read_fds, fd_set *write_fds)
 	FD_ZERO(write_fds);
 	if(sm == NULL)
 	{
-		printf("Found null\n");
+
 		fflush(stdout);
 	}
 	if(sm->states == NULL)
 	{
-		printf("Found null2\n");
+
 		fflush(stdout);
 	}
 	set_up_fd_sets_rec(read_fds, write_fds, sm->states->head);
@@ -1024,7 +1016,7 @@ void debug_print_state(int state)
 			msg = "State not found in debug print";
 			break;
 	}
-	printf("State %s was chosen.\n", msg);
+
 	fflush(stdout);
 }
 

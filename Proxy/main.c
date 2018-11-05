@@ -40,28 +40,6 @@ int main(int argc, char **argv)
 			execute_options();
 			server_string(argv[argc - 1]);
 			app_context = get_app_context();
-			/*
-				int pipes[2];
-				int pid= start_parser(app_context->command_specification,pipes);
-
-				buffer_p buffer;
-				buffer_initialize(&buffer,1000);
-
-				buffer_read(pipes[READ_FD],buffer);
-
-				buffer_write(STDOUT_FILENO,buffer);
-
-				int response = check_parser_exit_status(pid);
-				if(response==STANDARD)
-				{
-					printf("Program exited normally.\n");
-				}
-				else
-				{
-					printf("Program encountered an error.\n");
-				}
-
-				buffer_finalize(buffer);*/
 
 			//createConection();
 			run_server();
