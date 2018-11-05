@@ -29,4 +29,4 @@ int listen_address_validation(char *address);
 
 void free_struct();
 
-#endif //PROTOS_TPE_OPTIONS_H
+#endif

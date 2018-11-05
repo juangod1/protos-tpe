@@ -112,10 +112,6 @@ void pop3_direction(char *arg)
 
 void error_specification(char *arg)
 {
-	//Specifies the file where stderr is rerouted to. By default /dev/null
-	printf("This is error specification: %s!\n",arg);
-
-
 	FILE * newStream = freopen(arg, "w+", stderr);
 	if(newStream==NULL)
 	{
@@ -127,9 +123,6 @@ void error_specification(char *arg)
 			return;
 		}
 	}
-
-	perror("test");
-
 	fflush(stderr);
 	get_app_context()->error_descriptor = dup(fileno(stderr));
 }

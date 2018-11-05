@@ -21,19 +21,6 @@
 #include <sys/types.h>
 #include <netinet/sctp.h>
 
-//El manejo de estar escuchando el socket correspondiente esta hecho por fuera de este archivo
-//Este archivo va a manejar la comunicacion desde el lado del servidor cuando encuentra al menos un usuario administrador conectado
-
-//Formatos de los mensajes
-//REQUEST
-//header: command,tamaño
-//body: parameters
-//RESPONSE
-//header: command al que responde, estado de response, tamaño
-//body: content
-
-//CAMBIOS A REALIZAR
-//int parameters a ESTRUCTURA de parameters
 #define MAX_BUFFER 1024
 
 file_descriptor setup_admin_socket()
@@ -65,7 +52,6 @@ file_descriptor setup_admin_socket()
 		error_terminal();
 	}
 
-	/* Specify that a maximum of 5 streams will be available per socket */
 	memset(&initmsg, 0, sizeof(initmsg));
 	initmsg.sinit_num_ostreams  = 5;
 	initmsg.sinit_max_instreams = 5;
@@ -89,7 +75,6 @@ file_descriptor setup_admin_socket()
 		error_terminal();
 	}
 
-	/* Specify that a maximum of 5 streams will be available per socket */
 	memset(&initmsg, 0, sizeof(initmsg));
 	initmsg.sinit_num_ostreams  = 5;
 	initmsg.sinit_max_instreams = 5;
@@ -133,14 +118,10 @@ int text_response_BS(int response_state, char *content, state s, file_descriptor
 	}
 	else
 	{
-		//Estado especial
 		strcat(res, esp);
 	}
-	//Enviar el la response
 	strcat(res, content);
 	strcat(res,"\r\n\r\n");
-	//int     amount = (double) strlen(res) / (double) BUFFER_SIZE +
-	//                 ((((int) strlen(res) % (int) BUFFER_SIZE) == 0) ? 0 : 1);
 	int read = buffer_read_string(res,s->buffers[0]);
 	if(*(res+read) != 0)
 	{
@@ -169,7 +150,7 @@ int parse_message(const char *str, char sep, char **command, char **parameter)
 			{
 				return 1;
 			}
-			*command = calloc(1, stop - start + 1);//Por ahi me falta 1 para finalizar el string
+			*command = calloc(1, stop - start + 1);
 			if(stop-start != 0)
 			{
                 memcpy(*command, str + start, stop - start);
@@ -187,7 +168,7 @@ int parse_message(const char *str, char sep, char **command, char **parameter)
 	}
 	if(count == 0)
 	{
-		*command = calloc(1, stop - start + 1);//Por ahi me falta 1 para finalizar el string
+		*command = calloc(1, stop - start + 1);
 		if(stop-start != 0)
 		{
             memcpy(*command, str + start, stop - start);
@@ -203,7 +184,7 @@ int parse_message(const char *str, char sep, char **command, char **parameter)
 	if(stop-start != 0)
 	{
         *parameter = calloc(1, stop - start + 1);
-        memcpy(*parameter, str + start, stop - start);//Por ahi me falta uno para finalizar el string
+        memcpy(*parameter, str + start, stop - start);
     }
     else
     {
@@ -227,12 +208,10 @@ void process_request(state s, file_descriptor fd)
 		*p = '\0';
 	}
 	printf("%s", response);
-	//Separo el string de response por espacios y analizo cada cosa.
 	char *command   = NULL;
 	char *parameter = NULL;
 	if(parse_message(response, ' ', &command, &parameter) == 1)
 	{
-		//Error de mensaje
 		text_response_BS(FAILED, "Message format error.", s, fd);
 		//TODO:Puedo cerrar la conexion o dejar que siga un poco mas.
 	}
@@ -240,12 +219,10 @@ void process_request(state s, file_descriptor fd)
         switch (parse_admin_command(command)) {
             case USER:
                 if (s->protocol_state != AUTENTICATION) {
-                    //Error de SCOPE
                     SCOPE_ERROR
                     //TODO:Cerrar la response y solicitar un nuevo request.
                     break;
                 }
-                //Se procede
                 if (parameter != NULL) {
                     s->user = calloc(1, strlen(parameter) + 1);
                     memcpy(s->user, parameter, strlen(parameter));
@@ -256,12 +233,10 @@ void process_request(state s, file_descriptor fd)
                 break;
             case PASS:
                 if (s->protocol_state != AUTENTICATION) {
-                    //Error de SCOPE
                     SCOPE_ERROR
                     //TODO:Cerrar la response y solicitar un nuevo request.
                     break;
                 }
-                //Tiene que haber ingresado un usuario previamente
                 if (s->user != NULL) {
                     s->pass = calloc(1, strlen(parameter) + 1);
                     memcpy(s->pass, parameter, strlen(parameter));
@@ -280,13 +255,11 @@ void process_request(state s, file_descriptor fd)
                 break;
             case LISTS:
                 if (s->protocol_state != EXCHANGE) {
-                    //Error de SCOPE
                     SCOPE_ERROR
                     //TODO:Cerrar la response y solicitar un nuevo request.
                     break;
                 }
                 if (parameter != NULL) {
-                    //Si hay parameters, presentar un ERROR DE FORMATO
                     FORMAT_ERROR
                     //TODO:Cerrar la response y solicitar un nuevo request.
                 } else {
@@ -302,13 +275,11 @@ void process_request(state s, file_descriptor fd)
                 break;
             case STATS:
                 if (s->protocol_state != EXCHANGE) {
-                    //Error de SCOPE
                     SCOPE_ERROR
                     //TODO:Cerrar la response y solicitar un nuevo request.
                 } else if (parameter != NULL) {
                     int paramNum = parse_positive_int(parameter);
                     if (paramNum == -1) {
-                        //Si no es un numero presentar un ERROR DE FORMATO
                         FORMAT_ERROR
                         //TODO:Cerrar la response y solicitar un nuevo request.
                     } else {
@@ -319,7 +290,6 @@ void process_request(state s, file_descriptor fd)
                             char textomonitor[25];
                             char content[50] = "The result is: ";
                             sprintf(textomonitor, "%ld", resmonitor);
-                            //Aca se puede hacer referencia a la funcion o al numero de funcion que fue llamado.
                             text_response_BS(SUCCESS, strcat(content, textomonitor), s,
                                              fd);//TODO: Hay que acomodar el strcat
                         }
@@ -330,7 +300,6 @@ void process_request(state s, file_descriptor fd)
                 break;
             case ACTIVE:
                 if (s->protocol_state != EXCHANGE) {
-                    //Error de SCOPE
                     SCOPE_ERROR
                     //TODO:Cerrar la response y solicitar un nuevo request.
                 } else {
@@ -342,7 +311,6 @@ void process_request(state s, file_descriptor fd)
                     } else {
                         int paramNum = parse_positive_int(parameter);
                         if (paramNum != 1 && paramNum != 0) {
-                            //ERROR DE FORMATO - parameters invalidos
                             FORMAT_ERROR
                             //TODO:Cerrar la response y solicitar un nuevo request.
                         } else {
@@ -356,12 +324,10 @@ void process_request(state s, file_descriptor fd)
                 break;
             case FILTER:
                 if (s->protocol_state != EXCHANGE) {
-                    //Error de SCOPE
                     SCOPE_ERROR
                     //TODO:Cerrar la response y solicitar un nuevo request.
                 } else {
                     if (parameter == NULL) {
-                        //Significa que no paso parameter entonces quiere saber cual es el filter actual
                         char *filtro = get_transformation_filter();
                         char resp[64] = "Current transformation: ";
                         text_response_BS(SUCCESS, strcat(resp, filtro), s, fd);
@@ -374,16 +340,12 @@ void process_request(state s, file_descriptor fd)
                 break;
             case QUIT:
                 s->protocol_state = CLOSE;
-                //Es multiestado entonces no verificoS
                 text_response_BS(SUCCESS, "Goodbye!", s, fd);
-                //cerrar sesion cerrando el socket y dropeando la informacion de sesion
                 free(s->user);
                 free(s->pass);
                 s->disconnect = 1;
                 break;
-                //Y por ultimo tenemos el caso default por si falla por scope o por error
             default:
-                //El command ingresado no esta dentro de los disponibles.
                 text_response_BS(FAILED, "Command unknown. Refer to the RFC.", s, fd);
                 break;
         }
@@ -432,7 +394,6 @@ int parse_admin_command(const char *resp)
 
 int authenticate(char *user, char *pass)
 {
-	//Usando las variable globales tiene que authenticate y luego proporcionar el codigo que resulto
 	char    *users[2]  = {"pablito", "juancito"};
 	char    *passes[2] = {"pabs", "juans"};
 	for(int i          = 0; i < 2; i++)
@@ -449,7 +410,6 @@ int authenticate(char *user, char *pass)
 	return 1;
 }
 
-//Retorna -1 si falla
 int parse_positive_int(char *string)
 {
 	char *remain;
@@ -462,34 +422,29 @@ int parse_positive_int(char *string)
 	return (int) ret;
 }
 
-//Devuelve el numero de funciones que hay
 char **get_monitor_array()
 {
 	app_context_p app = get_app_context();
 	return app->monitor;
 }
 
-//Busca la estadistica correspondiente al monitor(i)
 long monitor(int numero)
 {
 	//TODO Tiene que buscar las metricas en el contexto
 	return get_app_context()->monitor_values[numero-1];
 }
 
-//Busca en el contexto del proxy el estado actual de la transformacion. ACTIVO o INACTIVO
 int get_transformation_state()
 {
 
 	return get_app_context()->transform_status;
 }
 
-//Carga el estado de transformacion y devuelve 0 si funciono y -1 sino.
 void set_transformation_state(int estado)
 {
 	get_app_context()->transform_status = estado;
 }
 
-//Busca el command actual en el contexto del proxy
 char *get_transformation_filter()
 {
 	return get_app_context()->command_specification;

@@ -61,7 +61,7 @@ char * mt_buffer_get_boundary(buffer_p buffer)
         ptr++;
         count--;
     }
-    if(*ptr!='"') return NULL; //BOUNDARY DIDNT FIT IN BUFFER :(
+    if(*ptr!='"') return NULL;
     return my_strndup(ret,size);
 }
 

@@ -7,4 +7,4 @@
 
 int parser_parse(int argc, char **argv);
 
-#endif //PROTOS_TPE_MAIN_H
+#endif

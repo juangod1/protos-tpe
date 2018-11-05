@@ -38,4 +38,4 @@ int charbuffer_ends_with_doubleCRLF(char* buffer);
 
 void clean_buffer(char* buffer);
 
-#endif //PROTOS_TPE_MAIN_H
+#endif

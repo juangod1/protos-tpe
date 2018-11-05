@@ -35,7 +35,6 @@ int main(int argc, char **argv)
 
 int parser_parse(int argc, char **argv)
 {
-	// Arguments: command FILTER_MEDIAS FILTER_MSG POP3FILTER_VERSION POP3_USERNAME POP3_SERVER
 	if(argc != 7)
 	{
 		perror("INCORRECT PARAMETERS FOR PARSER\n");

@@ -15,7 +15,6 @@
 
 void prepareForSending(char **username, char **password);
 
-//config socket_config;
 struct sockaddr_in     addr;
 static admin_context_p admin_context;
 
@@ -33,24 +32,18 @@ int main(int argc, char **argv)
 	admin_context = get_admin_context();
 	socket_config();
 
-	//Saludo al usuario y le informo que se va a intentar hacer una conexion al proxy
 	printf("Hello! Starting connection...\n");
-	//Waiting for conection
 	int fd = createConnection();
 
-	char status = 0;//0 desconectado, 1 conectado, 2 quitting.
+	char status = 0;
 	while(status != 2)
 	{
-		//Tengo que loggearme
-
 		requestForLogin(fd, &status);
 		if(status == 1)
 		{
-			//Me conecte exitosamente entonces entro en otro modo
 			interaction(fd);
 		}
 	}
-	//CierreDeConexion
 	closeConnection(fd);
 	return 0;
 }
@@ -71,7 +64,7 @@ int createConnection()
 	struct sctp_event_subscribe events;
 
 
-	//Creo una conexion SCTP con los valores (default 9090, 127.0.0.1)
+
 	if((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP)) == -1)
 	{
 		printf("An error has ocurred while creating SCTP socket\n");
@@ -80,7 +73,6 @@ int createConnection()
 		exit(EXIT_FAILURE);
 	}
 
-	//Realizo la conexion
 	if((ret = connect(fd, (struct sockaddr *) &addr, sizeof(addr))) == -1)
 	{
 		printf(("An error has ocurred while connecting the SCTP socket\n"));
@@ -93,24 +85,19 @@ int createConnection()
 
 void requestForLogin(int fd, char *status)
 {
-	//Hago la solicitud al servidor
 	if(requestLoginToProxy(fd))
 	{
-		//Respuesta positiva
 		loginSuccess(status);
 	}
 	else
 	{
-		//Respuesta negativa
 		loginError(fd, status);
 	}
 }
 
 void loginError(int fd, char *status)
 {
-	//Aviso que no se puedo autenticar
 	printf("Login failed. Do you wish to retry? [Y/n]: ");
-	//Pregunto si quiere volver a intentar o si quiere quitear
 	char   *input = calloc(1, INITIAL_INPUT_SIZE);
 	size_t count  = fetchLineFromStdin(&input, INITIAL_INPUT_SIZE);
 	if(count != 1)
@@ -125,7 +112,6 @@ void loginError(int fd, char *status)
 		}
 		else if(*input == 'N' || *input == 'n')
 		{
-			//Si quitea hago *status = 2;
 			*status = 2;
 		}
 	}
@@ -134,9 +120,7 @@ void loginError(int fd, char *status)
 
 void loginSuccess(char *status)
 {
-	//Aviso que se conecto
 	printf("Login succesful\n");
-	//Seteo variable para que salga del while
 	*status = 1;
 }
 
@@ -148,10 +132,8 @@ char requestLoginToProxy(int fd)
 
 	sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
 	printf("%s\n",buffer);
-	//Le solicito un usuario
 	printf("Please enter your username: ");
 	fetchLineFromStdin(&usernameInput, INITIAL_INPUT_SIZE);
-	//Le solicito una contraseña
 	printf("Please enter your password: ");
 	fetchLineFromStdin(&passwordInput, INITIAL_INPUT_SIZE);
 	prepareForSending(&usernameInput, &passwordInput);
@@ -164,7 +146,6 @@ char requestLoginToProxy(int fd)
 	{
 		*pos = '\n';
 	}
-	//En la conexion 9090 le envia con USER name el parametro obtenido del usuario
 	int ret = sctp_sendmsg(fd, usernameInput, strlen(usernameInput), NULL, 0, 0, 0, 0, 0, 0);
 	if(ret == -1)
 	{
@@ -177,7 +158,6 @@ char requestLoginToProxy(int fd)
 	sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
 	printf("+0K\n");
 
-	//Luego le envia la contraseña con PASS string
 	ret = sctp_sendmsg(fd, passwordInput, strlen(passwordInput), NULL, 0, 0, 0, 0, 0, 0);
 	if(ret == -1)
 	{
@@ -201,10 +181,6 @@ char requestLoginToProxy(int fd)
 	{
 		return 0;
 	}
-
-	//Devuelve 1 si fue exitoso
-	//Devuelve 0 si falla
-	//Libera memoria
 }
 
 void prepareForSending(char **username, char **password)

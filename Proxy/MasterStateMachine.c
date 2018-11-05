@@ -131,7 +131,6 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
 		return NOT_WAITING;
 	}
 
-	//NEW ADMIN CONNECTED
 	log_event(s, '+', "Connection");
 	get_app_context()->monitor_values[1] += 1;
 
@@ -308,7 +307,6 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 {
 	if(get_app_context()->has_to_query_dns)
 	{
-		// Connection happens in thread
 	}
 	else
 	{
@@ -365,7 +363,6 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 
 	add_state(sm, st);
 
-	//NEW MUA CONNECTED
 	get_app_context()->monitor_values[0] += 1;
 	get_app_context()->monitor_values[2] += 1;
 
@@ -580,14 +577,12 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				printf("--------------------------------------------------------\n");
 				printf("Read buffer content from Origin: \n");
 				print_buffer(s->buffers[1]);
-				//Saco los termination octets
-				//Miro el buffer count
 				if(buffer_starts_with_string("+OK", s->buffers[1]) ||
 				   buffer_starts_with_string("-ERR", s->buffers[1]))
 				{
-					IS_NEW_LINE      = true;// ESTE ES NUEVO
-					IS_NEXT_NEW_LINE = true; //EL PROXIMO ES NUEVO
-					IS_MULTILINE     = false; //NO ES MULTILINEA
+					IS_NEW_LINE      = true;
+					IS_NEXT_NEW_LINE = true;
+					IS_MULTILINE     = false;
 					if(!get_app_context()->pipelining)
 					{
 						s->pipelining_data = true;
@@ -595,37 +590,37 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				}
 				else if(IS_NEXT_NEW_LINE && buffer_indicates_parsable_message(s->buffers[1]))
 				{
-					IS_NEW_LINE      = true; //ESTE ES LO QUE ERA EL PROXIMO
-					IS_NEXT_NEW_LINE = false;// EL PROXIMO NO ES NUEVO
-					IS_TRANS         = true; //ESTE ES TRANS
-					IS_MULTILINE     = true; //ES MULTILINEA
+					IS_NEW_LINE      = true;
+					IS_NEXT_NEW_LINE = false;
+					IS_TRANS         = true;
+					IS_MULTILINE     = true;
 				}
 				else if(IS_NEXT_NEW_LINE && buffer_indicates_start_of_list(s->buffers[1]))
 				{
-					IS_NEW_LINE      = true; //ESTE es nuevo
-					IS_NEXT_NEW_LINE = false;// EL PROXIMO NO ES NUEVO
-					IS_TRANS         = true; //ESTE ES TRANS
-					IS_MULTILINE     = true; //ES MULTILINEA
+					IS_NEW_LINE      = true;
+					IS_NEXT_NEW_LINE = false;
+					IS_TRANS         = true;
+					IS_MULTILINE     = true;
 
 				}
 				else if(IS_NEXT_NEW_LINE && buffer_indicates_start_of_capa(s->buffers[1]))
 				{
-					IS_NEW_LINE      = true; //ESTE es nuevo
-					IS_NEXT_NEW_LINE = false;// EL PROXIMO NO ES NUEVO
-					IS_TRANS         = true; //ESTE ES TRANS
-					IS_MULTILINE     = true; //ES MULTILINEA
+					IS_NEW_LINE      = true;
+					IS_NEXT_NEW_LINE = false;
+					IS_TRANS         = true;
+					IS_MULTILINE     = true;
 					if(!get_app_context()->pipelining)
 					{
 						buffer_read_string("PIPELINING\r\n", s->buffers[1]);
 					}
 				}
 				else
-				{ //continuo impresion de multilinea
-					IS_NEW_LINE = false; //ESTE NO ES NUEVO
+				{
+					IS_NEW_LINE = false;
 				}
 			}
 			else if(s->read_fds[2] == fd)
-			{   // Transform READ
+			{
 				if(buffer_read(fd, s->buffers[2]) == 0)
 				{
 					IS_PROCESSING = false;

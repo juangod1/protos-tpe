@@ -17,4 +17,4 @@ void notImplemented();
 void thenSuccess();
 void checkStringsEqual(char* str1, char* str2);
 void givenNothing();
-#endif //TP2_TEMPORARY_TESTLIB_H
+#endif

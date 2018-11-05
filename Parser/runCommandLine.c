@@ -8,7 +8,7 @@
 int run_parser(char *command)
 {
 	int status = system(command);
-	if(WSTOPSIG(status) == 127) //todo: man says I shouldn't
+	if(WSTOPSIG(status) == 127)
 	{
 		perror("Invalid command");
 		exit(BAD_EXIT_STATUS);
