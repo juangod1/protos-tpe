@@ -24,7 +24,7 @@ void initialize_app_context()
 	app_context->censored_media_types  = NULL;
 	app_context->pop3_path             = NULL;
 	app_context->command_specification = NULL;
-	app_context->error_path            = NULL;
+	app_context->error_descriptor      = -1;
 	app_context->local_port            = 0;
 	app_context->isIPV6                = 0;
 	app_context->management_path       = NULL;
@@ -56,9 +56,14 @@ void destroy_app_context()
 	free(app_context->first);
 	free(app_context->replacement_message);
 	free(app_context->management_path);
-	free(app_context->error_path);
 	free(app_context->pop3_path);
 	free(app_context->censored_media_types);
+
+	if(app_context->error_descriptor<0)
+	{
+		close(app_context->error_descriptor);
+	}
+
 	for(int i=0; i< 5; i++)
 	{
 		free(app_context->monitor[i]);
@@ -109,8 +114,24 @@ void error_specification(char *arg)
 {
 	//Specifies the file where stderr is rerouted to. By default /dev/null
 	printf("This is error specification: %s!\n",arg);
-	fflush(stdout);
-	app_context->error_path = my_strdup(arg);
+
+
+	FILE * newStream = freopen(arg, "w+", stderr);
+	if(newStream==NULL)
+	{
+		perror("Fopen error. Setting error path to default /dev/null");
+		newStream=freopen("/dev/null","w",stderr);
+		if(newStream==NULL)
+		{
+			perror("Fopen error. SEtting error path to stderr.");
+			return;
+		}
+	}
+
+	perror("test");
+
+	fflush(stderr);
+	get_app_context()->error_descriptor = dup(fileno(stderr));
 }
 
 void management_direction(char *arg)

@@ -44,27 +44,8 @@ void pop3_direction_validation(int argc, char **argv,
     }
 }
 
-void error_specification_validation(int argc, char **argv,
-                                    response_p resp) //TODO: parse string, make sure it has the correct format.
-{//tiene que ser un path valido
-    if(argc<1 || argv[0] == NULL)
-    {
-        resp->success    = FALSE;
-        resp->error_text = "Error specification accepts only one parameter";
-        return;
-    }
-    else
-    {
-        struct stat statbuf;
-        int i = stat(argv[0], &statbuf);
-        if(i == -1)
-        {
-            resp->success    = FALSE;
-            resp->error_text = "Invalid error path";
-            return;
-        }
-    }
-
+void error_specification_validation(int argc, char **argv, response_p resp) //TODO: parse string, make sure it has the correct format.
+{
 	resp->success       = TRUE;
 	resp->next_argument = 1;
 }

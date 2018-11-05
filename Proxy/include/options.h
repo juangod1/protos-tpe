@@ -12,7 +12,7 @@ typedef struct
 	char            *address_server_string;
 	struct addrinfo *addr;
 	struct addrinfo *first;
-	char            *error_path;
+	int	            error_descriptor;
 	char            *pop3_path;
 	char            *management_path;
 	char            *replacement_message;
