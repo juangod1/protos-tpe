@@ -112,7 +112,7 @@ void pop3_direction(char *arg)
 
 void error_specification(char *arg)
 {
-	FILE * newStream = freopen(arg, "w+", stderr);
+	/*FILE * newStream = freopen(arg, "w+", stderr);
 	if(newStream==NULL)
 	{
 		perror("Fopen error. Setting error path to default /dev/null");
@@ -124,7 +124,7 @@ void error_specification(char *arg)
 		}
 	}
 	fflush(stderr);
-	get_app_context()->error_descriptor = dup(fileno(stderr));
+	get_app_context()->error_descriptor = dup(fileno(stderr));*/
 }
 
 void management_direction(char *arg)

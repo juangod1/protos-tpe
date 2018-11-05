@@ -11,6 +11,7 @@
 #include <pthread.h>
 
 #define BUFFER_SIZE 600
+#define BIG_BUFFER_SIZE 4200
 
 #define IS_PROCESSING s->data_1
 #define IS_NEXT_NEW_LINE s->data_2
