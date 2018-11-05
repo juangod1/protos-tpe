@@ -295,7 +295,7 @@ void process_request(state s, file_descriptor fd)
                             FORMAT_ERROR
                             //TODO:Cerrar la response y solicitar un nuevo request.
                         } else {
-                            set_transformation_state(paramNum);
+                            set_transformation_state(paramNum, s);
                             char resp[40] = "SUCCESS. Transformation is: ";
                             text_response_BS(SUCCESS, strcat(resp,
                                                              (paramNum ? "Active" : "Inactive")), s, fd);
@@ -314,6 +314,16 @@ void process_request(state s, file_descriptor fd)
                         text_response_BS(SUCCESS, strcat(resp, filtro), s, fd);
                     } else {
                         command_specification(parameter);
+
+						char *log = calloc(1,1);
+						char *trans = "NOT POP3 - TRANSFORMATION COMMAND CHANGED TO: ";
+						log = realloc(log,strlen(trans) + strlen(parameter) + 1);
+						memset(log,'\0',strlen(trans)+strlen(parameter)+1);
+						strcat(log,trans);
+						strcat(log,parameter);
+						log_event(s,'*', log);
+						free(log);
+
                         char resp[MAX_FILTER_BUFFER] = "SUCCESS. Current transformation: ";
                         text_response_BS(SUCCESS, strcat(resp, parameter), s, fd);
                     }
@@ -423,9 +433,18 @@ int get_transformation_state()
 	return get_app_context()->transform_status;
 }
 
-void set_transformation_state(int estado)
+void set_transformation_state(int estado, state s)
 {
 	get_app_context()->transform_status = estado;
+	char *log = calloc(1,1);
+	char *trans = "NOT POP3 - TRANSFORMATION STATUS CHANGED TO: ";
+	char *active = (estado?"ON":"OFF");
+	log = realloc(log,strlen(trans) + strlen(active) + 1);
+	memset(log,'\0',strlen(trans)+strlen(active)+1);
+	strcat(log,trans);
+	strcat(log,active);
+	log_event(s,'*', log);
+	free(log);
 }
 
 char *get_transformation_filter()
