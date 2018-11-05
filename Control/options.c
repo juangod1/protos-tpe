@@ -2,6 +2,7 @@
 #include <getopt.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include "../Shared/include/executionValidator.h"
 #include "include/options.h"
 
@@ -84,12 +85,12 @@ uint16_t connection_port(char *port)
 
 int connection_port_validation(uint16_t port)
 {
-	return 1;
+	return true;
 }
 
 int listen_address_validation(char *address)
 {
-	return 1;
+	return true;
 }
 
 void free_struct()

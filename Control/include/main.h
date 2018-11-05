@@ -22,6 +22,8 @@ void loginError(int fd, char *status);
 
 void loginSuccess(char *connected);
 
+void receiveGreeting(int fd);
+
 char requestLoginToProxy(int fd);
 
 void interaction(int fd);

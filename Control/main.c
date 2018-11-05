@@ -36,6 +36,7 @@ int main(int argc, char **argv)
 	int fd = createConnection();
 
 	char status = 0;
+	receiveGreeting(fd);
 	while(status != 2)
 	{
 		requestForLogin(fd, &status);
@@ -60,9 +61,6 @@ void socket_config()
 int createConnection()
 {
 	int                         fd, ret;
-	struct sctp_initmsg         initmsg;
-	struct sctp_event_subscribe events;
-
 
 
 	if((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP)) == -1)
@@ -123,15 +121,18 @@ void loginSuccess(char *status)
 	printf("Login succesful\n");
 	*status = 1;
 }
-
+void receiveGreeting(int fd)
+{
+    char buffer[MAX_BUFFER] = {0};
+    sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
+    printf("%s",buffer);
+}
 char requestLoginToProxy(int fd)
 {
 	char buffer[MAX_BUFFER] = {0};
 	char *usernameInput = calloc(1, INITIAL_INPUT_SIZE);
 	char *passwordInput = calloc(1, INITIAL_INPUT_SIZE);
 
-	sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
-	printf("%s\n",buffer);
 	printf("Please enter your username: ");
 	fetchLineFromStdin(&usernameInput, INITIAL_INPUT_SIZE);
 	printf("Please enter your password: ");
@@ -156,7 +157,6 @@ char requestLoginToProxy(int fd)
 	}
 
 	sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
-	printf("+0K\n");
 
 	ret = sctp_sendmsg(fd, passwordInput, strlen(passwordInput), NULL, 0, 0, 0, 0, 0, 0);
 	if(ret == -1)
@@ -168,13 +168,12 @@ char requestLoginToProxy(int fd)
 	}
 
 	ret = sctp_recvmsg(fd, buffer, sizeof(buffer), NULL, 0, 0, 0);
-
+    printf("%s",buffer);
 	free(usernameInput);
 	free(passwordInput);
 
 	if(strncmp(buffer, "+OK", 3) == 0)
 	{
-
 		return 1;
 	}
 	else

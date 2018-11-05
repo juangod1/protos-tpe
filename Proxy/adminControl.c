@@ -22,12 +22,12 @@
 #include <netinet/sctp.h>
 
 #define MAX_BUFFER 1024
+#define MAX_FILTER_BUFFER 256
 
 file_descriptor setup_admin_socket()
 {
 	int                 listenSock, ret;
 	struct sockaddr_in  servaddr;
-	struct sctp_initmsg initmsg;
 
 	listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP);
 	if(listenSock == -1)
@@ -48,44 +48,6 @@ file_descriptor setup_admin_socket()
 	{
 		printf("Bind failed \n");
 		perror("bind()");
-		close(listenSock);
-		error_terminal();
-	}
-
-	memset(&initmsg, 0, sizeof(initmsg));
-	initmsg.sinit_num_ostreams  = 5;
-	initmsg.sinit_max_instreams = 5;
-	initmsg.sinit_max_attempts  = 4;
-	ret = setsockopt(listenSock, IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(initmsg));
-
-	if(ret == -1)
-	{
-		printf("setsockopt() failed \n");
-		perror("setsockopt()");
-		close(listenSock);
-		error_terminal();
-	}
-
-	ret = listen(listenSock, 5);
-	if(ret == -1)
-	{
-		printf("listen() failed \n");
-		perror("listen()");
-		close(listenSock);
-		error_terminal();
-	}
-
-	memset(&initmsg, 0, sizeof(initmsg));
-	initmsg.sinit_num_ostreams  = 5;
-	initmsg.sinit_max_instreams = 5;
-	initmsg.sinit_max_attempts  = 4;
-	ret = setsockopt(listenSock, IPPROTO_SCTP, SCTP_INITMSG,
-	                 &initmsg, sizeof(initmsg));
-
-	if(ret == -1)
-	{
-		printf("setsockopt() failed \n");
-		perror("setsockopt()");
 		close(listenSock);
 		error_terminal();
 	}
@@ -201,7 +163,7 @@ void admin_greeting(state s, file_descriptor fd)
 void process_request(state s, file_descriptor fd)
 {
 	buffer_p buffer               = s->buffers[0];
-	char     response[MAX_BUFFER] = {0};
+	char     response[MAX_FILTER_BUFFER] = {0};
 	buffer_write_string(response, buffer);
 	char*p;
 	if((p = strchr(response,'\n')) != NULL){
@@ -288,7 +250,7 @@ void process_request(state s, file_descriptor fd)
                             text_response_BS(FAILED, "Function not found, use LISTS.", s, fd);
                         } else {
                             char textomonitor[25];
-                            char content[50] = "The result is: ";
+                            char content[64] = "The result is: ";
                             sprintf(textomonitor, "%ld", resmonitor);
                             text_response_BS(SUCCESS, strcat(content, textomonitor), s,
                                              fd);//TODO: Hay que acomodar el strcat
@@ -306,7 +268,7 @@ void process_request(state s, file_descriptor fd)
                     if (parameter == NULL) {
                         //Significa que no paso parameter entonces quiere saber cual es el estado actual
                         int estadoT = get_transformation_state();
-                        char resp[30] = "Transformation is: ";
+                        char resp[MAX_FILTER_BUFFER] = "Transformation is: ";
                         text_response_BS(SUCCESS, strcat(resp, (estadoT ? "Active" : "Inactive")), s, fd);
                     } else {
                         int paramNum = parse_positive_int(parameter);
@@ -329,11 +291,11 @@ void process_request(state s, file_descriptor fd)
                 } else {
                     if (parameter == NULL) {
                         char *filtro = get_transformation_filter();
-                        char resp[64] = "Current transformation: ";
+                        char resp[MAX_FILTER_BUFFER] = "Current transformation: ";
                         text_response_BS(SUCCESS, strcat(resp, filtro), s, fd);
                     } else {
                         command_specification(parameter);
-                        char resp[64] = "SUCCESS. Current transformation: ";
+                        char resp[MAX_FILTER_BUFFER] = "SUCCESS. Current transformation: ";
                         text_response_BS(SUCCESS, strcat(resp, parameter), s, fd);
                     }
                 }
