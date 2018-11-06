@@ -45,4 +45,9 @@ Las opciones disponibles son:
 * -l \<management_address\> : dirección del server de management
 * -p \<management_port\> : puerto del server de management
 
-El usuario y la contraseña para configuración se encuentran en `secret.txt`.
+Los usuarios administradores disponibles son:
+username: juan
+password: juan
+y
+username: marcelo
+password: marcelo
