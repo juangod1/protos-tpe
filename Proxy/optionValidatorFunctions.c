@@ -23,25 +23,10 @@ void pop3_direction_validation(int argc, char **argv,
 	if(argc < 1 || argv[0] == NULL)
 	{
 		resp->success    = FALSE;
-		resp->error_text = "Pop3 proxy address accepts only one parameter";
+		resp->error_text = "Pop3 direction accepts only one parameter";
 		return;
 	}
-	else
-	{
-		char buf[16];
-
-		if(inet_pton(AF_INET, argv[0], buf) || inet_pton(AF_INET6, argv[0], buf))
-		{
-			resp->success       = TRUE;
-			resp->next_argument = 1;
-		}
-		else
-		{
-			resp->success    = FALSE;
-			resp->error_text = "Invalid pop3 proxy address";
-			return;
-		}
-	}
+	validate_interface(argv[0],resp);
 }
 
 void error_specification_validation(int argc, char **argv,
@@ -53,30 +38,29 @@ void error_specification_validation(int argc, char **argv,
 
 void management_direction_validation(int argc, char **argv,
                                      response_p resp) //TODO: parse string, make sure it has the correct format.
-{//tiene que ser una direccion ipv4 o ipv6 valida
+{
 	if(argc < 1 || argv[0] == NULL)
 	{
 		resp->success    = FALSE;
-		resp->error_text = "Management address accepts only one parameter";
+		resp->error_text = "Management direction accepts only one parameter";
 		return;
 	}
-	else
-	{
-		char buf[16];
-
-		if(inet_pton(AF_INET, argv[0], buf) || inet_pton(AF_INET6, argv[0], buf))
-		{
-			resp->success       = TRUE;
-			resp->next_argument = 1;
-		}
-		else
-		{
-			resp->success    = FALSE;
-			resp->error_text = "Invalid management address";
-			return;
-		}
-	}
+	validate_interface(argv[0],resp);
 }
+
+void validate_interface(char *interface_str, response_p resp)
+{
+	if(strcmp(interface_str,"loopback")!=0 && strcmp(interface_str,"any")!=0 &&
+				strcmp(interface_str,"ipv4")!=0 && strcmp(interface_str,"ipv6")!=0)
+	{
+		resp->success    = FALSE;
+		resp->error_text = "Valid Interfaces: 'loopback','ipv4','ipv6','any'.";
+		return;
+	}
+	resp->success       = TRUE;
+	resp->next_argument = 1;
+}
+
 
 void replacement_message_validation(int argc, char **argv, response_p resp)
 {

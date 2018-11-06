@@ -82,9 +82,9 @@ void initialize_options()
 	option_register("Error Path", 'e', error_specification, "/dev/null",
 	                "Specifies the file where stderr is rerouted to. By default /dev/null",
 	                error_specification_validation, 1);
-	option_register("Pop3 Path", 'l', pop3_direction, "0.0.0.0", "Specifies the route where the Proxy will act.",
+	option_register("Pop3 Direction", 'l', pop3_direction, "any", "Specifies the route where the Proxy will act.",
 	                pop3_direction_validation, 1);
-	option_register("Management Path", 'L', management_direction, "127.0.0.1",
+	option_register("Management direction", 'L', management_direction, "loopback",
 	                "Specifies the route where the Management service will act.", management_direction_validation, 1);
 	option_register("Replacement Message", 'm', replacement_message, "Replaced Part",
 	                "Specifies the message to replace filtered text.", replacement_message_validation, 1);
