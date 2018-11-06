@@ -172,7 +172,7 @@ void process_request(state s, file_descriptor fd)
 	{
 		*p = '\0';
 	}
-	printf("%s", response);
+	
 	char *command   = NULL;
 	char *parameter = NULL;
 	if(parse_message(response, ' ', &command, &parameter) == 1)
