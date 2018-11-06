@@ -308,7 +308,7 @@ void interaction(int fd)
 		else if(strncmp(buffer, "FILTER", 6) == 0)
 		{
 			int response = wordexp(buffer, &p, 0);
-			if(response != 0)
+			if(response != 0 || (pos = strchr(buffer,'"')) != NULL || (pos = strchr(buffer,'\'')) != NULL)
 			{
 				printf("Incorrect input\n");
 			}
@@ -328,7 +328,10 @@ void interaction(int fd)
 				}
 
 			}
-			wordfree(&p);
+			if(response==0)
+            {
+                wordfree(&p);
+            }
 		}
 		else if(strcmp(buffer, "HELP") == 0)
 		{
