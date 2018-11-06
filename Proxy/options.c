@@ -30,6 +30,8 @@ void initialize_app_context()
 	app_context->isIPV6                  = 0;
 	app_context->management_path         = NULL;
 	app_context->management_port         = 0;
+	app_context->management_path_is_ipv4 = false;
+	app_context->pop3path_is_ipv4        = false;
 	app_context->origin_port             = 0;
 	app_context->replacement_message     = NULL;
 	app_context->address_server_string   = NULL;
@@ -113,26 +115,27 @@ void pop3_direction(char *arg)
 
 void error_specification(char *arg)
 {
-	FILE *newStream = freopen(arg, "w+", stderr);
-	if(newStream == NULL)
-	{
-		perror("Fopen error. Setting error path to default /dev/null");
-		newStream = freopen("/dev/null", "w", stderr);
-		if(newStream == NULL)
-		{
-			perror("Fopen error. Setting error path to stderr.");
-			return;
-		}
-	}
-	fflush(stderr);
-	get_app_context()->error_descriptor = dup(fileno(stderr));
 }
 
 void management_direction(char *arg)
 {
 	//Receives an direction and uses it to specify the address of the management service.
+	struct in6_addr buf6;
+	struct in_addr  buf4;
 
-	fflush(stdout);
+	if(inet_pton(AF_INET, arg, (void *) &buf4))
+	{
+		get_app_context()->management_path_is_ipv4 = true;
+	}
+	else if(inet_pton(AF_INET6, arg, (void *) &buf6))
+	{
+		get_app_context()->management_path_is_ipv4 = false;
+	}
+	else
+	{
+		app_context->management_path_is_ipv4 = -1;
+	}
+
 	app_context->management_path = my_strdup(arg);
 }
 

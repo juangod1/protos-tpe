@@ -6,8 +6,11 @@
 #define PROTOS_TPE_OPTIONS_H
 
 #include <stdint.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #define MONITORING_OPTIONS 4
+
 typedef struct
 {
 	int             has_to_query_dns;
@@ -16,7 +19,9 @@ typedef struct
 	struct addrinfo *first;
 	int             error_descriptor;
 	char            *pop3_path;
+	int             pop3path_is_ipv4;
 	char            *management_path;
+	int             management_path_is_ipv4;
 	char            *replacement_message;
 	char            *censored_media_types;
 	uint16_t        management_port;
