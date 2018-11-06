@@ -386,12 +386,7 @@ int buffer_is_line_buffered(buffer_p buffer)
 
 int buffer_must_be_line_buffered(buffer_p buffer)
 {
-	if(buffer->count < 3)
-	{
-		return false;
-	}
-	return *(buffer->data_start) == '.' && *(buffer->data_start + 1) != '\r';
-
+	return *(buffer->data_start) == '.';
 }
 
 int buffer_read_until_char_block(int file_descriptor, buffer_p buffer, char ch)

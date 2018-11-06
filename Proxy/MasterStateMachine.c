@@ -550,10 +550,6 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				buffer_remove_trailing_spaces(s->buffers[0]);
 				if(read_response == 0)
 				{
-
-
-
-
 					// If EOF received, MUA read and Origin write must be closed
 					s->disconnects[0] = true;
 					shutdown(s->read_fds[0], SHUT_RD);
@@ -580,6 +576,11 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			{ //TRANSFORM READ
 				if(buffer_read(fd, s->buffers[2]) == 0)
 				{
+					if(WAS_MULTI)
+					{
+						buffer_read_string(".\r\n",s->buffers[2]);
+					}
+					IS_END=true;
 					IS_PROCESSING = false;
 					close(s->read_fds[2]);
 					s->read_fds[2]  = -1;
@@ -612,7 +613,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				}
 				else
 				{
-
+					IS_END=false;
 				}
 			}
 			break;
@@ -621,7 +622,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			{   // MUA WRITE
 				int written_size  = 0;
 				int expected_size = 0;
-				if(!IS_ALREADY_LINE_BUFFERED && buffer_must_be_line_buffered(s->buffers[2]))
+				if(!IS_ALREADY_LINE_BUFFERED && !IS_END && buffer_must_be_line_buffered(s->buffers[2]))
 				{
 					written_size = write(s->write_fds[0], ".", 1);
 					IS_ALREADY_LINE_BUFFERED = true;
@@ -653,19 +654,23 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			}
 			else if(s->write_fds[2] == fd)
 			{   // Transform WRITE
-
-
 				int will_close;
 				if(IS_MULTILINE)
 				{
 					will_close = buffer_indicates_end_of_multiline_message(s->buffers[1]);
-					if(buffer_is_line_buffered(s->buffers[1]))
+					if(!will_close)
 					{
-						buffer_write_after_index(fd, s->buffers[1], 1);
+						if(buffer_is_line_buffered(s->buffers[1]))
+						{
+							buffer_write_after_index(fd, s->buffers[1], 1);
+						}
+						else
+						{
+							buffer_write(fd, s->buffers[1]);
+						}
 					}
-					else
-					{
-						buffer_write(fd, s->buffers[1]);
+					else{
+						buffer_clean(s->buffers[1]);
 					}
 				}
 				else
@@ -709,6 +714,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 		s->read_fds[2]  = pipes[0];
 		s->write_fds[2] = pipes[1];
 		IS_PROCESSING = true;
+		WAS_MULTI = IS_MULTILINE;
 		IS_TRANS      = false;
 		IS_NEW_LINE   = false;
 
@@ -822,7 +828,7 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 		case ATTEND_CLIENT_STATE:
 			if(curr->st->buffers[0] != NULL)
 			{
-				if(buffer_big_is_empty(curr->st->buffers[0]))
+				if(buffer_big_is_empty(curr->st->buffers[0]) && !buffer_ends_with_string(curr->st->buffers[0],"\n"))
 				{
 					if(curr->st->read_fds[0] > 0)
 					{
@@ -836,10 +842,6 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 							add_read_fd(curr->st->read_fds[0]); // MUA read
 						}
 					}
-					if(buffer_ends_with_string(curr->st->buffers[0],"\n"))
-					{
-						add_origin_write(curr);
-					}
 				}
 				else
 				{
@@ -848,7 +850,7 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 			}
 			if(curr->st->buffers[1] != NULL)
 			{
-				if(buffer_big_is_empty(curr->st->buffers[1]))
+				if(buffer_big_is_empty(curr->st->buffers[1]) && !buffer_ends_with_string(curr->st->buffers[1],"\n"))
 				{
 					if(ORIGIN_READ_DISCONNECTED)
 					{
@@ -863,23 +865,6 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 							// ORIGIN read
 						}
 					}
-					if(buffer_ends_with_string(curr->st->buffers[1],"\n"))
-					{
-						if(curr->st->write_fds[2] > 0)
-						{
-							printf("(TRANSFORM WRITE) Buffer 2 is not empty ==> ");
-							if(curr->st->data_1 && !curr->st->data_4)
-							{
-								printf("Will write to transform process.\n");
-								add_write_fd(curr->st->write_fds[2]); // Transform write
-							}
-							else
-							{
-								printf("Can't write, waiting for new transform process.\n");
-							}
-						}
-					}
-
 				}
 				else
 				{
@@ -900,25 +885,12 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 			}
 			if(curr->st->buffers[2] != NULL)
 			{
-				if(buffer_big_is_empty(curr->st->buffers[2]))
+				if(buffer_big_is_empty(curr->st->buffers[2]) && !buffer_ends_with_string(curr->st->buffers[2],"\n"))
 				{
 					if(curr->st->read_fds[2] > 0)
 					{
 
 						add_read_fd(curr->st->read_fds[2]); // Transform read
-					}
-					if(buffer_ends_with_string(curr->st->buffers[2],"\n"))
-					{
-						if(MUA_WRITE_DISCONNECTED){
-							printf("MUA write disconnected, fd not added.");
-						}
-						else{
-							if(curr->st->write_fds[0] > 0)
-							{
-								printf("(MUA WRITE) Buffer 3 is not empty ==> ");
-								add_write_fd(curr->st->write_fds[0]); // MUA write
-							}
-						}
 					}
 				}
 				else
