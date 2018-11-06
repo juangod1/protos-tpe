@@ -111,7 +111,12 @@ void pop3_direction(char *arg)
 	struct in6_addr buf6;
 	struct in_addr  buf4;
 
-	if(inet_pton(AF_INET, arg, (void *) &buf4))
+
+	if(!strcmp(arg, "0.0.0.0"))
+	{
+		app_context->pop3path_is_ipv4 = -1;
+	}
+	else if(inet_pton(AF_INET, arg, (void *) &buf4))
 	{
 		get_app_context()->pop3path_is_ipv4 = true;
 	}
