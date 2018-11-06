@@ -9,6 +9,13 @@ int main()
 {
 	char *replacementMessage = getenv("FILTER_MSG");
 	char *mediaList          = getenv("FILTER_MEDIAS");
+	if(replacementMessage==NULL)
+	{
+		replacementMessage="Parte Reemplazada.";
+	}
+	if(mediaList==NULL) {
+		mediaList="image/png";
+	}
 	mediaRangeEvaluator(replacementMessage, mediaList);
 
 }
@@ -70,8 +77,7 @@ int evaluate_mime(char *mime, char **media_type_complete_list)
 	return (ret) ? ret : OK;
 }
 
-int
-media_type_state_machine(char **media_type_complete_list, char *replacement_message, size_t replacement_message_size)
+int media_type_state_machine(char **media_type_complete_list, char *replacement_message, size_t replacement_message_size)
 {
   buffer_p buffer;
   buffer_initialize(&buffer, BUFFER_SIZE,BIG_BUFFER_SIZE);
@@ -90,7 +96,7 @@ media_type_state_machine(char **media_type_complete_list, char *replacement_mess
 		switch(state)
 		{
 			case READ_LINE:;
-				int amount = buffer_read_until_char_block(STDIN_FILENO, buffer, '\n');
+				int amount = buffer_read(STDIN_FILENO, buffer);
 
 				if(amount == 0)
 				{
@@ -158,7 +164,7 @@ media_type_state_machine(char **media_type_complete_list, char *replacement_mess
 				state = READ_LINE_AFTER_REPLACEMENT;
 				break;
 			case READ_LINE_AFTER_REPLACEMENT:;
-				amount = buffer_read_until_char_block(STDIN_FILENO, buffer, '\n');
+				amount = buffer_read(STDIN_FILENO, buffer);
 				if(amount == 0)
 				{
 					state = FINISHED;

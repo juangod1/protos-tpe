@@ -112,7 +112,15 @@ int buffer_fill_until_string(buffer_p buffer, char * str)
 		ret=false;
 	}
 	int available_size = buffer->size-buffer->count;
-	characters_to_copy=(characters_to_copy<available_size)?characters_to_copy:available_size;
+	if(available_size<characters_to_copy)
+	{
+		characters_to_copy=available_size;
+	}
+	if(characters_to_copy==77)
+	{
+		int breakpoint;
+		breakpoint=1;
+	}
 	memcpy(buffer->data_ptr,read_ptr,characters_to_copy);
 	buffer->big_buffer->write_index+=characters_to_copy;
 	buffer->count+=characters_to_copy;

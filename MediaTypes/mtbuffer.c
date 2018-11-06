@@ -18,7 +18,7 @@ char *mt_buffer_get_mime(buffer_p buffer)
 	{
 		return NULL;
 	}
-	char *ptr        = buffer->data_ptr + 14;
+	char *ptr        = buffer->data_start + 14;
 	char *str_start  = ptr;
 	int  aux_count   = 14;
 	int  count_start = aux_count;
@@ -46,12 +46,12 @@ char *mt_buffer_get_mime(buffer_p buffer)
 
 char *mt_buffer_get_boundary(buffer_p buffer)
 {
-	int index = find_substring(buffer->data_ptr, buffer->count, " boundary=");
+	int index = find_substring(buffer->data_start, buffer->count, " boundary=");
 	if(index < 0)
 	{
 		return NULL;
 	}
-	char *ptr = buffer->data_ptr + index;
+	char *ptr = buffer->data_start + index;
 	if(*ptr++ != '"')
     { return NULL; }
 	char *ret  = ptr;
@@ -71,12 +71,13 @@ char *mt_buffer_get_boundary(buffer_p buffer)
 void mt_buffer_discard(buffer_p buffer)
 {
 	buffer->count = 0;
+	buffer->data_ptr=buffer->data_start;
 }
 
 
 int mt_buffer_starts_with_boundary(char *boundary, buffer_p buffer)
 {
-	char *pointer = buffer->data_ptr;
+	char *pointer = buffer->data_start;
 	if(*(pointer++) != '-')
     { return 0; }
 	if(*(pointer++) != '-')
