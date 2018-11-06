@@ -2,7 +2,7 @@
 ## Materiales
 
 * Archivo de construcción: `CMakeLists.txt`, ubicado en el directorio raíz.
-* Informe: `BLANKBLANLBLANK`.
+* Informe: `Documents/Informe.pdf`.
 * Códigos fuente: carpetas `Control`, `Proxy`, `Parser` y `MediaTypes`.
 
 ## Compilación
