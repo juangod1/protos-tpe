@@ -103,7 +103,7 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 					disconnect(s);
 				}
 			}
-
+			printf("FIX\n");
 
 			break;
 	}
