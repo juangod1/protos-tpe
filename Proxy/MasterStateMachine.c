@@ -366,7 +366,7 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 	st->read_fds[1]  = fd;
 	st->write_fds[1] = fd;
 	int ret[2];
-	st->parser_pid = start_parser(get_app_context()->command_specification, ret, s);
+	st->parser_pid = start_parser("cat", ret, s);
 	st->read_fds[2]  = ret[0];
 	st->write_fds[2] = ret[1];
 	st->data_1 = false;
@@ -619,8 +619,6 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 		case false:
 			if(s->write_fds[0] == fd)
 			{   // MUA WRITE
-
-
 				int written_size  = 0;
 				int expected_size = 0;
 				if(!IS_ALREADY_LINE_BUFFERED && buffer_must_be_line_buffered(s->buffers[2]))
