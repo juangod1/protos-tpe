@@ -727,10 +727,6 @@ int read_origin(state s, int fd)
 	int rd = buffer_read_until_string(fd, s->buffers[1], "\r\n");
 	if(rd == 0)
 	{
-		printf("--------------------------------------------------------\n");
-		printf("Origin disconnected \n");
-		printf("--------------------------------------------------------\n");
-
 		// If EOF received, Origin read and Origin write must be closed
 		s->disconnects[2]=true;
 		shutdown(s->read_fds[1],SHUT_RD);
@@ -747,9 +743,6 @@ int read_origin(state s, int fd)
 	}
 	if(rd < 0)
 	{
-		printf("--------------------------------------------------------\n");
-		perror("Origin error \n");
-		printf("--------------------------------------------------------\n");
 		switch(errno)
 		{
 			default:
@@ -758,9 +751,7 @@ int read_origin(state s, int fd)
 		}
 		return NOT_WAITING;
 	}
-	printf("--------------------------------------------------------\n");
-	printf("Read buffer content from Origin: \n");
-	print_buffer(s->buffers[1]);
+
 	if(buffer_starts_with_string("+OK", s->buffers[1]) ||
 	   buffer_starts_with_string("-ERR", s->buffers[1]))
 	{
@@ -834,7 +825,6 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 					{
 						if(MUA_READ_DISCONNECTED)
 						{
-							printf("MUA READ disconnected, fd not added.\n");
 						}
 						else
 						{
@@ -979,29 +969,23 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 void add_origin_write(const struct nodeStruct *curr) {
 	if(curr->st->write_fds[1] > 0)
 						{
-							printf("(ORIGIN WRITE) Buffer 1 is not empty ==> ");
 							if(ORIGIN_WRITE_DISCONNECTED)
 							{
-								printf("Origin Write disconnected, fd not added.\n");
 							}
 							else
 							{
 								if(get_app_context()->pipelining)
 								{
-									printf("OS has Pipelining enabled. Added origin write\n");
 									add_write_fd(curr->st->write_fds[1]); // Origin write
 								}
 								else
 								{
-									printf("OS has no Pipelining enabled. ");
 									if(curr->st->pipelining_data)
 									{
-										printf("Added origin write\n");
 										add_write_fd(curr->st->write_fds[1]); // Origin write
 									}
 									else
 									{
-										printf("Waiting for server to process\n");
 									}
 								}
 							}
