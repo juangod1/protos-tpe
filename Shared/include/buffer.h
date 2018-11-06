@@ -3,6 +3,12 @@
 
 typedef struct big_buffer_t *big_buffer_p;
 
+struct buffer_response_t
+{
+	size_t characters_read;
+	int found_string;
+};
+
 struct big_buffer_t
 {
 	size_t size;
@@ -79,7 +85,7 @@ void buffer_clean(buffer_p buff);
 
 
 int buffer_write_until_string(buffer_p buffer, char * str, int file_descriptor);
-int buffer_fill_until_string(buffer_p buffer, char * str);
+struct buffer_response_t buffer_fill_until_string(buffer_p buffer, char * str);
 void print_big_buffer(buffer_p buff);
 
 

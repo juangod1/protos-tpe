@@ -68,13 +68,15 @@ int buffer_big_is_empty(buffer_p buffer)
 
 int buffer_read(int file_descriptor, buffer_p buffer)
 {
-	int ret = buffer_fill_until_string(buffer,"\n");
-	if(!ret)
+	struct buffer_response_t  ret = buffer_fill_until_string(buffer,"\n");
+	int previous_character_read = 0;
+	if(!ret.found_string)
 	{
+		previous_character_read = ret.characters_read;
 		buffer_big_read(file_descriptor, buffer);
 		ret = buffer_fill_until_string(buffer,"\n");
 	}
-	return ret;
+	return ret.characters_read + previous_character_read;
 }
 
 int buffer_big_read(int file_descriptor, const struct buffer_t *buffer) {
@@ -99,16 +101,22 @@ int buffer_big_read(int file_descriptor, const struct buffer_t *buffer) {
 	return amount;
 }
 
-int buffer_fill_until_string(buffer_p buffer, char * str)
+struct buffer_response_t buffer_fill_until_string(buffer_p buffer, char * str)
 {
-	if(buffer_big_is_empty(buffer)) return false;
+	if(buffer_big_is_empty(buffer))
+	{
+		struct buffer_response_t ret;
+		ret.characters_read=0;
+		ret.found_string=false;
+		return ret;
+	}
 	int ret=true;
 	char * read_ptr = buffer->big_buffer->data_start + buffer->big_buffer->write_index;
-	int characters_to_read = buffer->big_buffer->size - buffer->big_buffer->write_index;
+	int characters_to_read = buffer->big_buffer->read_size - buffer->big_buffer->write_index;
 	int characters_to_copy = find_substring(read_ptr,characters_to_read,str);
 	if(characters_to_copy==-1)
 	{
-		characters_to_copy = buffer->big_buffer->size - buffer->big_buffer->write_index;
+		characters_to_copy = buffer->big_buffer->read_size - buffer->big_buffer->write_index;
 		ret=false;
 	}
 	int available_size = buffer->size-buffer->count;
@@ -116,16 +124,15 @@ int buffer_fill_until_string(buffer_p buffer, char * str)
 	{
 		characters_to_copy=available_size;
 	}
-	if(characters_to_copy==77)
-	{
-		int breakpoint;
-		breakpoint=1;
-	}
 	memcpy(buffer->data_ptr,read_ptr,characters_to_copy);
 	buffer->big_buffer->write_index+=characters_to_copy;
 	buffer->count+=characters_to_copy;
 	buffer->data_ptr+=characters_to_copy;
-	return ret;
+
+	struct buffer_response_t response;
+	response.characters_read=characters_to_copy;
+	response.found_string=ret;
+	return response;
 }
 
 
@@ -334,6 +341,9 @@ void buffer_remove_trailing_spaces(buffer_p buffer)
 	size_t count      = buffer->count;
 	int    last_space = -1;
 	size_t i          = 0;
+	if(count==0 || *(ptr+count-1)!='\n'){
+		return;
+	}
 	while(i < count)
 	{
 		if(*(ptr + i) != '\n')
@@ -364,13 +374,15 @@ int buffer_indicates_end_of_single_line_message(buffer_p buffer)
 
 int buffer_read_until_string(int file_descriptor, buffer_p buffer, char *str) //\r\n\0 || \r\n\r\n\0
 {
-	int ret = buffer_fill_until_string(buffer,str);
-	if(!ret)
+	struct buffer_response_t  ret = buffer_fill_until_string(buffer,str);
+	int previous_character_read = 0;
+	if(!ret.found_string)
 	{
+		previous_character_read = ret.characters_read;
 		buffer_big_read(file_descriptor, buffer);
 		ret = buffer_fill_until_string(buffer,str);
 	}
-	return ret;
+	return ret.characters_read + previous_character_read;
 }
 
 int buffer_is_line_buffered(buffer_p buffer)
@@ -428,13 +440,15 @@ int buffer_read_until_char(int file_descriptor, buffer_p buffer, char ch)
 	char str[2];
 	str[0]=ch;
 	str[1]=0;
-	int ret = buffer_fill_until_string(buffer,str);
-	if(!ret)
+	struct buffer_response_t  ret = buffer_fill_until_string(buffer,str);
+	int previous_character_read = 0;
+	if(!ret.found_string)
 	{
+		previous_character_read = ret.characters_read;
 		buffer_big_read(file_descriptor, buffer);
-		ret = buffer_fill_until_string(buffer,"\n");
+		ret = buffer_fill_until_string(buffer,str);
 	}
-	return ret;
+	return ret.characters_read + previous_character_read;
 }
 
 /**
