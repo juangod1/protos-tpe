@@ -325,7 +325,10 @@ void interaction(int fd)
 					}
 					ret = sctp_sendmsg(fd, (void *) buffer, length, NULL, 0, 0, 0, 0, 0, 0);
 					printResponse(fd);
-				}
+				} else
+                {
+				    printf("Incorrect input: to send more than one argument, add @\n");
+                }
 
 			}
 			if(response==0)
