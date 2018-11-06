@@ -10,7 +10,7 @@ typedef int file_descriptor;
 
 file_descriptor setup_MUA_socket();
 
-file_descriptor setup_origin_socket();
+file_descriptor setup_origin_socket(int isip4);
 
 void run_server();
 

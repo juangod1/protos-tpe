@@ -137,7 +137,7 @@ execution_state CONNECT_ADMIN_on_arrive(state s, file_descriptor fd, int is_read
 
 	st->read_fds[0]  = accept_ret;
 	st->write_fds[0] = accept_ret;
-	buffer_initialize(&(st->buffers[0]),BUFFER_SIZE,BIG_BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE, BIG_BUFFER_SIZE);
 	add_state(sm, st);
 
 	return NOT_WAITING;
@@ -173,7 +173,7 @@ state_code CONNECT_ADMIN_STAGE_TWO_on_leave(state s)
 	st->session_id = s->session_id;
 	st->read_fds[0]  = s->read_fds[0];
 	st->write_fds[0] = s->write_fds[0];
-	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE,BIG_BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE, BIG_BUFFER_SIZE);
 	add_state(sm, st);
 	remove_state(sm, s);
 }
@@ -203,8 +203,14 @@ void *query_dns(void *st)
 	get_app_context()->addr = get_app_context()->first;
 	int ret = -1;
 
+	char b[16];
+
+
 	while(get_app_context()->addr != NULL &&
-	      (ret = connect(s->read_fds[1], get_app_context()->addr->ai_addr, get_app_context()->addr->ai_addrlen)) < 0)
+	      (ret = connect(
+			      (s->read_fds[1] = setup_origin_socket(
+					      get_app_context()->addr->ai_family==AF_INET?true:false)),
+			      get_app_context()->addr->ai_addr, get_app_context()->addr->ai_addrlen)) < 0)
 	{
 		get_app_context()->addr = get_app_context()->addr->ai_next;
 	}
@@ -255,7 +261,6 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
 		state st = new_state(CONNECT_CLIENT_STAGE_TWO_STATE, CONNECT_CLIENT_STAGE_TWO_on_arrive,
 		                     CONNECT_CLIENT_STAGE_TWO_on_resume, CONNECT_CLIENT_STAGE_TWO_on_leave);
 		st->read_fds[0] = accept_ret;
-		st->read_fds[1] = setup_origin_socket();
 
 		st->session_id = s->session_id;
 		int ret = pipe(st->pipes);
@@ -278,7 +283,7 @@ execution_state CONNECT_CLIENT_on_arrive(state s, file_descriptor fd, int is_rea
 
 		st->session_id = s->session_id;
 		st->read_fds[0] = accept_ret;
-		st->read_fds[1] = setup_origin_socket();
+		st->read_fds[1] = setup_origin_socket(!get_app_context()->isIPV6);
 
 		add_state(sm, st);
 	}
@@ -295,9 +300,9 @@ state_code CONNECT_CLIENT_on_leave(state s)
 
 execution_state CONNECT_CLIENT_CONN_REFUSED_on_arrive(state s, file_descriptor fd, int is_read)
 {
-	buffer_initialize(&(s->buffers[0]),BUFFER_SIZE,BIG_BUFFER_SIZE);
-	buffer_read_string("-ERR Connection Refused\r\n",(s->buffers[0]));
-	buffer_write(fd,s->buffers[0]);
+	buffer_initialize(&(s->buffers[0]), BUFFER_SIZE, BIG_BUFFER_SIZE);
+	buffer_read_string("-ERR Connection Refused\r\n", (s->buffers[0]));
+	buffer_write(fd, s->buffers[0]);
 	return NOT_WAITING;
 }
 
@@ -369,7 +374,7 @@ execution_state CONNECT_CLIENT_STAGE_THREE_on_arrive(state s, file_descriptor fd
 	st->read_fds[2]  = ret[0];
 	st->write_fds[2] = ret[1];
 	st->data_1 = false;
-	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE,BIG_BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE, BIG_BUFFER_SIZE);
 
 	add_state(sm, st);
 
@@ -427,11 +432,11 @@ execution_state CONNECT_CLIENT_STAGE_FOUR_on_resume(state s, file_descriptor fd,
 		case 3: // Process CAPA reply
 			while(true)
 			{
-				if(buffer_read_until_string(fd, s->buffers[0], "\r\n")==0)
+				if(buffer_read_until_string(fd, s->buffers[0], "\r\n") == 0)
 				{
 					break;
 				}
-				char buf[BUFFER_SIZE]         = {0};
+				char buf[BUFFER_SIZE] = {0};
 				buffer_write_string(buf, s->buffers[0]);
 				buffer_clean(s->buffers[0]);
 
@@ -466,9 +471,9 @@ state_code CONNECT_CLIENT_STAGE_FOUR_on_leave(state s)
 	st->write_fds[1] = s->write_fds[1];
 	st->read_fds[2]  = s->read_fds[2];
 	st->write_fds[2] = s->write_fds[2];
-	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE,BIG_BUFFER_SIZE);
-	buffer_initialize(&(st->buffers[1]), BUFFER_SIZE,BIG_BUFFER_SIZE);
-	buffer_initialize(&(st->buffers[2]), BUFFER_SIZE,BIG_BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[0]), BUFFER_SIZE, BIG_BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[1]), BUFFER_SIZE, BIG_BUFFER_SIZE);
+	buffer_initialize(&(st->buffers[2]), BUFFER_SIZE, BIG_BUFFER_SIZE);
 
 	add_state(sm, st);
 	remove_state(sm, s);
@@ -523,20 +528,20 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 {
 	if(!is_read)
 	{
-		if(s->write_fds[0]==fd && buffer_is_empty(s->buffers[2]))
+		if(s->write_fds[0] == fd && buffer_is_empty(s->buffers[2]))
 		{
-			fd=s->read_fds[2];
-			is_read=!is_read;
+			fd      = s->read_fds[2];
+			is_read = !is_read;
 		}
-		if(s->write_fds[1]==fd && buffer_is_empty(s->buffers[0]))
+		if(s->write_fds[1] == fd && buffer_is_empty(s->buffers[0]))
 		{
-			fd=s->read_fds[0];
-			is_read=!is_read;
+			fd      = s->read_fds[0];
+			is_read = !is_read;
 		}
-		if(s->write_fds[2]==fd && buffer_is_empty(s->buffers[1]))
+		if(s->write_fds[2] == fd && buffer_is_empty(s->buffers[1]))
 		{
-			fd=s->read_fds[1];
-			is_read=!is_read;
+			fd      = s->read_fds[1];
+			is_read = !is_read;
 		}
 	}
 	int disconnection = false;
@@ -565,8 +570,8 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 			}
 			else if(s->read_fds[1] == fd)
 			{   // Origin READ
-				int ret = read_origin(s,fd);
-				if(ret!=0)
+				int ret = read_origin(s, fd);
+				if(ret != 0)
 				{
 					return ret;
 				}
@@ -577,9 +582,9 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				{
 					if(WAS_MULTI)
 					{
-						buffer_read_string(".\r\n",s->buffers[2]);
+						buffer_read_string(".\r\n", s->buffers[2]);
 					}
-					IS_END=true;
+					IS_END        = true;
 					IS_PROCESSING = false;
 					close(s->read_fds[2]);
 					s->read_fds[2]  = -1;
@@ -602,8 +607,8 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 					}
 					else if(!buffer_big_is_empty(s->buffers[1]))
 					{
-						ret = read_origin(s,fd);
-						if(ret!=0)
+						ret = read_origin(s, fd);
+						if(ret != 0)
 						{
 							return ret;
 						}
@@ -612,7 +617,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 				}
 				else
 				{
-					IS_END=false;
+					IS_END = false;
 				}
 			}
 			break;
@@ -668,7 +673,8 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 							buffer_write(fd, s->buffers[1]);
 						}
 					}
-					else{
+					else
+					{
 						buffer_clean(s->buffers[1]);
 					}
 				}
@@ -713,7 +719,7 @@ execution_state ATTEND_CLIENT_on_arrive(state s, file_descriptor fd, int is_read
 		s->read_fds[2]  = pipes[0];
 		s->write_fds[2] = pipes[1];
 		IS_PROCESSING = true;
-		WAS_MULTI = IS_MULTILINE;
+		WAS_MULTI     = IS_MULTILINE;
 		IS_TRANS      = false;
 		IS_NEW_LINE   = false;
 
@@ -727,14 +733,15 @@ int read_origin(state s, int fd)
 	if(rd == 0)
 	{
 		// If EOF received, Origin read and Origin write must be closed
-		s->disconnects[2]=true;
-		shutdown(s->read_fds[1],SHUT_RD);
-		s->read_fds[1]=-1;
-		s->disconnects[3]=true;
-		shutdown(s->write_fds[1],SHUT_WR);
-		s->write_fds[1]=-1;
+		s->disconnects[2] = true;
+		shutdown(s->read_fds[1], SHUT_RD);
+		s->read_fds[1]    = -1;
+		s->disconnects[3] = true;
+		shutdown(s->write_fds[1], SHUT_WR);
+		s->write_fds[1] = -1;
 
-		if(!IS_PROCESSING){
+		if(!IS_PROCESSING)
+		{
 			disconnect(s);
 		}
 
@@ -818,7 +825,7 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 		case ATTEND_CLIENT_STATE:
 			if(curr->st->buffers[0] != NULL)
 			{
-				if(buffer_big_is_empty(curr->st->buffers[0]) && !buffer_ends_with_string(curr->st->buffers[0],"\n"))
+				if(buffer_big_is_empty(curr->st->buffers[0]) && !buffer_ends_with_string(curr->st->buffers[0], "\n"))
 				{
 					if(curr->st->read_fds[0] > 0)
 					{
@@ -839,7 +846,7 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 			}
 			if(curr->st->buffers[1] != NULL)
 			{
-				if(buffer_big_is_empty(curr->st->buffers[1]) && !buffer_ends_with_string(curr->st->buffers[1],"\n"))
+				if(buffer_big_is_empty(curr->st->buffers[1]) && !buffer_ends_with_string(curr->st->buffers[1], "\n"))
 				{
 					if(ORIGIN_READ_DISCONNECTED)
 					{
@@ -874,7 +881,7 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 			}
 			if(curr->st->buffers[2] != NULL)
 			{
-				if(buffer_big_is_empty(curr->st->buffers[2]) && !buffer_ends_with_string(curr->st->buffers[2],"\n"))
+				if(buffer_big_is_empty(curr->st->buffers[2]) && !buffer_ends_with_string(curr->st->buffers[2], "\n"))
 				{
 					if(curr->st->read_fds[2] > 0)
 					{
@@ -965,30 +972,31 @@ void set_up_fd_sets_rec(fd_set *read_fds, fd_set *write_fds, node curr)
 	set_up_fd_sets_rec(read_fds, write_fds, curr->next);
 }
 
-void add_origin_write(const struct nodeStruct *curr) {
+void add_origin_write(const struct nodeStruct *curr)
+{
 	if(curr->st->write_fds[1] > 0)
-						{
-							if(ORIGIN_WRITE_DISCONNECTED)
-							{
-							}
-							else
-							{
-								if(get_app_context()->pipelining)
-								{
-									add_write_fd(curr->st->write_fds[1]); // Origin write
-								}
-								else
-								{
-									if(curr->st->pipelining_data)
-									{
-										add_write_fd(curr->st->write_fds[1]); // Origin write
-									}
-									else
-									{
-									}
-								}
-							}
-						}
+	{
+		if(ORIGIN_WRITE_DISCONNECTED)
+		{
+		}
+		else
+		{
+			if(get_app_context()->pipelining)
+			{
+				add_write_fd(curr->st->write_fds[1]); // Origin write
+			}
+			else
+			{
+				if(curr->st->pipelining_data)
+				{
+					add_write_fd(curr->st->write_fds[1]); // Origin write
+				}
+				else
+				{
+				}
+			}
+		}
+	}
 }
 
 void set_up_fd_sets(fd_set *read_fds, fd_set *write_fds)

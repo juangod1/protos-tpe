@@ -74,11 +74,11 @@ void run_server()
 	}
 }
 
-file_descriptor setup_origin_socket()
+file_descriptor setup_origin_socket(int isip4)
 {
-	if(get_app_context()->isIPV6)
+	if(isip4)
 	{
-		file_descriptor sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+		file_descriptor sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		if(sock < 0)
 		{
 			perror("Unable to create socket.\n");
@@ -90,7 +90,7 @@ file_descriptor setup_origin_socket()
 	}
 	else
 	{
-		file_descriptor sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		file_descriptor sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
 		if(sock < 0)
 		{
 			perror("Unable to create socket.\n");
