@@ -64,13 +64,9 @@ execution_state ATTEND_ADMIN_on_arrive(state s, file_descriptor fd, int is_read)
 			int ret = buffer_read(fd, s->buffers[0]);
 			if(ret == 0 || (ret == -1 && errno == ECONNRESET))
 			{
-
-
 				disconnect(s);
 				return WAITING;
 			}
-
-
 			break;
 		case 0:
 
@@ -783,7 +779,7 @@ int read_origin(state s, int fd)
 	{
 		IS_NEW_LINE      = true;
 		IS_NEXT_NEW_LINE = false;
-		IS_TRANS         = true;
+		IS_TRANS         = false;
 		IS_MULTILINE     = true;
 
 	}
