@@ -35,7 +35,5 @@ void non_test_mode_validation(int argc, char **argv, response_p resp);
 
 void is_valid_port(char *port_string, response_p resp);
 
-void validate_interface(char *interface_str, response_p resp);
-
 
 #endif
