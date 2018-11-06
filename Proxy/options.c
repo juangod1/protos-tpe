@@ -108,13 +108,40 @@ void initialize_options()
 void pop3_direction(char *arg)
 {
 	//Receives an direction and uses it to specify the address of the proxy service.
+	struct in6_addr buf6;
+	struct in_addr  buf4;
 
-	fflush(stdout);
+	if(inet_pton(AF_INET, arg, (void *) &buf4))
+	{
+		get_app_context()->pop3path_is_ipv4 = true;
+	}
+	else if(inet_pton(AF_INET6, arg, (void *) &buf6))
+	{
+		get_app_context()->pop3path_is_ipv4 = false;
+	}
+	else
+	{
+		app_context->pop3path_is_ipv4 = -1;
+	}
+
 	app_context->pop3_path = my_strdup(arg);
 }
 
 void error_specification(char *arg)
 {
+	FILE *newStream = freopen(arg, "w+", stderr);
+	if(newStream == NULL)
+	{
+		perror("Fopen error. Setting error path to default /dev/null");
+		newStream = freopen("/dev/null", "w", stderr);
+		if(newStream == NULL)
+		{
+			perror("Fopen error. Setting error path to stderr.");
+			return;
+		}
+	}
+	fflush(stderr);
+	get_app_context()->error_descriptor = dup(fileno(stderr));
 }
 
 void management_direction(char *arg)
