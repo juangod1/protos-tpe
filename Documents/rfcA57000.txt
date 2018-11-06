@@ -1,0 +1,247 @@
+AP3P Protocol
+
+Status of this Memo
+
+	This document specifies an ITBA standards track protocol for the
+	ITBA community, and requests discussion and suggestion for 
+	improvements. Please refer to the current edition of the "Internet
+	Official Protocol Standards" (STD 1) for the standarization state
+	and status of this protocol. Distribution of this memo is limited.
+
+Copyright Notice
+
+	Copyright (C) ITBA. All Rights Reserved.
+
+IESG Note
+
+	This protocol is to be used by a server and a client to express
+	decisions about the interaction between them in order to fullfil
+	the tasks of live administration of the proxy server.
+
+Table of Contents
+
+	1. Introduction................................................1
+	2. Communication Model.........................................2
+		2.1 Request commands...................................2
+		2.2 Responses..........................................2
+		2.3 Inactivity.........................................2
+	3. Communication Process.......................................3
+		3.1 States.............................................3
+			3.1.1 Authentication...........................3
+			3.1.2 Exchange.................................3
+			3.1.3 Close....................................3
+		3.2 Global commands....................................4
+		3.3 Procedure..........................................4
+	4. Comments
+		4.1 Special characters "@".............................4
+		4.2 Commands and parameters............................4
+
+1. Introduction
+
+	The purpose of this document is to standarize interaction between
+	administrator users and proxyPOP3 server for POP3.
+	This will provide the correct mechanisms to successfully communicate
+	with proxyPOP3 server performing changes to configuration and 
+	retriving information on runtime.
+
+	It is REQUIRED for the successful use of this protocol that the
+	administrator knows the connection port. This is set by default to
+	9090 but it can be changed.
+
+									[PAGE 1]
+
+2. Communication model
+
+	We can identify 2 types of users:
+		-Administrator: is the one that connects to the proxyPOP3
+		server in order to change configurations and ask for
+		statistics
+		-Proxy server: is the process that runs between the MUA
+		and the POP3 server and has the statistics and
+		configurations to be changed.
+	There will only be one proxy running but many administrators may 
+	connect.
+	Communication will be text-based.
+
+2.1 Requests commands
+	
+	Commands in AP3P consist of a case-sensitive keyword followed by
+	one or none arguments. All commands are terminated by a CRLF "\r\n".
+	Keywords and arguments consist of printable ASCII characters and are
+	separated by a single SPACE character. There is a reserved character
+	"@" that is used to escape SPACE character from that point until the
+	termination of the request.
+
+	Example: 
+		"USER juan\r\n"....................................CORRECT
+		"USER juan \r\n".................................INCORRECT
+
+2.2 Responses
+
+	Responses from the proxy server may have up to 512 characters and
+	are terminated with a CRLF pair "\r\n\r\n".
+	These responses contain a response status indicator separated by a
+	SPACE"-"SPACE and followed by a description.
+	
+	Responses status might be:
+		-"+OK"..........................................AFIRMATIVE
+		-"-ERR"...........................................NEGATIVE
+		-"*SPC"............................................SPECIAL
+
+	Negative responses indicate that the command requested is unknown or 
+	migth not follow correct format. This status is also used when request
+	is not done in proper state.
+	Special responses are provided for further information that cannot
+	be classified as AFIRMATIVE nor NEGATIVE.
+	
+
+2.3 Handling inactivity
+
+	The proxy server MAY implement an inactivity counter to handle idle
+	administrators. If so, it MUST be of at least 10 minutes. Whenever
+	a request is received from an administrator, this counter MUST be 
+	reseted.
+	Furthermore if counter is implemented, NOOP command MUST also be
+	implemented, to provide administrators a command to reset counter
+	without performing any action and without negatives response.
+		
+									[PAGE 2]
+
+3. Communication process
+
+	The process of communication is splited into different states. This 
+	will be identified by their corresponding starting events. Inside each
+	event there are sets of commands that MUST be implemented by the proxy
+	server and these MUST be exclusively available in their corresponding 
+	state.
+
+3.1 States
+
+3.1.2 AUTHENTICATION
+	
+	Starting event: after client connects to proxy servers' port and the
+	proxy server answers with a greeting.
+	Description: Through this state the administrator MUST identify and
+	the proxy server MUST authenticate if it corresponds.
+	Steps:
+		1. open SCTP connection on port 9090.
+		2. server MUST send greeting.
+		3. admin MUST identify, using USER & PASS mechanisms.
+		4. server MUST authenticate.
+		5. if valid server MUST send afirmative response and state is
+		changed to EXCHANGE
+		6. if not, server MUST send negative response and MAY close
+		connection.
+		7. if not closed, admin MAY retry authentication or use QUIT.
+
+		Commands:
+		USER name
+			Arguments: name is a string that contain username
+			Possible responses: "+OK"
+			Function: Allows admin to provide username to identify.
+			Answer MUST always be positive to avoid providing 
+			information.
+		PASS string
+			Arguments: string is the password to try with previous
+			provided username
+			Possible responses: "+OK"/"-ERR"
+			Function: Allows admin to provide password to 
+			authenticate. Proxy server must check authentication 
+			and if its positive, state is now EXCHANGE.
+
+3.1.2 EXCHANGE
+	
+	Starting event: after proxy server responding that admin has been 
+	successfully identified.
+	Description: Through this state the administrator MAY request for 
+	actions or information through available commands.
+	Steps:
+		1. admin MUST provide a well formated command
+		2. server answers with the corresponding status and info.
+		3. admin MAY repeat commands until QUIT or inactivity counter 
+		reaches 0 if implemented.
+
+		Commands:
+		LISTS
+			Arguments: none
+			Possible responses: "+OK"
+			Function: server MUST provide available options to 
+			request for statistics throught STATS command.
+		STATS number
+			Arguments: number is an int REQUIRED that indicates 
+			which statistics to retrive.
+			Possible responses: "+OK"/"-ERR"
+			Function: Allows admin to ask for statistics 
+			information available. 
+		ACTIVE [bool]
+			Argument: bool is an optional argument that indicates 
+			if filter is active (1) or not (0).
+			Possible responses: "+OK"/"-ERR"
+			Function: server MUST change filter configuration if 
+			argument is correct. If argument is null, then server 
+			MUST provide current configuration.
+		FILTER [cmd]
+			Argument: cmd is an optional string that indicates the
+			name of a system(3) compatible command. Administrator 
+			MUST know if command wont work correctly.
+			Possible responses: "+OK"
+			Function: server MUST change command filter 
+			configuration if argument is correct. If argument is 
+			null, then server MUST provide current command 
+			configuration.	
+
+3.1.2 CLOSE
+	
+	Starting event: after administrator sends QUIT or in case of 
+	implemented counter, when this one ends.
+	Description: Connection is closed by the proxy server. If by any 
+	reason connection is not closed, sate MUST be changed to CLOSE in 
+	order to suspend any further command usage, since only QUIT will be 
+	accepted.
+
+									[PAGE 3]
+
+3.2 Global commands
+
+	This commands might be used from any of the states
+
+	QUIT
+		Arguments: none
+		Possible response: "+OK"
+		Function: proxy server MUST change state to CLOSE and close 
+		SCTP connection with the administrator.
+
+3.2 Procedure
+
+	1. administrator opens SCTP connection to port 9090(default)
+	2. proxy server responds with greeting
+	3. now entering AUTHENTICATION state
+	4. client identifies with username and password.
+	5. server verifys this credentials and responds "+OK"/"-ERR"
+	6. if "+OK", now entering EXCHANGE state. if "-ERR" then step 3
+	7. administrator now can perform all commands available in EXCHANGE.
+	8. upon QUIT command, state becomes CLOSE and connection is closed.
+
+4. Comments
+	
+	This section is ment to explain some particular characteristics that 
+	the protocol has. 
+
+4.1 Special character "@"
+
+	This character is ment to indicate SPACE escape from that character up
+	to the end of the line. It is valid to use "@ACTIVE" since this 
+	command does not require any parameter but "@ACTIVE 0" wont work since
+	it MUST be considered one only string. The purpose of this special 
+	character is to allow the administrator provide "SPACE using" commands
+	to the proxy filter. Example: "FILTER @sed s/o/0/g|sed s/a/4/g"
+
+4.2 Commands and Parameters
+
+	Since all commands have 1 or none arguments split by a single SPACE 
+	character, if "@" is not used then whenever request consists of more 
+	than one SPACE is considered bad format. By this, it can also be 
+	infered that if request starts with SPACE, thenthere is no command 
+	keyword provided.
+
+									[PAGE 4]
