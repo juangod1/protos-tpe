@@ -294,12 +294,12 @@ void interaction(int fd)
 					}
 					else
 					{
-						printf("Usage: ACTIVE [BOOL], bool must be 0 or 1");
+						printf("Usage: ACTIVE [BOOL], bool must be 0 or 1\n");
 					}
 				}
 				else
 				{
-					printf("Usage ACTIVE [BOOL]");
+					printf("Usage ACTIVE [BOOL]\n");
 				}
 			}
 
@@ -310,7 +310,7 @@ void interaction(int fd)
 			int response = wordexp(buffer, &p, 0);
 			if(response != 0)
 			{
-				printf("There seems to be an internal error\n");
+				printf("Incorrect input\n");
 			}
 			else
 			{
