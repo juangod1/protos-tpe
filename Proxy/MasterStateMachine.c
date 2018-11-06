@@ -209,7 +209,7 @@ void *query_dns(void *st)
 	while(get_app_context()->addr != NULL &&
 	      (ret = connect(
 			      (s->read_fds[1] = setup_origin_socket(
-					      get_app_context()->addr->ai_family==AF_INET?true:false)),
+					      get_app_context()->addr->ai_family == AF_INET ? true : false)),
 			      get_app_context()->addr->ai_addr, get_app_context()->addr->ai_addrlen)) < 0)
 	{
 		get_app_context()->addr = get_app_context()->addr->ai_next;

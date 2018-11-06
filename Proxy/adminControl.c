@@ -26,7 +26,7 @@
 
 file_descriptor setup_admin_socket()
 {
-	int listenSock, ret;
+	int    listenSock, ret;
 	size_t size;
 	if(get_app_context()->management_path_is_ipv4 == -1)
 	{
@@ -45,7 +45,7 @@ file_descriptor setup_admin_socket()
 		servaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 		servaddr.sin_port        = htons(get_app_context()->management_port);
 
-		ret = bind(listenSock, (struct sockaddr *) &servaddr, (socklen_t)size);
+		ret = bind(listenSock, (struct sockaddr *) &servaddr, (socklen_t) size);
 
 		if(ret == -1)
 		{
@@ -69,13 +69,13 @@ file_descriptor setup_admin_socket()
 		}
 
 		bzero((void *) &servaddr, sizeof(servaddr));
-		servaddr.sin_family      = AF_INET;
+		servaddr.sin_family = AF_INET;
 		struct in_addr buf;
 		inet_pton(AF_INET, get_app_context()->management_path, (void *) &buf);
 		servaddr.sin_addr = buf;
-		servaddr.sin_port        = htons(get_app_context()->management_port);
+		servaddr.sin_port = htons(get_app_context()->management_port);
 
-		ret = bind(listenSock, (struct sockaddr *)&servaddr, (socklen_t)size);
+		ret = bind(listenSock, (struct sockaddr *) &servaddr, (socklen_t) size);
 
 		if(ret == -1)
 		{
@@ -99,13 +99,13 @@ file_descriptor setup_admin_socket()
 		}
 
 		bzero((void *) &servaddr, sizeof(servaddr));
-		servaddr.sin6_family       = AF_INET6;
+		servaddr.sin6_family = AF_INET6;
 		struct in6_addr buf;
 		inet_pton(AF_INET6, get_app_context()->management_path, (void *) &buf);
 		servaddr.sin6_addr = buf;
-		servaddr.sin6_port         = htons(get_app_context()->management_port);
+		servaddr.sin6_port = htons(get_app_context()->management_port);
 
-		ret = bind(listenSock, (struct sockaddr *) &servaddr, (socklen_t)size);
+		ret = bind(listenSock, (struct sockaddr *) &servaddr, (socklen_t) size);
 
 		if(ret == -1)
 		{

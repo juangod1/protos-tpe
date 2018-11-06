@@ -105,7 +105,7 @@ file_descriptor setup_origin_socket(int isip4)
 
 file_descriptor setup_MUA_socket()
 {
-	int listenSock, ret;
+	int    listenSock, ret;
 	size_t size;
 	if(get_app_context()->pop3path_is_ipv4 == -1)
 	{
@@ -121,11 +121,11 @@ file_descriptor setup_MUA_socket()
 		}
 
 		bzero((void *) &servaddr, sizeof(servaddr));
-		servaddr.sin6_family       = AF_INET6;
-		servaddr.sin6_addr = in6addr_any;
-		servaddr.sin6_port         = htons(get_app_context()->local_port);
+		servaddr.sin6_family = AF_INET6;
+		servaddr.sin6_addr   = in6addr_any;
+		servaddr.sin6_port   = htons(get_app_context()->local_port);
 
-		ret = bind(listenSock, (struct sockaddr *) &servaddr, (socklen_t)size);
+		ret = bind(listenSock, (struct sockaddr *) &servaddr, (socklen_t) size);
 
 		if(ret == -1)
 		{
@@ -149,13 +149,13 @@ file_descriptor setup_MUA_socket()
 		}
 
 		bzero((void *) &servaddr, sizeof(servaddr));
-		servaddr.sin_family      = AF_INET;
+		servaddr.sin_family = AF_INET;
 		struct in_addr buf;
 		inet_pton(AF_INET, get_app_context()->pop3_path, (void *) &buf);
 		servaddr.sin_addr = buf;
-		servaddr.sin_port        = htons(get_app_context()->local_port);
+		servaddr.sin_port = htons(get_app_context()->local_port);
 
-		ret = bind(listenSock, (struct sockaddr *)&servaddr, (socklen_t)size);
+		ret = bind(listenSock, (struct sockaddr *) &servaddr, (socklen_t) size);
 
 		if(ret == -1)
 		{
@@ -179,13 +179,13 @@ file_descriptor setup_MUA_socket()
 		}
 
 		bzero((void *) &servaddr, sizeof(servaddr));
-		servaddr.sin6_family       = AF_INET6;
+		servaddr.sin6_family = AF_INET6;
 		struct in6_addr buf;
 		inet_pton(AF_INET6, get_app_context()->pop3_path, (void *) &buf);
 		servaddr.sin6_addr = buf;
-		servaddr.sin6_port         = htons(get_app_context()->local_port);
+		servaddr.sin6_port = htons(get_app_context()->local_port);
 
-		ret = bind(listenSock, (struct sockaddr *) &servaddr, (socklen_t)size);
+		ret = bind(listenSock, (struct sockaddr *) &servaddr, (socklen_t) size);
 
 		if(ret == -1)
 		{

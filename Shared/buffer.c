@@ -15,15 +15,15 @@ int buffer_big_read(int file_descriptor, const struct buffer_t *buffer);
 int buffer_initialize(buffer_p *buffer, size_t size, size_t big_buffer_size)
 {
 	(*buffer) = malloc(sizeof(struct buffer_t));
-	(*buffer)->count      = 0;
-	(*buffer)->size       = size;
-	(*buffer)->data_start = calloc(1, size);
-	(*buffer)->data_ptr   = (*buffer)->data_start;
-	(*buffer)->big_buffer = malloc(sizeof(struct big_buffer_t));
-	(*buffer)->big_buffer->data_start = malloc(big_buffer_size);
-	(*buffer)->big_buffer->size = big_buffer_size;
+	(*buffer)->count                   = 0;
+	(*buffer)->size                    = size;
+	(*buffer)->data_start              = calloc(1, size);
+	(*buffer)->data_ptr                = (*buffer)->data_start;
+	(*buffer)->big_buffer              = malloc(sizeof(struct big_buffer_t));
+	(*buffer)->big_buffer->data_start  = malloc(big_buffer_size);
+	(*buffer)->big_buffer->size        = big_buffer_size;
 	(*buffer)->big_buffer->write_index = 0;
-	(*buffer)->big_buffer->read_size = 0;
+	(*buffer)->big_buffer->read_size   = 0;
 }
 
 int buffer_finalize(buffer_p buffer)
@@ -40,16 +40,16 @@ int buffer_finalize(buffer_p buffer)
 		buffer->data_start = NULL;
 		buffer->data_ptr   = NULL;
 	}
-	if(buffer->big_buffer !=NULL)
+	if(buffer->big_buffer != NULL)
 	{
 		if(buffer->big_buffer->data_start != NULL)
 		{
 			free(buffer->big_buffer->data_start);
-			buffer->big_buffer->data_start=NULL;
+			buffer->big_buffer->data_start = NULL;
 		}
-		buffer->big_buffer->size=0;
-		buffer->big_buffer->write_index=0;
-		buffer->big_buffer->read_size=0;
+		buffer->big_buffer->size        = 0;
+		buffer->big_buffer->write_index = 0;
+		buffer->big_buffer->read_size   = 0;
 		free(buffer->big_buffer);
 	}
 	free(buffer);
@@ -58,32 +58,33 @@ int buffer_finalize(buffer_p buffer)
 
 int buffer_is_empty(buffer_p buffer)
 {
-	return buffer->count==0;
+	return buffer->count == 0;
 }
 
 int buffer_big_is_empty(buffer_p buffer)
 {
-	return buffer->big_buffer->read_size==buffer->big_buffer->write_index;
+	return buffer->big_buffer->read_size == buffer->big_buffer->write_index;
 }
 
 int buffer_read(int file_descriptor, buffer_p buffer)
 {
-	struct buffer_response_t  ret = buffer_fill_until_string(buffer,"\n");
-	int previous_character_read = 0;
+	struct buffer_response_t ret                     = buffer_fill_until_string(buffer, "\n");
+	int                      previous_character_read = 0;
 	if(!ret.found_string)
 	{
 		previous_character_read = ret.characters_read;
 		buffer_big_read(file_descriptor, buffer);
-		ret = buffer_fill_until_string(buffer,"\n");
+		ret = buffer_fill_until_string(buffer, "\n");
 	}
 	return ret.characters_read + previous_character_read;
 }
 
-int buffer_big_read(int file_descriptor, const struct buffer_t *buffer) {
-	size_t  characters_to_read = buffer->big_buffer->size;
-	char *read_ptr          = buffer->big_buffer->data_start;
+int buffer_big_read(int file_descriptor, const struct buffer_t *buffer)
+{
+	size_t characters_to_read = buffer->big_buffer->size;
+	char   *read_ptr          = buffer->big_buffer->data_start;
 
-	int amount = read(file_descriptor, read_ptr, characters_to_read);
+	int amount                      = read(file_descriptor, read_ptr, characters_to_read);
 	if(amount != -1)
 	{
 		buffer->big_buffer->read_size = amount;
@@ -96,42 +97,42 @@ int buffer_big_read(int file_descriptor, const struct buffer_t *buffer) {
 	{
 		perror("Read error");
 	}
-	buffer->big_buffer->write_index=0;
-	buffer->big_buffer->read_size=amount;
+	buffer->big_buffer->write_index = 0;
+	buffer->big_buffer->read_size   = amount;
 	return amount;
 }
 
-struct buffer_response_t buffer_fill_until_string(buffer_p buffer, char * str)
+struct buffer_response_t buffer_fill_until_string(buffer_p buffer, char *str)
 {
 	if(buffer_big_is_empty(buffer))
 	{
 		struct buffer_response_t ret;
-		ret.characters_read=0;
-		ret.found_string=false;
+		ret.characters_read = 0;
+		ret.found_string    = false;
 		return ret;
 	}
-	int ret=true;
-	char * read_ptr = buffer->big_buffer->data_start + buffer->big_buffer->write_index;
-	int characters_to_read = buffer->big_buffer->read_size - buffer->big_buffer->write_index;
-	int characters_to_copy = find_substring(read_ptr,characters_to_read,str);
-	if(characters_to_copy==-1)
+	int  ret                = true;
+	char *read_ptr          = buffer->big_buffer->data_start + buffer->big_buffer->write_index;
+	int  characters_to_read = buffer->big_buffer->read_size - buffer->big_buffer->write_index;
+	int  characters_to_copy = find_substring(read_ptr, characters_to_read, str);
+	if(characters_to_copy == -1)
 	{
 		characters_to_copy = buffer->big_buffer->read_size - buffer->big_buffer->write_index;
-		ret=false;
+		ret                = false;
 	}
-	int available_size = buffer->size-buffer->count;
-	if(available_size<characters_to_copy)
+	int available_size = buffer->size - buffer->count;
+	if(available_size < characters_to_copy)
 	{
-		characters_to_copy=available_size;
+		characters_to_copy = available_size;
 	}
-	memcpy(buffer->data_ptr,read_ptr,characters_to_copy);
-	buffer->big_buffer->write_index+=characters_to_copy;
-	buffer->count+=characters_to_copy;
-	buffer->data_ptr+=characters_to_copy;
+	memcpy(buffer->data_ptr, read_ptr, characters_to_copy);
+	buffer->big_buffer->write_index += characters_to_copy;
+	buffer->count += characters_to_copy;
+	buffer->data_ptr += characters_to_copy;
 
 	struct buffer_response_t response;
-	response.characters_read=characters_to_copy;
-	response.found_string=ret;
+	response.characters_read = characters_to_copy;
+	response.found_string    = ret;
 	return response;
 }
 
@@ -341,7 +342,8 @@ void buffer_remove_trailing_spaces(buffer_p buffer)
 	size_t count      = buffer->count;
 	int    last_space = -1;
 	size_t i          = 0;
-	if(count==0 || *(ptr+count-1)!='\n'){
+	if(count == 0 || *(ptr + count - 1) != '\n')
+	{
 		return;
 	}
 	while(i < count)
@@ -374,13 +376,13 @@ int buffer_indicates_end_of_single_line_message(buffer_p buffer)
 
 int buffer_read_until_string(int file_descriptor, buffer_p buffer, char *str) //\r\n\0 || \r\n\r\n\0
 {
-	struct buffer_response_t  ret = buffer_fill_until_string(buffer,str);
-	int previous_character_read = 0;
+	struct buffer_response_t ret                     = buffer_fill_until_string(buffer, str);
+	int                      previous_character_read = 0;
 	if(!ret.found_string)
 	{
 		previous_character_read = ret.characters_read;
 		buffer_big_read(file_descriptor, buffer);
-		ret = buffer_fill_until_string(buffer,str);
+		ret = buffer_fill_until_string(buffer, str);
 	}
 	return ret.characters_read + previous_character_read;
 }
@@ -438,15 +440,15 @@ int buffer_read_until_char_block(int file_descriptor, buffer_p buffer, char ch)
 int buffer_read_until_char(int file_descriptor, buffer_p buffer, char ch)
 {
 	char str[2];
-	str[0]=ch;
-	str[1]=0;
-	struct buffer_response_t  ret = buffer_fill_until_string(buffer,str);
-	int previous_character_read = 0;
+	str[0] = ch;
+	str[1] = 0;
+	struct buffer_response_t ret                     = buffer_fill_until_string(buffer, str);
+	int                      previous_character_read = 0;
 	if(!ret.found_string)
 	{
 		previous_character_read = ret.characters_read;
 		buffer_big_read(file_descriptor, buffer);
-		ret = buffer_fill_until_string(buffer,str);
+		ret = buffer_fill_until_string(buffer, str);
 	}
 	return ret.characters_read + previous_character_read;
 }

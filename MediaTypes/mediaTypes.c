@@ -9,12 +9,13 @@ int main()
 {
 	char *replacementMessage = getenv("FILTER_MSG");
 	char *mediaList          = getenv("FILTER_MEDIAS");
-	if(replacementMessage==NULL)
+	if(replacementMessage == NULL)
 	{
-		replacementMessage="Parte Reemplazada.";
+		replacementMessage = "Parte Reemplazada.";
 	}
-	if(mediaList==NULL) {
-		mediaList="image/png";
+	if(mediaList == NULL)
+	{
+		mediaList = "image/png";
 	}
 	mediaRangeEvaluator(replacementMessage, mediaList);
 
@@ -77,10 +78,11 @@ int evaluate_mime(char *mime, char **media_type_complete_list)
 	return (ret) ? ret : OK;
 }
 
-int media_type_state_machine(char **media_type_complete_list, char *replacement_message, size_t replacement_message_size)
+int
+media_type_state_machine(char **media_type_complete_list, char *replacement_message, size_t replacement_message_size)
 {
-  buffer_p buffer;
-  buffer_initialize(&buffer, BUFFER_SIZE,BIG_BUFFER_SIZE);
+	buffer_p buffer;
+	buffer_initialize(&buffer, BUFFER_SIZE, BIG_BUFFER_SIZE);
 
 	int finished = false;
 	int state    = READ_LINE;
